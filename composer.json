@@ -1,0 +1,32 @@
+{
+  "name": "10up/elasticpress-labs",
+  "description": "10up Plugin Scaffold",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "10up",
+      "email": "info@10up.com",
+      "homepage": "https://10up.com",
+			"role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "ElasticpressLabs\\": "includes/classes/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7",
+    "10up/wp_mock": "dev-master",
+    "10up/phpcs-composer": "dev-master",
+    "10up/elasticpress": "^3.5"
+  },
+  "scripts": {
+    "lint": "phpcs .",
+    "lint-fix": "phpcbf ."
+  }
+}

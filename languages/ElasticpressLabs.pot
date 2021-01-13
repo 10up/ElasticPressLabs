@@ -1,0 +1,98 @@
+# Copyright (C) 2020 10up
+# This file is distributed under the same license as the ElasticPress Labs plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: ElasticPress Labs 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpresslabs\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2020-11-19T18:22:36+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.4.0\n"
+"X-Domain: elasticpress-labs\n"
+
+#. Plugin Name of the plugin
+#: includes/classes/Feature/ElasticPressLabs.php:30
+msgid "ElasticPress Labs"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/10up/ElasticPressLabs"
+msgstr ""
+
+#. Description of the plugin
+msgid "A developer focused interface to commonly ElasticPress plugin issues."
+msgstr ""
+
+#. Author of the plugin
+msgid "10up"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://10up.com"
+msgstr ""
+
+#: includes/classes/Feature/ElasticPressLabs.php:45
+msgid "Enable or disable the ElastisPress Labs Features."
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:27
+msgid "Meta Key Pattern"
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:43
+msgid "Include or exclude meta key patterns."
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:92
+msgid "Allow patterns"
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:103
+#: includes/classes/Feature/MetaKeyPattern.php:123
+msgid "Separate multiple regular expressions with line breaks."
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:104
+msgid "Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5"
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:112
+msgid "Deny patterns"
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:438
+#: includes/functions/core.php:181
+msgid "You will need to <a href=\"%1$s\">run a sync</a> to update your index."
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:24
+msgid "Search Algorithm Version"
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:39
+msgid "Change the version of the search algorithm."
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:48
+msgid "By default, the ElasticPress uses version 3.5 but you can change to version 3.4."
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:80
+msgid "Version"
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:97
+msgid "This version searches for the existence of all words in the search first, then returns results based on how closely those words appear."
+msgstr ""
+
+#: includes/classes/Feature/SearchAlgorithm.php:111
+msgid "This version uses a fuzzy match approach which includes results that have misspellings, and also includes matches on only some of the words in the search."
+msgstr ""
+
+#: dist/js/admin.js:195
+msgid "This change will be reflected on the next page reload or expiration of any front-end caches."
+msgstr ""
