@@ -2,7 +2,7 @@
 
  A developer focused interface to commonly [ElasticPress plugin](https://github.com/10up/ElasticPress/) issues
 
-**Please note:** master is the stable branch
+**Please note:** trunk is the stable branch
 
 ## Overview
 
@@ -33,6 +33,11 @@ If you identify any errors or have an idea for improving the plugin, please [ope
 ## Support Level
 
 **Active:** 10up is actively working on this, and we expect to continue work for the foreseeable future including keeping tested up to the most recent version of WordPress.  Bug reports, feature requests, questions, and pull requests are welcome.
+
+## Changelog
+
+### 1.0.0
+- Initial plugin release
 
 ## Like what you see?
 

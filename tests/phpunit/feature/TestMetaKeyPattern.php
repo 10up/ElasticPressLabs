@@ -9,7 +9,7 @@ namespace ElasticPressLabsTest;
 
 require __DIR__ . '/../../../vendor/10up/elasticpress/elasticpress.php';
 
-use ElasticpressLabs;
+use ElasticPressLabs;
 use WP_Mock\Tools\TestCase as BaseTestCase;
 
 /**

@@ -2,7 +2,7 @@
 /**
  * Meta key pattern Feature
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
 namespace ElasticPressLabs\Feature;
@@ -267,6 +267,16 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 			$post_meta = $this->get_allowed_meta_key_list( $meta_keys );
 
 			set_transient( 'custom_ep_distinct_post_meta', $post_meta );
+		}
+
+		if ( empty( $weight_config ) ) {
+			$search     = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+			$post_types = $search->get_searchable_post_types();
+			$weighting  = new \ElasticPress\Feature\Search\Weighting();
+
+			foreach ( $post_types as $post_type ) {
+				$weight_config[ $post_type ] = $weighting->get_post_type_default_settings( $post_type );
+			}
 		}
 
 		foreach ( $weight_config as $post_type => $fields ) {

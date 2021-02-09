@@ -3,7 +3,7 @@
  * Plugin Name:       ElasticPress Labs
  * Plugin URI:        https://github.com/10up/ElasticPressLabs
  * Description:       A developer focused interface to commonly ElasticPress plugin issues.
- * Version:           0.1.0
+ * Version:           1.0.0
  * Requires at least: 4.9
  * Requires PHP:      7.2
  * Author:            10up
@@ -13,11 +13,11 @@
  * Text Domain:       elasticpress-labs
  * Domain Path:       /languages
  *
- * @package           ElasticpressLabs
+ * @package           ElasticPressLabs
  */
 
 // Useful global constants.
-define( 'ELASTICPRESS_LABS_VERSION', '0.1.0' );
+define( 'ELASTICPRESS_LABS_VERSION', '1.0.0' );
 define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
@@ -26,11 +26,11 @@ define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
 
 // Activation/Deactivation.
-register_activation_hook( __FILE__, '\ElasticpressLabs\Core\activate' );
-register_deactivation_hook( __FILE__, '\ElasticpressLabs\Core\deactivate' );
+register_activation_hook( __FILE__, '\ElasticPressLabs\Core\activate' );
+register_deactivation_hook( __FILE__, '\ElasticPressLabs\Core\deactivate' );
 
 // Bootstrap.
-ElasticpressLabs\Core\setup();
+ElasticPressLabs\Core\setup();
 
 // Require Composer autoloader if it exists.
 if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {

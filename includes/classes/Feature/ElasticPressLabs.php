@@ -2,7 +2,7 @@
 /**
  * Meta key pattern Feature
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -194,6 +194,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 
 				if ( $settings['active'] && $this->is_subfeature_active( $subfeature->slug ) ) {
 					\ElasticPress\Features::factory()->register_feature( $subfeature );
+					$subfeature->setup();
 				}
 			}
 		}
