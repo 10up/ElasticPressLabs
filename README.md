@@ -2,7 +2,7 @@
 
  A developer focused interface to commonly [ElasticPress plugin](https://github.com/10up/ElasticPress/) issues
 
-**Please note:** master is the stable branch
+**Please note:** trunk is the stable branch
 
 ## Overview
 

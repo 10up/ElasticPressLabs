@@ -122,5 +122,5 @@ if it does not already reflect the version being released.
 5. Readme updates: Make any other readme changes as necessary in `README.md`.
 6. Tests: Run the tests with the command `npm run test`.
 7. Build: Run the command `npm run build-release`.
-8. Merge: Make a non-fast-forward merge from your release branch to `develop`, then do the same for `develop` into `master` (`git checkout master && git merge --no-ff develop`). `master` contains the stable development version.
-9. Push: Push your `master` branch to GitLab (e.g. `git push origin master`).
+8. Merge: Make a non-fast-forward merge from your release branch to `develop`, then do the same for `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
+9. Push: Push your `trunk` branch to GitLab (e.g. `git push origin trunk`).
