@@ -21,8 +21,6 @@ function setup() {
 
 	add_action( 'init', $n( 'i18n' ) );
 	add_action( 'init', $n( 'init' ) );
-	add_action( 'wp_enqueue_scripts', $n( 'scripts' ) );
-	add_action( 'wp_enqueue_scripts', $n( 'styles' ) );
 	add_action( 'admin_enqueue_scripts', $n( 'admin_scripts' ) );
 	add_action( 'admin_enqueue_scripts', $n( 'admin_styles' ) );
 
@@ -83,7 +81,7 @@ function deactivate() {
  * @return array
  */
 function get_enqueue_contexts() {
-	return [ 'admin', 'frontend', 'shared' ];
+	return [ 'admin' ];
 }
 
 /**
@@ -123,44 +121,11 @@ function style_url( $stylesheet, $context ) {
 }
 
 /**
- * Enqueue scripts for front-end.
- *
- * @return void
- */
-function scripts() {
-
-	wp_enqueue_script(
-		'elasticpress_labs_shared',
-		script_url( 'shared', 'shared' ),
-		[],
-		ELASTICPRESS_LABS_VERSION,
-		true
-	);
-
-	wp_enqueue_script(
-		'elasticpress_labs_frontend',
-		script_url( 'frontend', 'frontend' ),
-		[],
-		ELASTICPRESS_LABS_VERSION,
-		true
-	);
-
-}
-
-/**
  * Enqueue scripts for admin.
  *
  * @return void
  */
 function admin_scripts() {
-
-	wp_enqueue_script(
-		'elasticpress_labs_shared',
-		script_url( 'shared', 'shared' ),
-		[],
-		ELASTICPRESS_LABS_VERSION,
-		true
-	);
 
 	wp_enqueue_script(
 		'elasticpress_labs_admin',
@@ -190,50 +155,11 @@ function admin_scripts() {
 }
 
 /**
- * Enqueue styles for front-end.
- *
- * @return void
- */
-function styles() {
-
-	wp_enqueue_style(
-		'elasticpress_labs_shared',
-		style_url( 'shared-style', 'shared' ),
-		[],
-		ELASTICPRESS_LABS_VERSION
-	);
-
-	if ( is_admin() ) {
-		wp_enqueue_style(
-			'elasticpress_labs_admin',
-			style_url( 'admin-style', 'admin' ),
-			[],
-			ELASTICPRESS_LABS_VERSION
-		);
-	} else {
-		wp_enqueue_style(
-			'elasticpress_labs_frontend',
-			style_url( 'style', 'frontend' ),
-			[],
-			ELASTICPRESS_LABS_VERSION
-		);
-	}
-
-}
-
-/**
  * Enqueue styles for admin.
  *
  * @return void
  */
 function admin_styles() {
-
-	wp_enqueue_style(
-		'elasticpress_labs_shared',
-		style_url( 'shared-style', 'shared' ),
-		[],
-		ELASTICPRESS_LABS_VERSION
-	);
 
 	wp_enqueue_style(
 		'elasticpress_labs_admin',

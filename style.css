@@ -1,3 +1,0 @@
-/**
- * ElasticPress Labs
- */
