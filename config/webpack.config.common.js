@@ -38,7 +38,7 @@ module.exports = {
 		 *
 		 * @see (@link https://webpack.js.org/configuration/output/#outputjsonpfunction)
 		 */
-		jsonpFunction: '__ElasticpressLabs_webpackJsonp',
+		jsonpFunction: '__ElasticPressLabs_webpackJsonp',
 	},
 
 	// Console stats output.

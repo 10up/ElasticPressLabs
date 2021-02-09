@@ -2,7 +2,7 @@
 /**
  * Meta key pattern Feature
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
 namespace ElasticPressLabs\Feature;

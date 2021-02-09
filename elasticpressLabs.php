@@ -13,7 +13,7 @@
  * Text Domain:       elasticpress-labs
  * Domain Path:       /languages
  *
- * @package           ElasticpressLabs
+ * @package           ElasticPressLabs
  */
 
 // Useful global constants.
@@ -26,11 +26,11 @@ define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
 
 // Activation/Deactivation.
-register_activation_hook( __FILE__, '\ElasticpressLabs\Core\activate' );
-register_deactivation_hook( __FILE__, '\ElasticpressLabs\Core\deactivate' );
+register_activation_hook( __FILE__, '\ElasticPressLabs\Core\activate' );
+register_deactivation_hook( __FILE__, '\ElasticPressLabs\Core\deactivate' );
 
 // Bootstrap.
-ElasticpressLabs\Core\setup();
+ElasticPressLabs\Core\setup();
 
 // Require Composer autoloader if it exists.
 if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {

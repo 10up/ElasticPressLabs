@@ -16,7 +16,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ElasticpressLabs\\": "includes/classes/"
+      "ElasticPressLabs\\": "includes/classes/"
     }
   },
   "require-dev": {

@@ -2,7 +2,7 @@
 /**
  * Search Algorithm Feature
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
 namespace ElasticPressLabs\Feature;

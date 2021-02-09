@@ -2,10 +2,10 @@
 /**
  * Core plugin functionality.
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
-namespace ElasticpressLabs\Core;
+namespace ElasticPressLabs\Core;
 
 use \WP_Error as WP_Error;
 
@@ -97,7 +97,7 @@ function get_enqueue_contexts() {
 function script_url( $script, $context ) {
 
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
-		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticpressLabs script loader.' );
+		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs script loader.' );
 	}
 
 	return ELASTICPRESS_LABS_URL . "dist/js/${script}.js";
@@ -115,7 +115,7 @@ function script_url( $script, $context ) {
 function style_url( $stylesheet, $context ) {
 
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
-		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticpressLabs stylesheet loader.' );
+		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs stylesheet loader.' );
 	}
 
 	return ELASTICPRESS_LABS_URL . "dist/css/${stylesheet}.css";

@@ -18,7 +18,7 @@ that is, to add a new feature you should add a file in the folder
 /**
  * Example Feature
  *
- * @package ElasticpressLabs
+ * @package ElasticPressLabs
  */
 
 namespace ElasticPressLabs\Feature;
@@ -115,7 +115,7 @@ ElasticPress Labs feature to enable or disable.
 1. Branch: Starting from develop, cut a release branch named
 `release/X.Y.Z` for your changes.
 2. Version bump: Bump the version number in `elasticpressLabs.php`,
-`readme.txt`, `package-lock.json`, `package.json`, and `ElasticpressLabs.pot`
+`readme.txt`, `package-lock.json`, `package.json`, and `ElasticPressLabs.pot`
 if it does not already reflect the version being released.
 3. Changelog: Add/update the changelog in `readme.txt`.
 4. Translations: Update the .pot.

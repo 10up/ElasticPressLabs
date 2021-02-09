@@ -32,7 +32,7 @@ stable.
 = Manual Installation =
 
 1. Upload the entire `/elasticpress-labs` directory to the `/wp-content/plugins/` directory.
-2. Activate Elasticpress Labs through the 'Plugins' menu in WordPress.
+2. Activate ElasticPress Labs through the 'Plugins' menu in WordPress.
 
 == Frequently Asked Questions ==
 
