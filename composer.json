@@ -1,6 +1,6 @@
 {
   "name": "10up/elasticpress-labs",
-  "description": "10up Plugin Scaffold",
+  "description": "A developer focused interface to commonly ElasticPress plugin issues.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "authors": [
