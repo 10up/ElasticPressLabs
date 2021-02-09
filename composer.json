@@ -27,6 +27,7 @@
   },
   "scripts": {
     "lint": "phpcs .",
-    "lint-fix": "phpcbf ."
+    "lint-fix": "phpcbf .",
+    "test": "phpunit"
   }
 }
