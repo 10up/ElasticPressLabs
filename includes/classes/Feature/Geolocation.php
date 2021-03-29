@@ -25,6 +25,14 @@ class Geolocation extends \ElasticPress\Feature {
 		$this->title = esc_html__( 'Geolocation Search', 'elasticpress-labs' );
 
 		$this->requires_install_reindex = true;
+		$this->default_settings         = [
+			'geolocation_selector' => '',
+			'feature_geolocation_maximum_distance_radius_setting' => '30mi',
+			'feature_geolocation_set_location_button_label_setting' => esc_html__( 'Use My Location', 'elasticpress-labs' ),
+			'feature_geolocation_location_set_message_setting' => esc_html__( 'Using Current Location', 'elasticpress-labs' ),
+			'feature_geolocation_remove_location_button_label_setting' => esc_html__( 'Stop using my location', 'elasticpress-labs' ),
+			'feature_geolocation_location_error_message_setting' => esc_html__( 'Geolocation is not supported by this browser', 'elasticpress-labs' ),
+		];
 
 		parent::__construct();
 	}
@@ -69,10 +77,121 @@ class Geolocation extends \ElasticPress\Feature {
 		?>
 
 		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
-			<div class="field-name status"><label for="feature_location_selector"><?php esc_html_e( '"Location Me" selector', 'elasticpress' ); ?></label></div>
+			<div class="field-name status">
+				<label for="feature_location_selector">
+					<?php esc_html_e( '"Location Me" selector', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
 			<div class="input-wrap">
-				<input value="<?php echo empty( $settings['geolocation_selector'] ) ? 'ep-geolocation' : esc_html( $settings['geolocation_selector'] ); ?>" type="text" data-field-name="geolocation_selector" class="setting-field" id="feature_geolocation_selector">
-				<p class="field-description"><?php esc_html_e( 'Input selectors where you would like to have the "Locate Me" button appended separated by a comma. Example: .custom-selector, #custom-id', 'elasticpress' ); ?></p>
+				<input
+					class="setting-field"
+					id="feature_geolocation_selector"
+					value="<?php echo empty( $settings['geolocation_selector'] ) ? '' : esc_html( $settings['geolocation_selector'] ); ?>"
+					type="text"
+					data-field-name="geolocation_selector"
+				/>
+				<p class="field-description">
+					<?php esc_html_e( 'Input selectors where you would like to have the "Locate Me" button appended separated by a comma. Example: .custom-selector, #custom-id', 'elasticpress-labs' ); ?>
+				</p>
+			</div>
+		</div>
+
+		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+			<div class="field-name status">
+				<label for="feature_geolocation_maximum_distance_radius">
+					<?php esc_html_e( 'Maximum distance radius', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
+			<div class="input-wrap">
+				<input
+					class="setting-field"
+					id="feature_geolocation_maximum_distance_radius_setting"
+					value="<?php echo empty( $settings['feature_geolocation_maximum_distance_radius_setting'] ) ? '30mi' : esc_html( $settings['feature_geolocation_maximum_distance_radius_setting'] ); ?>"
+					type="text"
+					data-field-name="feature_geolocation_maximum_distance_radius_setting"
+				/>
+				<p class="field-description">
+					<?php
+						// translators: link to Elasticsearch page reference
+						echo wp_kses_post( sprintf( __( 'The radius of the circle centred on the specified location. Points which fall into this circle are considered to be matches. Example: 30mi, 20km. The distance can be specified in <a href="%s">various units</a>.', 'elasticpress-labs' ), esc_url( 'https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#distance-units' ) ) );
+					?>
+				</p>
+			</div>
+		</div>
+
+		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+			<div class="field-name status">
+				<label for="feature_geolocation_set_location_button_label_setting">
+					<?php esc_html_e( 'Location button label', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
+			<div class="input-wrap">
+				<input
+					class="setting-field"
+					id="feature_geolocation_set_location_button_label_setting"
+					value="<?php echo empty( $settings['feature_geolocation_set_location_button_label_setting'] ) ? '' : esc_html( $settings['feature_geolocation_set_location_button_label_setting'] ); ?>"
+					type="text"
+					data-field-name="feature_geolocation_set_location_button_label_setting"
+				/>
+			</div>
+		</div>
+
+		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+			<div class="field-name status">
+				<label for="feature_geolocation_location_set_message_setting">
+					<?php esc_html_e( 'Location message', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
+			<div class="input-wrap">
+				<input
+					class="setting-field"
+					id="feature_geolocation_location_set_message_setting"
+					value="<?php echo empty( $settings['feature_geolocation_location_set_message_setting'] ) ? '' : esc_html( $settings['feature_geolocation_location_set_message_setting'] ); ?>"
+					type="text"
+					data-field-name="feature_geolocation_location_set_message_setting"
+				/>
+
+				<p class="field-description">
+					<?php esc_html_e( 'This message will inform the user that your location will be used for search.', 'elasticpress-labs' ); ?>
+				</p>
+			</div>
+		</div>
+
+		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+			<div class="field-name status">
+				<label for="feature_geolocation_remove_location_button_label_setting">
+					<?php esc_html_e( 'Remove location button label', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
+			<div class="input-wrap">
+				<input
+					class="setting-field"
+					id="feature_geolocation_remove_location_button_label_setting"
+					value="<?php echo empty( $settings['feature_geolocation_remove_location_button_label_setting'] ) ? '' : esc_html( $settings['feature_geolocation_remove_location_button_label_setting'] ); ?>"
+					type="text"
+					data-field-name="feature_geolocation_remove_location_button_label_setting"
+				/>
+			</div>
+		</div>
+
+		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+			<div class="field-name status">
+				<label for="feature_geolocation_location_error_message_setting">
+					<?php esc_html_e( 'Error message', 'elasticpress-labs' ); ?>
+				</label>
+			</div>
+			<div class="input-wrap">
+				<input
+					class="setting-field"
+					id="feature_geolocation_location_error_message_setting"
+					value="<?php echo empty( $settings['feature_geolocation_location_error_message_setting'] ) ? '' : esc_html( $settings['feature_geolocation_location_error_message_setting'] ); ?>"
+					type="text"
+					data-field-name="feature_geolocation_location_error_message_setting"
+				/>
+
+				<p class="field-description">
+					<?php esc_html_e( 'This message will inform the user that the browser doesn\'t support geolocation.', 'elasticpress-labs' ); ?>
+				</p>
 			</div>
 		</div>
 		<?php
@@ -216,7 +335,7 @@ class Geolocation extends \ElasticPress\Feature {
 	public function enqueue_scripts() {
 		wp_enqueue_script(
 			'elasticpress-geolocation',
-			ELASTICPRESS_LABS_URL . 'dist/js/geolocation-script.min.js',
+			ELASTICPRESS_LABS_URL . 'dist/js/geolocation.js',
 			[],
 			ELASTICPRESS_LABS_VERSION,
 			true
@@ -224,12 +343,18 @@ class Geolocation extends \ElasticPress\Feature {
 
 		$settings = $this->get_settings();
 
+		if ( ! $settings ) {
+			$settings = [];
+		}
+
+		$settings = wp_parse_args( $settings, $this->default_settings );
+
 		$epgl_options = [
-			'selector'                => empty( $settings['geolocation_selector'] ) ? 'ep-geolocation' : esc_html( $settings['geolocation_selector'] ),
-			'buttonText'              => esc_html__( 'Use My Location', 'elasticpress' ),
-			'getLocationErrorMessage' => esc_html__( 'Geolocation is not supported by this browser.', 'elasticpress' ),
-			'locationSetMessage'      => esc_html__( 'Using Current location', 'elasticpress' ),
-			'removeButtonText'        => esc_html__( 'Stop using my location', 'elasticpress' ),
+			'selector'                 => esc_html( $settings['geolocation_selector'] ),
+			'locationButtonText'       => esc_html( $settings['feature_geolocation_set_location_button_label_setting'] ),
+			'locationErrorMessage'     => esc_html( $settings['feature_geolocation_location_error_message_setting'] ),
+			'locationSetMessage'       => esc_html( $settings['feature_geolocation_location_set_message_setting'] ),
+			'removeLocationButtonText' => esc_html( $settings['feature_geolocation_remove_location_button_label_setting'] ),
 		];
 
 		wp_localize_script(
