@@ -8,9 +8,9 @@
 
 namespace ElasticPressLabs\Feature;
 
-use ElasticPress\Feature as Feature;
-use ElasticPress\Features as Features;
-use ElasticPress\FeatureRequirementsStatus as FeatureRequirementsStatus;
+use ElasticPress\Feature;
+use ElasticPress\Features;
+use ElasticPress\FeatureRequirementsStatus;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
