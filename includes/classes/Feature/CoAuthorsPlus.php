@@ -63,9 +63,9 @@ class CoAuthorsPlus extends Feature {
 	 * Prepare Elasticsearch query to search for posts by author/coauthor
 	 *
 	 * @since 1.1.0
-	 * @param {array} $formatted_args Formatted Elasticsearch query
-	 * @param {array} $args Query variables
-	 * @param {array} $wp_query Query part
+	 * @param {array}  $formatted_args Formatted Elasticsearch query
+	 * @param {array}  $args Query variables
+	 * @param WP_Query $wp_query Query part
 	 * @return {array} New query
 	 */
 	public function include_author_in_es_query( $formatted_args, $args, $wp_query ) {
