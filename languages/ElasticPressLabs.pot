@@ -1,15 +1,15 @@
-# Copyright (C) 2020 10up
+# Copyright (C) 2021 10up
 # This file is distributed under the same license as the ElasticPress Labs plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpresslabs\n"
+"Project-Id-Version: ElasticPress Labs 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpressLabs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2020-11-19T18:22:36+00:00\n"
+"POT-Creation-Date: 2021-07-16T21:42:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.4.0\n"
 "X-Domain: elasticpress-labs\n"
@@ -35,8 +35,36 @@ msgstr ""
 msgid "https://10up.com"
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:45
+#: includes/classes/Feature/CoAuthorsPlus.php:34
+msgid "Co-Authors Plus"
+msgstr ""
+
+#: includes/classes/Feature/CoAuthorsPlus.php:178
+msgid "Add support for Co-Authors Plus plugin."
+msgstr ""
+
+#: includes/classes/Feature/CoAuthorsPlus.php:189
+msgid "You need to active the Protected Content feature."
+msgstr ""
+
+#: includes/classes/Feature/CoAuthorsPlus.php:204
+msgid "You need to have Co-Authors Plus installed and activated."
+msgstr ""
+
+#: includes/classes/Feature/CoAuthorsPlus.php:207
+msgid "You need to activate the Protected Content Feature to this feature work properly."
+msgstr ""
+
+#: includes/classes/Feature/ElasticPressLabs.php:43
 msgid "Enable or disable the ElastisPress Labs Features."
+msgstr ""
+
+#: includes/classes/Feature/ElasticPressLabs.php:125
+msgid "Register feature"
+msgstr ""
+
+#: includes/classes/Feature/ElasticPressLabs.php:137
+msgid "Unregister feature"
 msgstr ""
 
 #: includes/classes/Feature/MetaKeyPattern.php:27
@@ -64,8 +92,8 @@ msgstr ""
 msgid "Deny patterns"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:438
-#: includes/functions/core.php:181
+#: includes/classes/Feature/MetaKeyPattern.php:448
+#: includes/functions/core.php:146
 msgid "You will need to <a href=\"%1$s\">run a sync</a> to update your index."
 msgstr ""
 
@@ -93,6 +121,6 @@ msgstr ""
 msgid "This version uses a fuzzy match approach which includes results that have misspellings, and also includes matches on only some of the words in the search."
 msgstr ""
 
-#: dist/js/admin.js:195
+#: dist/js/admin.js:198
 msgid "This change will be reflected on the next page reload or expiration of any front-end caches."
 msgstr ""
