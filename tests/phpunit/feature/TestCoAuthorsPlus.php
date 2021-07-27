@@ -1,0 +1,148 @@
+<?php
+/**
+ * Test Co-Authors Plus feature
+ *
+ * @since  1.1.0
+ * @package ElasticPressLabs
+ */
+
+namespace ElasticPressLabsTest;
+
+use ElasticPressLabs;
+
+/**
+ * CoAuthors Plus test class
+ *
+ * @since  1.1.0
+ */
+class TestCoAuthorsPlus extends \WP_UnitTestCase {
+	/**
+	 * Setup each test.
+	 *
+	 * @since  1.1.0
+	 */
+	public function setUp() {
+		$instance = new ElasticPressLabs\Feature\CoAuthorsPlus();
+		\ElasticPress\Features::factory()->register_feature($instance);
+	}
+
+	/**
+	 * Get Co-Authors Plus feature
+	 *
+	 * @since  1.1.0
+	 * @return CoAuthorsPlus
+	 */
+	protected function get_feature() {
+		return \ElasticPress\Features::factory()->get_registered_feature( 'co_authors_plus' );
+	}
+
+	/**
+	 * Get protected function as public
+	 *
+	 * @since  1.1.0
+	 * @param string $functionName
+	 * @param string $className
+	 * @return ReflectionClass
+	 */
+	protected function get_protected_function( $functionName, $className = 'ElasticPressLabs\Feature\CoAuthorsPlus' ) {
+		$reflector = new \ReflectionClass( $className );
+		$function  = $reflector->getMethod( $functionName );
+		$function->setAccessible( true );
+
+		return $function;
+	}
+
+	/**
+	 * Test constrcut
+	 *
+	 * @since  1.1.0
+	 */
+	public function testConstruct() {
+		$instance = $this->get_feature();
+
+        $this->assertEquals( 'co_authors_plus', $instance->slug );
+        $this->assertEquals( 'Co-Authors Plus', $instance->title );
+	}
+
+	/**
+	 * Test box summary
+	 *
+	 * @since  1.1.0
+	 */
+	public function testBoxSummary() {
+		ob_start();
+		$this->get_feature()->output_feature_box_summary();
+        $output = ob_get_clean();
+
+		$this->assertContains( 'Add support for Co-Authors Plus plugin.', $output );
+	}
+
+	/**
+	 * Test box long text
+	 *
+	 * @since  1.1.0
+	 */
+	public function testBoxLong() {
+		ob_start();
+		$this->get_feature()->output_feature_box_long();
+        $output = ob_get_clean();
+
+		$this->assertContains( 'You need to active the Protected Content feature.', $output );
+	}
+
+	/**
+	 * Test filter out author name and id from Elasticsearch query
+	 *
+	 * @since  1.1.0
+	 */
+	public function testFilterOutAuthorNameAndId() {
+		$feature  = $this->get_feature();
+		$function_filter_out_author_name_and_id_from_es_filter = $this->get_protected_function( 'filter_out_author_name_and_id_from_es_filter' );
+
+		$this->assertEquals([], $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array([])));
+
+		$this->assertEquals('', $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array( '' ) ) );
+
+		$formatted_args = [
+			'post_filter' => [
+				'bool' => [
+					'must' => [
+						[
+							'term' => [
+								'post_author.display_name' => [ 'test' ]
+							]
+						]
+					]
+				]
+			]
+		];
+
+		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
+
+		$this->assertEmpty( $filtered_formatted_args );
+
+		$formatted_args['post_filter']['bool']['must'][] = [
+			'terms' => [
+				'post_type.raw' => [ 'post' ]
+			]
+		];
+
+		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
+
+		$this->assertNotEmpty( $filtered_formatted_args );
+		$this->assertCount( 1, $filtered_formatted_args );
+		$this->assertArrayHasKey( 'terms', $filtered_formatted_args[0] );
+
+		$formatted_args['post_filter']['bool']['must'][] = [
+			'term' => [
+				'post_author.id' => [ 1 ]
+			]
+		];
+
+		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
+
+		$this->assertNotEmpty( $filtered_formatted_args );
+		$this->assertCount( 1, $filtered_formatted_args );
+		$this->assertArrayHasKey( 'terms', $filtered_formatted_args[0] );
+	}
+}
