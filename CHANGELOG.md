@@ -12,6 +12,6 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 Initial plugin release
 
-[Unreleased]: https://github.com/10up/ElasticPressLabs/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/10up/ElasticPressLabs/compare/1.1.0...HEAD
 [1.1.0]: https://github.com/10up/ElasticPressLabs/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/10up/ElasticPressLabs/releases/tag/1.0.0
