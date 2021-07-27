@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [Unreleased]
 
-## [1.1.0] - 2021-07-19
+## [1.1.0] - 2021-07-27
 ### Added
 - Integration with [Co-Authors Plus](https://wordpress.org/plugins/co-authors-plus/). Props [@dinhtungdu](https://github.com/dinhtungdu) and [@Rahmon](https://github.com/Rahmon).
 
