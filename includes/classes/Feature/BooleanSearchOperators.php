@@ -108,7 +108,7 @@ class BooleanSearchOperators extends Feature {
 					/**
 					 * Filter the fields to use in boolean operator searches
 					 *
-					 * @hook    ep_boolean_operators_fields
+					 * @hook    ep_labs_boolean_operators_fields
 					 *
 					 * @param   {array} $search_fields
 					 * @param   {array}  $query_vars    Query variables
@@ -118,13 +118,13 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {array} New fields
 					 */
-					'fields'           => \apply_filters( 'ep_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
+					'fields'           => \apply_filters( 'ep_labs_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
 
 					/**
 					 * Filter the default boolean operator
 					 * Valid values: OR, AND
 					 *
-					 * @hook    ep_boolean_operators_default
+					 * @hook    ep_labs_boolean_operators_default
 					 *
 					 * @param   {string} $default
 					 * @param   {array}  $query_vars    Query variables
@@ -134,14 +134,14 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {string} New operator
 					 */
-					'default_operator' => \apply_filters( 'ep_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
+					'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
 
 					/**
 					 * Filter allowed boolean operators.
 					 * Valid flags: ALL, AND, ESCAPE, FUZZY, NEAR, NONE, NOT, OR, PHRASE, PRECEDENCE, PREFIX, SLOP, WHITESPACE
 					 * Must return a string with a single flag or use pipe separators, e.g.: 'OR|AND|PREFIX'
 					 *
-					 * @hook    ep_boolean_operators_flags
+					 * @hook    ep_labs_boolean_operators_flags
 					 *
 					 * @param   {string} $flags
 					 * @param   {array}  $query_vars    Query variables
@@ -151,7 +151,7 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {string} New flags
 					 */
-					'flags'            => \apply_filters( 'ep_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
+					'flags'            => \apply_filters( 'ep_labs_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
 				),
 			);
 
@@ -169,7 +169,7 @@ class BooleanSearchOperators extends Feature {
 				 *
 				 * @return  {bool} New fuzziness
 				 */
-				$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
+				$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_labs_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
 			}
 
 			$original_text = $search_text;
@@ -200,7 +200,7 @@ class BooleanSearchOperators extends Feature {
 			/**
 			 * Filter the search text to use in boolean operator queries
 			 *
-			 * @hook    ep_boolean_operators_search_text
+			 * @hook    ep_labs_boolean_operators_search_text
 			 *
 			 * @param   {string} $search_text   Search text modified to replace tokens
 			 * @param   {string} $original_text The original search text
@@ -210,7 +210,7 @@ class BooleanSearchOperators extends Feature {
 			 *
 			 * @return  {string} New search text
 			 */
-			$simple_query['simple_query_string']['query'] = \apply_filters( 'ep_boolean_operators_search_text', $search_text, $original_text, $query_vars, $search_fields, $query );
+			$simple_query['simple_query_string']['query'] = \apply_filters( 'ep_labs_boolean_operators_search_text', $search_text, $original_text, $query_vars, $search_fields, $query );
 
 			/**
 			 * Filter formatted Elasticsearch simple query string query (only contains query part)
@@ -225,7 +225,7 @@ class BooleanSearchOperators extends Feature {
 			 *
 			 * @return {array} New query
 			 */
-			return \apply_filters( 'ep_boolean_operators_query_args', $simple_query, $query_vars, $search_text, $search_fields, $query );
+			return \apply_filters( 'ep_labs_boolean_operators_query_args', $simple_query, $query_vars, $search_text, $search_fields, $query );
 		}
 
 		return $query;
