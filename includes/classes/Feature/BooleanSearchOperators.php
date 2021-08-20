@@ -10,6 +10,7 @@ namespace ElasticPressLabs\Feature;
 use ElasticPress\Feature;
 use ElasticPress\FeatureRequirementsStatus;
 use ElasticPress\Features;
+use ElasticPress\Elasticsearch;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -117,7 +118,7 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {array} New fields
 					 */
-					'fields'                              => \apply_filters( 'ep_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
+					'fields'           => \apply_filters( 'ep_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
 
 					/**
 					 * Filter the default boolean operator
@@ -133,7 +134,7 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {string} New operator
 					 */
-					'default_operator'                    => \apply_filters( 'ep_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
+					'default_operator' => \apply_filters( 'ep_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
 
 					/**
 					 * Filter allowed boolean operators.
@@ -150,24 +151,26 @@ class BooleanSearchOperators extends Feature {
 					 *
 					 * @return  {string} New flags
 					 */
-					'flags'                               => \apply_filters( 'ep_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
-
-					/**
-					 * Filter automatic synonym generation for boolean operators queries
-					 *
-					 * @hook    ep_boolean_operators_generate_synonyms
-					 *
-					 * @param   {bool} $auto_generate_synonyms
-					 * @param   {array}  $query_vars    Query variables
-					 * @param   {string} $search_text   Search text modified to replace tokens
-					 * @param   {array}  $search_fields Search fields
-					 * @param   {array}  $query         The original query
-					 *
-					 * @return  {bool} New fuzziness
-					 */
-					'auto_generate_synonyms_phrase_query' => \apply_filters( 'ep_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query ),
+					'flags'            => \apply_filters( 'ep_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
 				),
 			);
+
+			if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '6.0', '>=' ) ) {
+				/**
+				 * Filter automatic synonym generation for boolean operators queries
+				 *
+				 * @hook    ep_boolean_operators_generate_synonyms
+				 *
+				 * @param   {bool} $auto_generate_synonyms
+				 * @param   {array}  $query_vars    Query variables
+				 * @param   {string} $search_text   Search text modified to replace tokens
+				 * @param   {array}  $search_fields Search fields
+				 * @param   {array}  $query         The original query
+				 *
+				 * @return  {bool} New fuzziness
+				 */
+				$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
+			}
 
 			$original_text = $search_text;
 
