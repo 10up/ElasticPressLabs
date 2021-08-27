@@ -74,4 +74,36 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 		$this->assertContains( 'Allows users to search using the following boolean operators:', $output );
 	}
 
+	/**
+	 * Text query_uses_boolean_operators function
+	 *
+	 * @since 1.2.0
+	 */
+	public function testQueryUsesBooleanOperators() {
+		$feature  = $this->get_feature();
+
+		$this->assertTrue( $feature->query_uses_boolean_operators( '(museum (art))' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( '"american museum"' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum art*' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum art~35' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum | art' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum +art' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum -art' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum OR art' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum AND art' ) );
+		$this->assertTrue( $feature->query_uses_boolean_operators( 'museum NOT art' ) );
+
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum art' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'art ()' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum art 1985' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( '35 artists~' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum or art' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum and art' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum not art' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( '"museum' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( '(museum' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum)' ) );
+		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum *art' ) );
+	}
+
 }
