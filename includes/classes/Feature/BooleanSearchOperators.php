@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Boolean Search Feature
  *
- * @package ElasticPress\Feature\BooleanSearchOperators
+ * @package ElasticPressLabs\Feature\BooleanSearchOperators
  */
 class BooleanSearchOperators extends Feature {
 
