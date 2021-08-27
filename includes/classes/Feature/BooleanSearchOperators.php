@@ -269,7 +269,7 @@ class BooleanSearchOperators extends Feature {
 	public function query_uses_boolean_operators( $search_text ) {
 		$boolean_regex = '/(\".+\")|(\+)|(\-)|(\S\*)|(\S\~\d)|(.+\|.+)|(\(\S+\))|(\sOR\s)|(\sAND\s)|(\sNOT\s)/';
 
-		return preg_match( $boolean_regex, $search_text ) !== false;
+		return (bool) preg_match( $boolean_regex, $search_text );
 	}
 
 	/**
