@@ -58,7 +58,7 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_summary();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Allow boolean operators in search queries.', $output );
+		$this->assertContains( 'Allow boolean operators in search queries', $output );
 	}
 
 	/**
