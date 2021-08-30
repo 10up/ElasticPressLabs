@@ -315,28 +315,84 @@ class BooleanSearchOperators extends Feature {
 		<p><?php esc_html_e( 'Allows users to search using the following boolean operators:', 'elasticpress-labs' ); ?></p>
 		<ul>
 			<li>
-				<code>+</code> or
-				<code>AND</code> <?php esc_html_e( 'signifies AND operation. eg.: modern +art, modern AND art', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>+</code>, 2: <code>AND</code> */
+						esc_html__( '%1$s or %2$s signifies AND operation. eg.: modern +art, modern AND art', 'elasticpress-labs' ),
+						'<code>+</code>',
+						'<code>AND</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>|</code> or
-				<code>OR</code> <?php esc_html_e( 'signifies OR operation. eg.: modern | art, modern OR art', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>|</code>, 2: <code>OR</code> */
+						esc_html__( '%1$s or %2$s signifies OR operation. eg.: modern | art, modern OR art', 'elasticpress-labs' ),
+						'<code>|</code>',
+						'<code>OR</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>-</code> or
-				<code>NOT</code> <?php esc_html_e( 'signifies NOT operation. eg.: modern -art, modern NOT art', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>-</code>, 2: <code>NOT</code> */
+						esc_html__( '%1$s or %2$s signifies NOT operation. eg.: modern -art, modern NOT art', 'elasticpress-labs' ),
+						'<code>-</code>',
+						'<code>NOT</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>"</code> <?php esc_html_e( 'wraps characters to signify a phrase. eg.: "modern art"', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>"</code> */
+						esc_html__( '%1$s wraps characters to signify a phrase. eg.: "modern art"', 'elasticpress-labs' ),
+						'<code>"</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>*</code> <?php esc_html_e( 'signifies a prefix wildcard. eg.: art*', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>*</code> */
+						esc_html__( '%1$s signifies a prefix wildcard. eg.: art*', 'elasticpress-labs' ),
+						'<code>*</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>()</code> <?php esc_html_e( 'signifies precedence. eg.: (MoMA OR (modern AND art))', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>()</code> */
+						esc_html__( '%1$s signifies precedence. eg.: (MoMA OR (modern AND art))', 'elasticpress-labs' ),
+						'<code>()</code>'
+					)
+				);
+				?>
 			</li>
 			<li>
-				<code>~#</code> <?php esc_html_e( 'signifies slop if used on a phrase. eg.: "modern art"~2. Signifies fuzziness if used on a word: eg: modern~1', 'elasticpress-labs' ); ?>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: <code>~#</code> */
+						esc_html__( '%1$s signifies slop if used on a phrase. eg.: "modern art"~2. Signifies fuzziness if used on a word: eg: modern~1', 'elasticpress-labs' ),
+						'<code>~#</code>'
+					)
+				);
+				?>
 			</li>
 		</ul>
 		<?php
