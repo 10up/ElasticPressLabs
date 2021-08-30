@@ -104,18 +104,17 @@ class BooleanSearchOperators extends Feature {
 
 			$simple_query = array(
 				'simple_query_string' => array(
-
 					/**
 					 * Filter the fields to use in boolean operator searches
 					 *
-					 * @hook    ep_labs_boolean_operators_fields
-					 * @since   1.2.0
+					 * @hook   ep_labs_boolean_operators_fields
+					 * @since  1.2.0
 					 *
-					 * @param   {array} $search_fields
-					 * @param   {array}  $query_vars    Query variables
-					 * @param   {string} $search_text   Search text modified to replace tokens
-					 * @param   {array}  $search_fields Search fields
-					 * @param   {array}  $query         The original query
+					 * @param  {array} $search_fields
+					 * @param  {array}  $query_vars    Query variables
+					 * @param  {string} $search_text   Search text modified to replace tokens
+					 * @param  {array}  $search_fields Search fields
+					 * @param  {array}  $query         The original query
 					 *
 					 * @return {array} New fields
 					 */
@@ -125,16 +124,16 @@ class BooleanSearchOperators extends Feature {
 					 * Filter the default boolean operator
 					 * Valid values: OR, AND
 					 *
-					 * @hook    ep_labs_boolean_operators_default
-					 * @since   1.2.0
+					 * @hook   ep_labs_boolean_operators_default
+					 * @since  1.2.0
 					 *
-					 * @param   {string} $default
-					 * @param   {array}  $query_vars    Query variables
-					 * @param   {string} $search_text   Search text modified to replace tokens
-					 * @param   {array}  $search_fields Search fields
-					 * @param   {array}  $query         The original query
+					 * @param  {string} $default
+					 * @param  {array}  $query_vars    Query variables
+					 * @param  {string} $search_text   Search text modified to replace tokens
+					 * @param  {array}  $search_fields Search fields
+					 * @param  {array}  $query         The original query
 					 *
-					 * @return  {string} New operator
+					 * @return {string} New operator
 					 */
 					'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
 
@@ -146,13 +145,13 @@ class BooleanSearchOperators extends Feature {
 					 * @hook    ep_labs_boolean_operators_flags
 					 * @since   1.2.0
 					 *
-					 * @param   {string} $flags
-					 * @param   {array}  $query_vars    Query variables
-					 * @param   {string} $search_text   Search text modified to replace tokens
-					 * @param   {array}  $search_fields Search fields
-					 * @param   {array}  $query         The original query
+					 * @param  {string} $flags
+					 * @param  {array}  $query_vars    Query variables
+					 * @param  {string} $search_text   Search text modified to replace tokens
+					 * @param  {array}  $search_fields Search fields
+					 * @param  {array}  $query         The original query
 					 *
-					 * @return  {string} New flags
+					 * @return {string} New flags
 					 */
 					'flags'            => \apply_filters( 'ep_labs_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
 				),
@@ -165,13 +164,13 @@ class BooleanSearchOperators extends Feature {
 				 * @hook    ep_labs_boolean_operators_generate_synonyms
 				 * @since   1.2.0
 				 *
-				 * @param   {bool} $auto_generate_synonyms
-				 * @param   {array}  $query_vars    Query variables
-				 * @param   {string} $search_text   Search text modified to replace tokens
-				 * @param   {array}  $search_fields Search fields
-				 * @param   {array}  $query         The original query
+				 * @param  {bool} $auto_generate_synonyms
+				 * @param  {array}  $query_vars    Query variables
+				 * @param  {string} $search_text   Search text modified to replace tokens
+				 * @param  {array}  $search_fields Search fields
+				 * @param  {array}  $query         The original query
 				 *
-				 * @return  {bool} New fuzziness
+				 * @return {bool} New fuzziness
 				 */
 				$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_labs_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
 			}
@@ -204,16 +203,16 @@ class BooleanSearchOperators extends Feature {
 			/**
 			 * Filter the search text to use in boolean operator queries
 			 *
-			 * @hook    ep_labs_boolean_operators_search_text
+			 * @hook   ep_labs_boolean_operators_search_text
 			 * @since  1.2.0
 			 *
-			 * @param   {string} $search_text   Search text modified to replace tokens
-			 * @param   {string} $original_text The original search text
-			 * @param   {array}  $query_vars    Query variables
-			 * @param   {array}  $search_fields Search fields
-			 * @param   {array}  $query         The original query
+			 * @param  {string} $search_text   Search text modified to replace tokens
+			 * @param  {string} $original_text The original search text
+			 * @param  {array}  $query_vars    Query variables
+			 * @param  {array}  $search_fields Search fields
+			 * @param  {array}  $query         The original query
 			 *
-			 * @return  {string} New search text
+			 * @return {string} New search text
 			 */
 			$simple_query['simple_query_string']['query'] = \apply_filters( 'ep_labs_boolean_operators_search_text', $search_text, $original_text, $query_vars, $search_fields, $query );
 
