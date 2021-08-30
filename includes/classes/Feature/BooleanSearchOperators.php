@@ -109,6 +109,7 @@ class BooleanSearchOperators extends Feature {
 					 * Filter the fields to use in boolean operator searches
 					 *
 					 * @hook    ep_labs_boolean_operators_fields
+					 * @since   1.2.0
 					 *
 					 * @param   {array} $search_fields
 					 * @param   {array}  $query_vars    Query variables
@@ -116,7 +117,7 @@ class BooleanSearchOperators extends Feature {
 					 * @param   {array}  $search_fields Search fields
 					 * @param   {array}  $query         The original query
 					 *
-					 * @return  {array} New fields
+					 * @return {array} New fields
 					 */
 					'fields'           => \apply_filters( 'ep_labs_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
 
@@ -125,6 +126,7 @@ class BooleanSearchOperators extends Feature {
 					 * Valid values: OR, AND
 					 *
 					 * @hook    ep_labs_boolean_operators_default
+					 * @since   1.2.0
 					 *
 					 * @param   {string} $default
 					 * @param   {array}  $query_vars    Query variables
@@ -142,6 +144,7 @@ class BooleanSearchOperators extends Feature {
 					 * Must return a string with a single flag or use pipe separators, e.g.: 'OR|AND|PREFIX'
 					 *
 					 * @hook    ep_labs_boolean_operators_flags
+					 * @since   1.2.0
 					 *
 					 * @param   {string} $flags
 					 * @param   {array}  $query_vars    Query variables
@@ -159,7 +162,8 @@ class BooleanSearchOperators extends Feature {
 				/**
 				 * Filter automatic synonym generation for boolean operators queries
 				 *
-				 * @hook    ep_boolean_operators_generate_synonyms
+				 * @hook    ep_labs_boolean_operators_generate_synonyms
+				 * @since   1.2.0
 				 *
 				 * @param   {bool} $auto_generate_synonyms
 				 * @param   {array}  $query_vars    Query variables
@@ -201,6 +205,7 @@ class BooleanSearchOperators extends Feature {
 			 * Filter the search text to use in boolean operator queries
 			 *
 			 * @hook    ep_labs_boolean_operators_search_text
+			 * @since  1.2.0
 			 *
 			 * @param   {string} $search_text   Search text modified to replace tokens
 			 * @param   {string} $original_text The original search text
@@ -216,6 +221,7 @@ class BooleanSearchOperators extends Feature {
 			 * Filter formatted Elasticsearch simple query string query (only contains query part)
 			 *
 			 * @hook   ep_boolean_operators_query_args
+			 * @since  1.2.0
 			 *
 			 * @param  {array}  $simple_query  Current query
 			 * @param  {array}  $query_vars    Query variables
