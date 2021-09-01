@@ -3,7 +3,7 @@
  * Plugin Name:       ElasticPress Labs
  * Plugin URI:        https://github.com/10up/ElasticPressLabs
  * Description:       A developer focused interface to commonly ElasticPress plugin issues.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 4.9
  * Requires PHP:      7.2
  * Author:            10up
