@@ -1,8 +1,10 @@
 # ElasticPress Labs
 
- A developer focused interface to commonly [ElasticPress plugin](https://github.com/10up/ElasticPress/) issues
+> A developer focused interface to commonly [ElasticPress plugin](https://github.com/10up/ElasticPress/) issues
 
-**Please note:** trunk is the stable branch
+[![Support Level](https://img.shields.io/badge/support-active-green.svg)](#support-level) [![Tests](https://github.com/10up/ElasticPressLabs/actions/workflows/test.yml/badge.svg)](https://github.com/10up/ElasticPressLabs/actions/workflows/test.yml) [![Linting](https://github.com/10up/ElasticPressLabs/actions/workflows/lint.yml/badge.svg)](https://github.com/10up/ElasticPressLabs/actions/workflows/lint.yml) [![Release Version](https://img.shields.io/github/release/10up/ElasticPressLabs.svg)](https://github.com/10up/ElasticPressLabs/releases/latest) ![WordPress tested up to version](https://img.shields.io/badge/WordPress-v5.0%20tested-success.svg) [![GPLv2 License](https://img.shields.io/github/license/10up/ElasticPressLabs.svg)](https://github.com/10up/ElasticPressLabs/blob/develop/LICENSE.md)
+
+**Please note:** `trunk` is the stable branch
 
 ## Overview
 
@@ -44,4 +46,3 @@ If you identify any errors or have an idea for improving the plugin, please [ope
 <p align="center">
 <a href="http://10up.com/contact/"><img src="https://10up.com/uploads/2016/10/10up-Github-Banner.png" width="850"></a>
 </p>
-
