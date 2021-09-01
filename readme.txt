@@ -1,7 +1,7 @@
 === ElasticPress Labs ===
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
-Requires at least: 4.9
+Requires at least: 3.7.1
 Tested up to:      5.0
 Stable tag:        1.2.0
 Requires PHP:      7.2
