@@ -17,7 +17,7 @@
  */
 
 // Useful global constants.
-define( 'ELASTICPRESS_LABS_VERSION', '1.1.0' );
+define( 'ELASTICPRESS_LABS_VERSION', '1.2.0' );
 define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
