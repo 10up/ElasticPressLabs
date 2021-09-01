@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the ElasticPress Labs plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 1.1.0\n"
+"Project-Id-Version: ElasticPress Labs 1.2.0\n"
 "Report-Msgid-Bugs-To: https://github.com/10up/ElasticPressLabs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2021-07-16T21:42:24+00:00\n"
+"POT-Creation-Date: 2021-09-01T13:26:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.4.0\n"
 "X-Domain: elasticpress-labs\n"
@@ -33,6 +33,57 @@ msgstr ""
 
 #. Author URI of the plugin
 msgid "https://10up.com"
+msgstr ""
+
+#: includes/classes/Feature/BooleanSearchOperators.php:32
+msgid "Boolean Search Operators"
+msgstr ""
+
+#: includes/classes/Feature/BooleanSearchOperators.php:295
+msgid "This feature requires the \"Post Search\" feature to be enabled"
+msgstr ""
+
+#: includes/classes/Feature/BooleanSearchOperators.php:306
+msgid "Allow boolean operators in search queries"
+msgstr ""
+
+#: includes/classes/Feature/BooleanSearchOperators.php:315
+msgid "Allows users to search using the following boolean operators:"
+msgstr ""
+
+#. translators: 1: <code>+</code>, 2: <code>AND</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:322
+msgid "%1$s or %2$s signifies AND operation. eg.: modern +art, modern AND art"
+msgstr ""
+
+#. translators: 1: <code>|</code>, 2: <code>OR</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:334
+msgid "%1$s or %2$s signifies OR operation. eg.: modern | art, modern OR art"
+msgstr ""
+
+#. translators: 1: <code>-</code>, 2: <code>NOT</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:346
+msgid "%1$s or %2$s signifies NOT operation. eg.: modern -art, modern NOT art"
+msgstr ""
+
+#. translators: 1: <code>"</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:358
+msgid "%1$s wraps characters to signify a phrase. eg.: \"modern art\""
+msgstr ""
+
+#. translators: 1: <code>*</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:369
+msgid "%1$s signifies a prefix wildcard. eg.: art*"
+msgstr ""
+
+#. translators: 1: <code>()</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:380
+msgid "%1$s signifies precedence. eg.: (MoMA OR (modern AND art))"
+msgstr ""
+
+#. translators: 1: <code>~#</code>
+#: includes/classes/Feature/BooleanSearchOperators.php:391
+msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
 #: includes/classes/Feature/CoAuthorsPlus.php:34
