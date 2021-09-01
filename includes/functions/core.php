@@ -49,7 +49,7 @@ function i18n() {
  * @return void
  */
 function init() {
-	do_action( 'elasticpress_labs_init' );
+	do_action( 'ep_labs_init' );
 }
 
 /**
