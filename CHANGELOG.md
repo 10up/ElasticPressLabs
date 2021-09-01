@@ -6,11 +6,11 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [1.2.0] - 2021-09-01
 ### Added
-- Boolean Search Operators Feature. Props [@moraleida](https://github.com/moraleida) and [@Rahmon](https://github.com/Rahmon) via [#7](https://github.com/10up/ElasticPressLabs/pull/7).
+- Boolean Search Operators Feature. Props [@moraleida](https://github.com/moraleida), [@Rahmon](https://github.com/Rahmon), and [@felipeelia](https://github.com/felipeelia) via [#7](https://github.com/10up/ElasticPressLabs/pull/7).
 
 ## [1.1.0] - 2021-07-27
 ### Added
-- Integration with [Co-Authors Plus](https://wordpress.org/plugins/co-authors-plus/). Props [@dinhtungdu](https://github.com/dinhtungdu) and [@Rahmon](https://github.com/Rahmon) via [#4](https://github.com/10up/ElasticPressLabs/pull/4).
+- Integration with [Co-Authors Plus](https://wordpress.org/plugins/co-authors-plus/). Props [@dinhtungdu](https://github.com/dinhtungdu), [@Rahmon](https://github.com/Rahmon), and [@mbanusic](https://github.com/mbanusic) via [#4](https://github.com/10up/ElasticPressLabs/pull/4).
 
 ### [1.0.0] - 2021-02-09
 ### Added
