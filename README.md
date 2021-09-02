@@ -40,13 +40,17 @@ This plugin provides a simple interface to enable and disable features.
 5. Settings to change the version of the search algorithm between 3.4 and 3.5.
 ![](/.wordpress-org/screenshot-5.jpg)
 
-## Issues
-
-If you identify any errors or have an idea for improving the plugin, please [open an issue](https://github.com/10up/ElasticPressLabs/issues?state=open). We're excited to see what the community thinks of this project, and we would love your input!
-
 ## Support Level
 
 **Active:** 10up is actively working on this, and we expect to continue work for the foreseeable future including keeping tested up to the most recent version of WordPress.  Bug reports, feature requests, questions, and pull requests are welcome.
+
+## Changelog
+
+A complete listing of all notable changes to ElasticPress Labs are documented in [CHANGELOG.md](https://github.com/10up/elasticpresslabs/blob/develop/CHANGELOG.md).
+
+## Contributing
+
+Please read [CODE_OF_CONDUCT.md](https://github.com/10up/elasticpresslabs/blob/develop/CODE_OF_CONDUCT.md) for details on our code of conduct, [CONTRIBUTING.md](https://github.com/10up/elasticpresslabs/blob/develop/CONTRIBUTING.md) for details on the process for submitting pull requests to us, and [CREDITS.md](https://github.com/10up/elasticpresslabs/blob/develop/CREDITS.md) for a listing of maintainers of, contributors to, and libraries used by ElasticPress Labs.
 
 ## Like what you see?
 
