@@ -4,7 +4,7 @@ Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 3.7.1
 Tested up to:      5.8
 Stable tag:        1.2.0
-Requires PHP:      7.2
+Requires PHP:      5.4
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,14 @@ This plugin provides a developer-focused interface to commonly used filters with
 ElasticPress Labs acts as an ElasticPress feature and registers its methods through the [ElasticPress Feature API](http://10up.github.io/ElasticPress/tutorial-feature-api.html). In this way the features added to this plugin will be immediately available in the ElasticPress interface.
 
 This plugin provides a simple interface to enable and disable features.
+
+== Screenshots ==
+
+1. ElasticPress Labs options section within ElasticPress Features settings screen, showing with `Status: Enabled`.
+2. Settings to allow boolean search operators in search queries.
+3. Settings to add Co-Authors Plus plugin support.
+4. Settings to include or exclude meta key patterns.
+5. Settings to change the version of the search algorithm between 3.4 and 3.5.
 
 == Changelog ==
 
