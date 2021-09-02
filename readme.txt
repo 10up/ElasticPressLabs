@@ -18,6 +18,14 @@ ElasticPress Labs acts as an ElasticPress feature and registers its methods thro
 
 This plugin provides a simple interface to enable and disable features.
 
+== Screenshots ==
+
+1. ElasticPress Labs options section within ElasticPress Features settings screen, showing with `Status: Enabled`.
+2. Settings to allow boolean search operators in search queries.
+3. Settings to add Co-Authors Plus plugin support.
+4. Settings to include or exclude meta key patterns.
+5. Settings to change the version of the search algorithm between 3.4 and 3.5.
+
 == Changelog ==
 
 = 1.2.0 =
