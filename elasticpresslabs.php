@@ -5,7 +5,7 @@
  * Description:       A developer focused interface to commonly ElasticPress plugin issues.
  * Version:           1.2.0
  * Requires at least: 4.9
- * Requires PHP:      7.2
+ * Requires PHP:      5.4
  * Author:            10up
  * Author URI:        https://10up.com
  * License:           GPL v2 or later
