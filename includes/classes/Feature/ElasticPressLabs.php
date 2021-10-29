@@ -165,7 +165,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 
 		$features_dir = plugin_dir_path( __FILE__ );
 
-		$current_file = $features_dir . __FILE__;
+		$current_file = __FILE__;
 
 		$features_files = array_diff(
 			glob( "{$features_dir}*.php" ),
