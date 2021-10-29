@@ -163,9 +163,9 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 	private function register_subfeatures() {
 		$settings = $this->get_settings();
 
-		$current_file = $features_dir . __FILE__;
-
 		$features_dir = plugin_dir_path( __FILE__ );
+
+		$current_file = __FILE__;
 
 		$features_files = array_diff(
 			glob( "{$features_dir}*.php" ),
