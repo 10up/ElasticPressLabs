@@ -106,6 +106,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$id_field_enabled  = $slug . '_enabled';
 		$id_field_disabled = $slug . '_disabled';
 		$name_field        = $slug . '_subfeature';
+		$settings[ $name_field ] = ! empty( $settings[ $name_field ] );
 
 		?>
 		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">

@@ -427,7 +427,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	/**
 	 * Tell user whether requirements for feature are met or not.
 	 *
-	 * @return array $status Status array
+	 * @return object $status Status array
 	 * @since 2.4
 	 */
 	public function requirements_status() {
@@ -448,6 +448,8 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 			$status->message[] = sprintf( __( 'You will need to <a href="%1$s">run a sync</a> to update your index.', 'elasticpress-labs' ), esc_url( $url ) );
 
 			return $status;
+		} else {
+			return new ElasticPress\FeatureRequirementsStatus( 0 );
 		}
 	}
 
