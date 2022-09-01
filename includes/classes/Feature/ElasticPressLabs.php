@@ -108,16 +108,15 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$name_field        = $slug . '_subfeature';
 
 		?>
-		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+		<div class="field">
 			<div class="field-name status">
 				<?php echo esc_html( $label ); ?>
 			</div>
 			<div class="input-wrap">
 				<label for="<?php echo esc_attr( $id_field_enabled ); ?>">
 					<input
-						name="<?php echo esc_attr( $name_field ); ?>"
+						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_enabled ); ?>"
-						data-field-name="<?php echo esc_attr( $name_field ); ?>"
 						class="setting-field"
 						<?php checked( (bool) $settings[ $name_field ] ); ?>
 						type="radio"
@@ -127,9 +126,8 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 				<br>
 				<label for="<?php echo esc_attr( $id_field_disabled ); ?>">
 					<input
-						name="<?php echo esc_attr( $name_field ); ?>"
+						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_disabled ); ?>"
-						data-field-name="<?php echo esc_attr( $name_field ); ?>"
 						class="setting-field"
 						<?php checked( (bool) $settings[ $name_field ], false ); ?>
 						type="radio"
