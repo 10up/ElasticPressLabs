@@ -1,6 +1,14 @@
 name: Test
 
+env:
+  COMPOSER_VERSION: "2"
+  COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
+  NODE_VERSION: "16"
+  NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
+
 on:
+  schedule:
+    - cron:  '0 0 * * *'
   push:
     branches:
       - develop
@@ -15,7 +23,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Start MySQL
       run: sudo systemctl start mysql.service
@@ -27,12 +35,23 @@ jobs:
         sudo sysctl -w fs.file-max=262144
         sudo sysctl -w vm.max_map_count=262144
 
+    - name: Set standard 10up cache directories
+      run: |
+        composer config -g cache-dir "${{ env.COMPOSER_CACHE }}"
+
+    - name: Prepare composer cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.COMPOSER_CACHE }}
+        key: composer-${{ env.COMPOSER_VERSION }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          composer-${{ env.COMPOSER_VERSION }}-
+
     - name: Set PHP version
       uses: shivammathur/setup-php@v2
       with:
         php-version: '7.4'
         coverage: none
-        tools: composer:v1
 
     - name: Install dependencies
       run: composer install
@@ -41,6 +60,7 @@ jobs:
       run: |
         bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1
         sleep 10
+
     - name: PHPUnit
       run: |
         composer run-script test
