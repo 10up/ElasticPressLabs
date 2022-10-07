@@ -23,12 +23,18 @@
     "phpunit/phpunit": "^7",
     "10up/wp_mock": "dev-master",
     "10up/phpcs-composer": "dev-master",
-    "10up/elasticpress": "^3.5"
+    "10up/elasticpress": "*",
+    "yoast/phpunit-polyfills": "^1.0"
   },
   "scripts": {
     "lint": "phpcs .",
     "lint-fix": "phpcbf .",
     "test": "phpunit",
     "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password mysql trunk true"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
   }
 }
