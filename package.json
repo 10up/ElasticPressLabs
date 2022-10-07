@@ -21,23 +21,8 @@
     "lint-php": "composer run lint",
     "format-js": "10up-toolkit format-js assets/js",
     "lint": "npm run lint-css && npm run lint-js && npm run lint-php",
-    "format": "npm run format-js"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.css": [
-      "10up-toolkit lint-style"
-    ],
-    "*.js": [
-      "10up-toolkit lint-js"
-    ],
-    "*.php": [
-      "./vendor/bin/phpcs --extensions=php --warning-severity=8 -s"
-    ]
+    "format": "npm run format-js",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -45,7 +30,7 @@
   },
   "devDependencies": {
     "10up-toolkit": "^4.2.2",
-    "husky": "^8.0.0",
+    "husky": "^8.0.1",
     "lint-staged": "^13.0.0"
   },
   "engines": {
