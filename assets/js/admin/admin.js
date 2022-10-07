@@ -13,26 +13,6 @@ jQuery(document).ready(function elasticPressLabsFeature($) {
 	$('#feature_meta_key_allow_pattern_setting').val(removeWhitespace);
 	$('#feature_meta_key_deny_pattern_setting').val(removeWhitespace);
 
-	function getElasticPressLabsSettings() {
-		return $('[data-feature="elasticpress_labs"] input[value="1"]')
-			.map(function isChecked() {
-				return $(this).is(':checked');
-			})
-			.get();
-	}
-
-	const currentSettings = getElasticPressLabsSettings();
-
-	function reloadPageIfSettingsChange(event, xhr, settings) {
-		if (settings?.data?.includes('action=ep_save_feature&feature=elasticpress_labs')) {
-			const updatedSettings = getElasticPressLabsSettings();
-
-			if (JSON.stringify(currentSettings) !== JSON.stringify(updatedSettings)) {
-				window.location.reload();
-			}
-		}
-	}
-
 	function getMetaKeyPatternSettings() {
 		return {
 			allow_pattern: $('#feature_meta_key_allow_pattern_setting').val(),
@@ -127,7 +107,25 @@ jQuery(document).ready(function elasticPressLabsFeature($) {
 	}
 
 	$(document)
-		.ajaxSuccess(reloadPageIfSettingsChange)
 		.ajaxSuccess(afterSaveSettingsMetaKeyPatternFeature)
 		.ajaxSuccess(afterSaveSettingsSearchAlgorithmVersionFeature);
 });
+
+/**
+ * As ElasticPress does not have any method to intercept the feature save process,
+ * we change the window.fetch object to make the page refresh after the AJAX call.
+ */
+const featuresEl = document.querySelector('.ep-features');
+if (featuresEl) {
+	const originalFetch = window.fetch;
+	const newFetch = async (input, options) => {
+		const response = await originalFetch(input, options);
+		window.location.reload();
+		return response; // just to avoid a console error.
+	};
+	const onSubmit = (event) => {
+		const form = event.target;
+		window.fetch = form.feature.value === 'elasticpress_labs' ? newFetch : originalFetch;
+	};
+	featuresEl.addEventListener('submit', onSubmit, { capture: true });
+}
