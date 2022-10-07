@@ -4,8 +4,8 @@
  * Plugin URI:        https://github.com/10up/ElasticPressLabs
  * Description:       A developer focused interface to commonly ElasticPress plugin issues.
  * Version:           1.2.0
- * Requires at least: 3.7.1
- * Requires PHP:      5.4
+ * Requires at least: 5.6
+ * Requires PHP:      7.0
  * Author:            10up
  * Author URI:        https://10up.com
  * License:           GPL v2 or later
@@ -23,6 +23,8 @@ define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 
+define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.4.0' );
+
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
 
@@ -37,20 +39,3 @@ ElasticPressLabs\Core\setup();
 if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
 	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
 }
-
-/**
- * Load the ElasticPress Feature
- *
- * @return void
- */
-function load_my_elasticpress_feature() {
-	if ( class_exists( '\ElasticPress\Features' ) ) {
-		// Include your class file.
-		require ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
-		// Register your feature in ElasticPress.
-		\ElasticPress\Features::factory()->register_feature(
-			new ElasticPressLabs()
-		);
-	}
-}
-add_action( 'plugins_loaded', 'load_my_elasticpress_feature', 11 );
