@@ -56,9 +56,11 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( $settings['active'] && '3.5' !== $settings['feature_search_algorithm_version_setting'] ) {
-			add_filter( 'ep_search_algorithm_version', array( $this, 'get_search_algorithm_version' ) );
+		if ( empty( $settings['active'] ) ) {
+			return;
 		}
+
+		add_filter( 'ep_post_search_algorithm', [ $this, 'get_search_algorithm_version' ] );
 	}
 
 	/**
@@ -74,53 +76,45 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 		$settings = wp_parse_args( $settings, $this->default_settings );
 
 		?>
-		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+		<div class="field">
 			<div class="field-name status">
-				<label for="feature_my_feature_setting">
-					<?php esc_html_e( 'Version', 'elasticpress-labs' ); ?>
-				</label>
+				<?php esc_html_e( 'Version', 'elasticpress-labs' ); ?>
 			</div>
 
 			<div class="input-wrap">
-				<label for="input_version-3.5">
-					<input
-						name="feature_search_algorithm_version_setting"
-						id="input_version-3.5"
-						data-field-name="feature_search_algorithm_version_setting"
-						class="setting-field"
-						<?php checked( $settings['feature_search_algorithm_version_setting'], '3.5' ); ?>
-						type="radio"
-						value="3.5"
-					>3.5
-				</label>
-				<p class="field-description">
-					<?php esc_html_e( 'This version searches for the existence of all words in the search first, then returns results based on how closely those words appear.', 'elasticpress-labs' ); ?>
-				</p>
-				<br>
-				<label for="input_version-3.4">
-					<input
-						name="feature_search_algorithm_version_setting"
-						id="input_version-3.4"
-						data-field-name="feature_search_algorithm_version_setting"
-						class="setting-field"
-						<?php checked( $settings['feature_search_algorithm_version_setting'], '3.4' ); ?>
-						type="radio"
-						value="3.4">3.4
-				</label>
-				<p class="field-description">
-					<?php esc_html_e( 'This version uses a fuzzy match approach which includes results that have misspellings, and also includes matches on only some of the words in the search.', 'elasticpress-labs' ); ?>
-				</p>
+				<?php
+				$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
+				foreach ( $search_algorithms as $search_algorithm ) {
+					?>
+					<label>
+						<input
+							name="settings[search_algorithm_version]"
+							type="radio"
+							<?php checked( $settings['search_algorithm_version'], $search_algorithm->get_slug() ); ?>
+							value="<?php echo esc_attr( $search_algorithm->get_slug() ); ?>">
+						<?php echo esc_html( $search_algorithm->get_name() ); ?>
+					</label>
+					<p class="field-description">
+						<?php echo wp_kses_post( $search_algorithm->get_description() ); ?>
+					</p>
+					<br>
+					<?php
+				}
+				?>
 			</div>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Get the search algorithm version.
+	 * Set the search algorithm
+	 *
+	 * @param string $search_algorithm The search algorithm slug
+	 * @return string
 	 */
-	public function get_search_algorithm_version() {
+	public function get_search_algorithm_version( $search_algorithm ) {
 		$settings = $this->get_settings();
 
-		return $settings['feature_search_algorithm_version_setting'];
+		return $settings['search_algorithm_version'] ?? $search_algorithm;
 	}
 }
