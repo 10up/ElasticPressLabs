@@ -4,32 +4,32 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "25663329c5d720c4334b67f3873693b6",
+    "content-hash": "a9d601cf86da1bfd54c7cbb388cffc99",
     "packages": [],
     "packages-dev": [
         {
             "name": "10up/elasticpress",
-            "version": "3.6.2",
+            "version": "4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "b64d09291b17e1c58969424b8f167071bc7dbddb"
+                "reference": "e52164f2bc1fc749c0d7755ef2992c7b2f65ed4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/b64d09291b17e1c58969424b8f167071bc7dbddb",
-                "reference": "b64d09291b17e1c58969424b8f167071bc7dbddb",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/e52164f2bc1fc749c0d7755ef2992c7b2f65ed4d",
+                "reference": "e52164f2bc1fc749c0d7755ef2992c7b2f65ed4d",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.6"
+                "php": ">=7.0"
             },
             "require-dev": {
                 "10up/phpcs-composer": "dev-master",
-                "10up/wpacceptance": "dev-master",
                 "phpcompatibility/phpcompatibility-wp": "*",
                 "phpunit/phpunit": "^7",
-                "wpackagist-plugin/woocommerce": "*"
+                "wpackagist-plugin/woocommerce": "*",
+                "yoast/phpunit-polyfills": "1.x-dev"
             },
             "type": "wordpress-plugin",
             "extra": {
@@ -69,9 +69,9 @@
             ],
             "support": {
                 "issues": "https://github.com/10up/ElasticPress/issues",
-                "source": "https://github.com/10up/ElasticPress/tree/3.6.2"
+                "source": "https://github.com/10up/ElasticPress/tree/4.3.1"
             },
-            "time": "2021-08-26T17:25:32+00:00"
+            "time": "2022-09-27T17:03:44+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -2365,6 +2365,67 @@
                 "wiki": "https://github.com/WordPress/WordPress-Coding-Standards/wiki"
             },
             "time": "2020-05-13T23:57:56+00:00"
+        },
+        {
+            "name": "yoast/phpunit-polyfills",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Yoast/PHPUnit-Polyfills.git",
+                "reference": "5ea3536428944955f969bc764bbe09738e151ada"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Yoast/PHPUnit-Polyfills/zipball/5ea3536428944955f969bc764bbe09738e151ada",
+                "reference": "5ea3536428944955f969bc764bbe09738e151ada",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4",
+                "phpunit/phpunit": "^4.8.36 || ^5.7.21 || ^6.0 || ^7.0 || ^8.0 || ^9.0"
+            },
+            "require-dev": {
+                "yoast/yoastcs": "^2.2.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev",
+                    "dev-develop": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "phpunitpolyfills-autoload.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Team Yoast",
+                    "email": "support@yoast.com",
+                    "homepage": "https://yoast.com"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.com/Yoast/PHPUnit-Polyfills/graphs/contributors"
+                }
+            ],
+            "description": "Set of polyfills for changed PHPUnit functionality to allow for creating PHPUnit cross-version compatible tests",
+            "homepage": "https://github.com/Yoast/PHPUnit-Polyfills",
+            "keywords": [
+                "phpunit",
+                "polyfill",
+                "testing"
+            ],
+            "support": {
+                "issues": "https://github.com/Yoast/PHPUnit-Polyfills/issues",
+                "source": "https://github.com/Yoast/PHPUnit-Polyfills"
+            },
+            "time": "2021-11-23T01:37:03+00:00"
         }
     ],
     "aliases": [],
@@ -2379,5 +2440,5 @@
         "php": ">=7.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.3.0"
 }
