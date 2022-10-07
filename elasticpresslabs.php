@@ -23,7 +23,7 @@ define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 
-define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.4.0' );
+define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.3.0' );
 
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
