@@ -29,6 +29,8 @@ function setup() {
 	// Hook to allow async or defer on asset loading.
 	add_filter( 'script_loader_tag', $n( 'script_loader_tag' ), 10, 2 );
 
+	add_action( 'plugins_loaded', $n( 'maybe_load_features' ) );
+
 	do_action( 'elasticpress_labs_loaded' );
 }
 
@@ -218,4 +220,56 @@ function script_loader_tag( $tag, $handle ) {
 	}
 
 	return $tag;
+}
+
+/**
+ * Check if minimum ElasticPress requirements are met before loading the plugin feature.
+ */
+function maybe_load_features() {
+	if ( ! class_exists( '\ElasticPress\Features' ) ) {
+		add_action( 'admin_notices', __NAMESPACE__ . '\admin_notice_missing_ep' );
+		return;
+	}
+
+	if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, ELASTICPRESS_LABS_MIN_EP_VERSION, '<' ) ) {
+		add_action( 'admin_notices', __NAMESPACE__ . '\admin_notice_min_ep_version' );
+		return;
+	}
+
+	// Include your class file.
+	require ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
+	// Register your feature in ElasticPress.
+	\ElasticPress\Features::factory()->register_feature(
+		new \ElasticPressLabs()
+	);
+}
+
+/**
+ * Render an admin notice about the absence of the ElasticPress plugin.
+ */
+function admin_notice_missing_ep() {
+	?>
+	<div class="notice notice-error">
+		<p><?php esc_html_e( 'ElasticPress Labs needs ElasticPress to work.', 'elasticpress-labs' ); ?></p>
+	</div>
+	<?php
+}
+
+/**
+ * Render an admin notice about the absence of the minimum ElasticPress plugin version.
+ */
+function admin_notice_min_ep_version() {
+	?>
+	<div class="notice notice-error">
+		<p>
+			<?php
+			printf(
+				/* translators: Min. EP version */
+				esc_html__( 'ElasticPress Labs needs at least ElasticPress %s to work properly.', 'elasticpress-labs' ),
+				esc_html( ELASTICPRESS_LABS_MIN_EP_VERSION )
+			);
+			?>
+		</p>
+	</div>
+	<?php
 }
