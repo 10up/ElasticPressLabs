@@ -60,7 +60,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( ! $settings['active'] ) {
+		if ( empty( $settings['active'] ) ) {
 			return;
 		}
 
