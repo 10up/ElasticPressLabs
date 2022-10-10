@@ -17,7 +17,7 @@ on:
 
 jobs:
   es_css_lint:
-    name: ES and Style Lint
+    name: ES Lint
 
     runs-on: ubuntu-latest
 
@@ -44,9 +44,6 @@ jobs:
 
     - name: es lint
       run: npm run lint-js
-
-    - name: style lint
-      run: npm run lint-style
 
   phpcs:
     name: PHP Lint
