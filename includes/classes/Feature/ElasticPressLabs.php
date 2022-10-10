@@ -106,6 +106,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$id_field_enabled  = $slug . '_enabled';
 		$id_field_disabled = $slug . '_disabled';
 		$name_field        = $slug . '_subfeature';
+		$setting_checked   = ! empty( $settings[ $name_field ] );
 
 		?>
 		<div class="field">
@@ -118,7 +119,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_enabled ); ?>"
 						class="setting-field"
-						<?php checked( (bool) $settings[ $name_field ] ); ?>
+						<?php checked( $setting_checked ); ?>
 						type="radio"
 						value="1"
 					><?php esc_html_e( 'Register feature', 'elasticpress-labs' ); ?>
@@ -129,7 +130,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_disabled ); ?>"
 						class="setting-field"
-						<?php checked( (bool) $settings[ $name_field ], false ); ?>
+						<?php checked( ! $setting_checked ); ?>
 						type="radio"
 						value="0"
 					><?php esc_html_e( 'Unregister feature', 'elasticpress-labs' ); ?>
