@@ -1,21 +1,21 @@
-# Copyright (C) 2021 10up
+# Copyright (C) 2022 10up
 # This file is distributed under the same license as the ElasticPress Labs plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 1.2.0\n"
-"Report-Msgid-Bugs-To: https://github.com/10up/ElasticPressLabs\n"
+"Project-Id-Version: ElasticPress Labs 2.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpresslabs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2021-09-01T13:26:52+00:00\n"
+"POT-Creation-Date: 2022-10-10T18:00:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.4.0\n"
 "X-Domain: elasticpress-labs\n"
 
 #. Plugin Name of the plugin
-#: includes/classes/Feature/ElasticPressLabs.php:30
+#: includes/classes/Feature/ElasticPressLabs.php:37
 msgid "ElasticPress Labs"
 msgstr ""
 
@@ -35,143 +35,144 @@ msgstr ""
 msgid "https://10up.com"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:32
+#: includes/classes/Feature/BooleanSearchOperators.php:39
 msgid "Boolean Search Operators"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:295
+#: includes/classes/Feature/BooleanSearchOperators.php:303
 msgid "This feature requires the \"Post Search\" feature to be enabled"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:306
+#: includes/classes/Feature/BooleanSearchOperators.php:314
 msgid "Allow boolean operators in search queries"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:315
+#: includes/classes/Feature/BooleanSearchOperators.php:323
 msgid "Allows users to search using the following boolean operators:"
 msgstr ""
 
 #. translators: 1: <code>+</code>, 2: <code>AND</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:322
+#: includes/classes/Feature/BooleanSearchOperators.php:330
 msgid "%1$s or %2$s signifies AND operation. eg.: modern +art, modern AND art"
 msgstr ""
 
 #. translators: 1: <code>|</code>, 2: <code>OR</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:334
+#: includes/classes/Feature/BooleanSearchOperators.php:342
 msgid "%1$s or %2$s signifies OR operation. eg.: modern | art, modern OR art"
 msgstr ""
 
 #. translators: 1: <code>-</code>, 2: <code>NOT</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:346
+#: includes/classes/Feature/BooleanSearchOperators.php:354
 msgid "%1$s or %2$s signifies NOT operation. eg.: modern -art, modern NOT art"
 msgstr ""
 
 #. translators: 1: <code>"</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:358
+#: includes/classes/Feature/BooleanSearchOperators.php:366
 msgid "%1$s wraps characters to signify a phrase. eg.: \"modern art\""
 msgstr ""
 
 #. translators: 1: <code>*</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:369
+#: includes/classes/Feature/BooleanSearchOperators.php:377
 msgid "%1$s signifies a prefix wildcard. eg.: art*"
 msgstr ""
 
 #. translators: 1: <code>()</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:380
+#: includes/classes/Feature/BooleanSearchOperators.php:388
 msgid "%1$s signifies precedence. eg.: (MoMA OR (modern AND art))"
 msgstr ""
 
 #. translators: 1: <code>~#</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:391
+#: includes/classes/Feature/BooleanSearchOperators.php:399
 msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:34
+#: includes/classes/Feature/CoAuthorsPlus.php:41
 msgid "Co-Authors Plus"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:178
-msgid "Add support for Co-Authors Plus plugin."
+#: includes/classes/Feature/CoAuthorsPlus.php:187
+msgid "Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:189
-msgid "You need to active the Protected Content feature."
+#: includes/classes/Feature/CoAuthorsPlus.php:198
+msgid "If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:204
+#: includes/classes/Feature/CoAuthorsPlus.php:213
 msgid "You need to have Co-Authors Plus installed and activated."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:207
+#: includes/classes/Feature/CoAuthorsPlus.php:216
 msgid "You need to activate the Protected Content Feature to this feature work properly."
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:43
+#: includes/classes/Feature/ElasticPressLabs.php:50
 msgid "Enable or disable the ElastisPress Labs Features."
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:125
+#: includes/classes/Feature/ElasticPressLabs.php:132
 msgid "Register feature"
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:137
+#: includes/classes/Feature/ElasticPressLabs.php:143
 msgid "Unregister feature"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:27
+#: includes/classes/Feature/MetaKeyPattern.php:34
 msgid "Meta Key Pattern"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:43
+#: includes/classes/Feature/MetaKeyPattern.php:50
 msgid "Include or exclude meta key patterns."
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:92
+#: includes/classes/Feature/MetaKeyPattern.php:100
 msgid "Allow patterns"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:103
-#: includes/classes/Feature/MetaKeyPattern.php:123
+#: includes/classes/Feature/MetaKeyPattern.php:111
+#: includes/classes/Feature/MetaKeyPattern.php:131
 msgid "Separate multiple regular expressions with line breaks."
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:104
+#: includes/classes/Feature/MetaKeyPattern.php:112
 msgid "Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:112
+#: includes/classes/Feature/MetaKeyPattern.php:120
 msgid "Deny patterns"
 msgstr ""
 
+#. translators: Sync Page URL
 #: includes/classes/Feature/MetaKeyPattern.php:448
-#: includes/functions/core.php:146
-msgid "You will need to <a href=\"%1$s\">run a sync</a> to update your index."
+msgid "Changes in this feature will only be applied after you <a href=\"%1$s\">run a full sync</a>."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:24
+#: includes/classes/Feature/SearchAlgorithm.php:32
 msgid "Search Algorithm Version"
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:39
+#: includes/classes/Feature/SearchAlgorithm.php:47
 msgid "Change the version of the search algorithm."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:48
+#: includes/classes/Feature/SearchAlgorithm.php:56
 msgid "By default, the ElasticPress uses version 3.5 but you can change to version 3.4."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:80
+#: includes/classes/Feature/SearchAlgorithm.php:89
 msgid "Version"
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:97
-msgid "This version searches for the existence of all words in the search first, then returns results based on how closely those words appear."
+#: includes/classes/Feature/SearchAlgorithm.php:138
+msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:111
-msgid "This version uses a fuzzy match approach which includes results that have misspellings, and also includes matches on only some of the words in the search."
+#: includes/functions/core.php:217
+msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
-#: dist/js/admin.js:198
-msgid "This change will be reflected on the next page reload or expiration of any front-end caches."
+#. translators: Min. EP version
+#: includes/functions/core.php:232
+msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""
