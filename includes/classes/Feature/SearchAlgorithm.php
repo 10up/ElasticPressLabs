@@ -25,7 +25,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
-			'feature_search_algorithm_version_setting' => '3.5',
+			'search_algorithm_version' => '3.5',
 		];
 
 		parent::__construct();
