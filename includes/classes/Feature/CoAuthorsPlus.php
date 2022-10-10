@@ -50,12 +50,14 @@ class CoAuthorsPlus extends Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( $settings['active'] && $this->is_protected_content_feature_active ) {
-			add_filter( 'ep_sync_taxonomies', array( $this, 'include_author_term' ) );
+		if ( empty( $settings['active'] ) || ! $this->is_protected_content_feature_active ) {
+			return;
+		}
 
-			if ( is_admin() ) {
-				add_filter( 'ep_post_formatted_args', [ $this, 'include_author_in_es_query' ], 10, 3 );
-			}
+		add_filter( 'ep_sync_taxonomies', array( $this, 'include_author_term' ) );
+
+		if ( is_admin() ) {
+			add_filter( 'ep_post_formatted_args', [ $this, 'include_author_in_es_query' ], 10, 3 );
 		}
 	}
 
@@ -69,6 +71,8 @@ class CoAuthorsPlus extends Feature {
 	 * @return {array} New query
 	 */
 	public function include_author_in_es_query( $formatted_args, $args, $wp_query ) {
+		global $coauthors_plus;
+
 		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ! $wp_query->is_main_query() ) {
 			return $formatted_args;
 		}
@@ -78,8 +82,6 @@ class CoAuthorsPlus extends Feature {
 		if ( ! $author_name ) {
 			return $formatted_args;
 		}
-
-		global $coauthors_plus;
 
 		$coauthor = $coauthors_plus->get_coauthor_by( 'login', $author_name );
 
@@ -175,7 +177,7 @@ class CoAuthorsPlus extends Feature {
 	 */
 	public function output_feature_box_summary() {
 		?>
-		<p><?php esc_html_e( 'Add support for Co-Authors Plus plugin.', 'elasticpress-labs' ); ?></p>
+		<p><?php esc_html_e( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name.', 'elasticpress-labs' ); ?></p>
 		<?php
 	}
 
@@ -186,7 +188,7 @@ class CoAuthorsPlus extends Feature {
 	 */
 	public function output_feature_box_long() {
 		?>
-		<p><?php esc_html_e( 'You need to active the Protected Content feature.', 'elasticpress-labs' ); ?></p>
+		<p><?php echo wp_kses_post( __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) ); ?></p>
 		<?php
 	}
 
