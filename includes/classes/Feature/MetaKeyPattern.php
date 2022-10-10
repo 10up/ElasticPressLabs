@@ -19,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MetaKeyPattern extends \ElasticPress\Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Initialize feature settings.
 	 */
 	public function __construct() {
@@ -71,7 +78,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 			array( $this, 'update_weighting_configuration_for_search' )
 		);
 		add_action( 'update_postmeta', array( $this, 'delete_transient_on_meta_update' ), 10, 3 );
-		add_action( 'wp_ajax_epl_meta_key_pattern_after_save', array( $this, 'after_save_settings' ) );
+		add_action( 'ep_after_update_feature', array( $this, 'after_save_settings' ) );
 	}
 
 	/**
@@ -411,18 +418,14 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	/**
 	 * Do actions after save the settings
 	 *
-	 * @return void
+	 * @param string $slug Feature slug
 	 */
-	public function after_save_settings() {
-		if ( ! check_ajax_referer( 'epl_nonce', 'nonce', false ) ) {
-			wp_send_json_error();
-			exit;
+	public function after_save_settings( $slug ) {
+		if ( $slug !== $this->slug ) {
+			return;
 		}
 
 		delete_transient( 'custom_ep_distinct_post_meta' );
-		update_site_option( 'epl_last_save_meta_key_patterns', time() );
-
-		wp_send_json_success();
 	}
 
 	/**
@@ -432,26 +435,20 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	 * @since 2.4
 	 */
 	public function requirements_status() {
-		$last_save = get_site_option( 'epl_last_save_meta_key_patterns' );
-		$last_sync = get_site_option( 'ep_last_sync' );
-
 		$status = new ElasticPress\FeatureRequirementsStatus( 0 );
-		if ( ! isset( $_GET['do_sync'] ) && $last_save > $last_sync ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$status->message = [];
-			$status->code    = 1;
 
-			if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
-				$url = admin_url( 'network/admin.php?page=elasticpress&do_sync' );
-			} else {
-				$url = admin_url( 'admin.php?page=elasticpress&do_sync' );
-			}
-
-			$status->message[] = sprintf(
-				/* translators: Sync Page URL */
-				__( 'You will need to <a href="%1$s">run a sync</a> to update your index.', 'elasticpress-labs' ),
-				esc_url( $url )
-			);
+		if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
+			$url = admin_url( 'network/admin.php?page=elasticpress&do_sync' );
+		} else {
+			$url = admin_url( 'admin.php?page=elasticpress&do_sync' );
 		}
+
+		$status->message = sprintf(
+			/* translators: Sync Page URL */
+			__( 'Changes in this feature will only be applied after you <a href="%1$s">run a full sync</a>.', 'elasticpress-labs' ),
+			esc_url( $url )
+		);
+
 		return $status;
 	}
 

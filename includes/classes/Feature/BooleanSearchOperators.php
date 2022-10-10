@@ -24,6 +24,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BooleanSearchOperators extends Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Initialize feature setting it's config
 	 */
 	public function __construct() {

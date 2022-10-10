@@ -22,7 +22,6 @@ function setup() {
 	add_action( 'init', $n( 'i18n' ) );
 	add_action( 'init', $n( 'init' ) );
 	add_action( 'admin_enqueue_scripts', $n( 'admin_scripts' ) );
-	add_action( 'admin_enqueue_scripts', $n( 'admin_styles' ) );
 
 	// Editor styles. add_editor_style() doesn't work outside of a theme.
 	add_filter( 'mce_css', $n( 'mce_css' ) );
@@ -128,7 +127,6 @@ function style_url( $stylesheet, $context ) {
  * @return void
  */
 function admin_scripts() {
-
 	wp_enqueue_script(
 		'elasticpress_labs_admin',
 		script_url( 'admin', 'admin' ),
@@ -136,40 +134,6 @@ function admin_scripts() {
 		ELASTICPRESS_LABS_VERSION,
 		true
 	);
-
-	wp_set_script_translations( 'elasticpress_labs_admin', 'elasticpress-labs', plugin_basename( ELASTICPRESS_LABS_PATH ) . '/languages/' );
-
-	if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
-		$sync_url = admin_url( 'network/admin.php?page=elasticpress&do_sync' );
-	} else {
-		$sync_url = admin_url( 'admin.php?page=elasticpress&do_sync' );
-	}
-
-	$sync_notice = sprintf( __( 'You will need to <a href="%1$s">run a sync</a> to update your index.', 'elasticpress-labs' ), esc_url( $sync_url ) );
-
-	$data = [
-		'ajax_url'    => admin_url( 'admin-ajax.php' ),
-		'nonce'       => wp_create_nonce( 'epl_nonce' ),
-		'sync_notice' => $sync_notice,
-	];
-	wp_localize_script( 'elasticpress_labs_admin', 'epla', $data );
-
-}
-
-/**
- * Enqueue styles for admin.
- *
- * @return void
- */
-function admin_styles() {
-
-	wp_enqueue_style(
-		'elasticpress_labs_admin',
-		style_url( 'admin-style', 'admin' ),
-		[],
-		ELASTICPRESS_LABS_VERSION
-	);
-
 }
 
 /**

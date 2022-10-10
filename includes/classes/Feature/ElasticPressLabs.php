@@ -15,6 +15,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ElasticPressLabs extends \ElasticPress\Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Registered subfeatures
 	 *
 	 * @var array
