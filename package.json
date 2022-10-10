@@ -38,8 +38,7 @@
   },
   "10up-toolkit": {
     "entry": {
-      "admin": "./assets/js/admin/admin.js",
-      "admin-style": "./assets/css/admin/admin-style.css"
+      "admin": "./assets/js/admin/admin.js"
     },
     "wpDependencyExternals": false
   }
