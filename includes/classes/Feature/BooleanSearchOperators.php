@@ -68,7 +68,7 @@ class BooleanSearchOperators extends Feature {
 			return false;
 		}
 
-		add_filter( 'ep_elasticpress_enabled', [ $this, 'integrate_boolean_search_operators' ], 10, 2 );
+		add_filter( 'ep_elasticpress_enabled', [ $this, 'integrate_boolean_search_operators' ], 15, 2 );
 	}
 
 	/**
@@ -86,8 +86,7 @@ class BooleanSearchOperators extends Feature {
 			return false;
 		}
 
-		if ( true === $query->query_vars['ep_integrate'] &&
-			( $this->is_active() || true === $query->query_vars['ep_boolean_operators'] ) ) {
+		if ( $this->is_active() || true === $query->query_vars['ep_boolean_operators'] ) {
 
 			\add_filter( 'ep_post_formatted_args_query', [ $this, 'replace_query_if_boolean' ], 999, 4 );
 		}
