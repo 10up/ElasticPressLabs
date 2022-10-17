@@ -30,25 +30,14 @@ This plugin provides a simple interface to enable and disable features.
 
 = 2.0.0 - 2022-10-17 =
 
-**ElasticPress Labs 2.0 has new requirements:**
-
-* New minimum versions are:
-
-	||Min|Max|
-	|---|:---:|:---:|
-	|ElasticPress|4.3.0|latest|
-	|Elasticsearch|5.2|7.10|
-	|WordPress|5.6+|latest|
-	|PHP|7.0+|latest|
-
 __Added:__
 
 * Documentation updates. Props [@jeffpaul](https://github.com/jeffpaul).
 
 __Changed:__
 
-* Assets are now built using 10up Toolkit. Props [@felipeelia](https://github.com/felipeelia).
 * Minimum requirements to run the plugin: ES (5.2-7.10), PHP 7.0+, WP 5.6+, and EP 4.3.0+. Props [@felipeelia](https://github.com/felipeelia).
+* Assets are now built using 10up Toolkit. Props [@felipeelia](https://github.com/felipeelia).
 * Search algorithm selection now makes use of ElasticPress classes. Props [@felipeelia](https://github.com/felipeelia).
 * Small Refactor of BooleanSearchOperators and update of an ElasticPress filter usage. Props [@felipeelia](https://github.com/felipeelia).
 * Meta Key Pattern: settings fields renamed and HTML fix. Props [@felipeelia](https://github.com/felipeelia).

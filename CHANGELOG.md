@@ -6,23 +6,12 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [2.0.0] - 2022-10-17
 
-**ElasticPress Labs 2.0 has new requirements:**
-
-* New minimum versions are:
-
-	||Min|Max|
-	|---|:---:|:---:|
-	|ElasticPress|4.3.0|latest|
-	|Elasticsearch|5.2|7.10|
-	|WordPress|5.6+|latest|
-	|PHP|7.0+|latest|
-
 ### Added
 - Documentation updates. Props [@jeffpaul](https://github.com/jeffpaul) via [#10](https://github.com/10up/ElasticPressLabs/pull/10).
 
 ### Changed
-- Assets are now built using 10up Toolkit. Props [@felipeelia](https://github.com/felipeelia) via [#28](https://github.com/10up/ElasticPressLabs/pull/28).
 - Minimum requirements to run the plugin: ES (5.2-7.10), PHP 7.0+, WP 5.6+, and EP 4.3.0+. Props [@felipeelia](https://github.com/felipeelia) via [#29](https://github.com/10up/ElasticPressLabs/pull/29) and [#30](https://github.com/10up/ElasticPressLabs/pull/30).
+- Assets are now built using 10up Toolkit. Props [@felipeelia](https://github.com/felipeelia) via [#28](https://github.com/10up/ElasticPressLabs/pull/28).
 - Search algorithm selection now makes use of ElasticPress classes. Props [@felipeelia](https://github.com/felipeelia) via [#31](https://github.com/10up/ElasticPressLabs/pull/31).
 - Small Refactor of BooleanSearchOperators and update of an ElasticPress filter usage. Props [@felipeelia](https://github.com/felipeelia) via [#33](https://github.com/10up/ElasticPressLabs/pull/33).
 - Meta Key Pattern: settings fields renamed and HTML fix. Props [@felipeelia](https://github.com/felipeelia) via [#34](https://github.com/10up/ElasticPressLabs/pull/34).
