@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Co-authors Plus description and small refactor. Props [@felipeelia](https://github.com/felipeelia) via [#35](https://github.com/10up/ElasticPressLabs/pull/35).
 
 ### Fixed
+- Boolean Search not working. Props [@burhandodhy](https://github.com/burhandodhy) via [#41](https://github.com/10up/ElasticPressLabs/pull/41).
 - Undefined notice. Props [@oscarssanchez](https://github.com/oscarssanchez) via [#11](https://github.com/10up/ElasticPressLabs/pull/11).
 - Composer v2 compatibility and unit tests. Props [@felipeelia](https://github.com/felipeelia) via [#22](https://github.com/10up/ElasticPressLabs/pull/22).
 - Changes made in the main feature not being saved. Props [@felipeelia](https://github.com/felipeelia) via [#21](https://github.com/10up/ElasticPressLabs/pull/21).

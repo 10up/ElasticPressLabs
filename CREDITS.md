@@ -18,6 +18,7 @@ Thank you to all the people who have already contributed to this repository via 
 [Ricardo Moraleida (@moraleida)](https://github.com/moraleida),
 [Marko Banusic (@mbanusic)](https://github.com/mbanusic),
 [Oscar Sanchez S. (@oscarssanchez)](https://github.com/oscarssanchez),
+[Burhan Nasir (@burhandodhy)](https://github.com/burhandodhy),
 and
 [Felipe Elia (@felipeelia)](https://github.com/felipeelia).
 
