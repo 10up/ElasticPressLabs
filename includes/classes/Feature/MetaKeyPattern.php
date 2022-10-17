@@ -438,14 +438,14 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 		$status = new ElasticPress\FeatureRequirementsStatus( 0 );
 
 		if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
-			$url = admin_url( 'network/admin.php?page=elasticpress&do_sync' );
+			$url = admin_url( 'network/admin.php?page=elasticpress-sync' );
 		} else {
-			$url = admin_url( 'admin.php?page=elasticpress&do_sync' );
+			$url = admin_url( 'admin.php?page=elasticpress-sync' );
 		}
 
 		$status->message = sprintf(
 			/* translators: Sync Page URL */
-			__( 'Changes in this feature will only be applied after you <a href="%1$s">run a full sync</a>.', 'elasticpress-labs' ),
+			__( 'Changes in this feature will only be applied after you <a href="%1$s">delete all data and sync</a>.', 'elasticpress-labs' ),
 			esc_url( $url )
 		);
 
