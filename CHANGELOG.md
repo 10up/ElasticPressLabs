@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Fixed
 - Boolean Search not working. Props [@burhandodhy](https://github.com/burhandodhy) via [#41](https://github.com/10up/ElasticPressLabs/pull/41).
+- Link to Sync Page in the Meta Key Pattern subfeature. Props [@MARQAS](https://github.com/MARQAS) and [@felipeelia](https://github.com/felipeelia) via [#42](https://github.com/10up/ElasticPressLabs/pull/42).
 - Undefined notice. Props [@oscarssanchez](https://github.com/oscarssanchez) via [#11](https://github.com/10up/ElasticPressLabs/pull/11).
 - Composer v2 compatibility and unit tests. Props [@felipeelia](https://github.com/felipeelia) via [#22](https://github.com/10up/ElasticPressLabs/pull/22).
 - Changes made in the main feature not being saved. Props [@felipeelia](https://github.com/felipeelia) via [#21](https://github.com/10up/ElasticPressLabs/pull/21).

@@ -46,6 +46,7 @@ __Changed:__
 __Fixed:__
 
 * Boolean Search not working. Props [@burhandodhy](https://github.com/burhandodhy).
+* Link to Sync Page in the Meta Key Pattern subfeature. Props [@MARQAS](https://github.com/MARQAS) and [@felipeelia](https://github.com/felipeelia).
 * Undefined notice. Props [@oscarssanchez](https://github.com/oscarssanchez).
 * Composer v2 compatibility and unit tests. Props [@felipeelia](https://github.com/felipeelia).
 * Changes made in the main feature not being saved. Props [@felipeelia](https://github.com/felipeelia).
