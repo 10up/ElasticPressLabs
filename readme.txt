@@ -28,7 +28,18 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
-= 2.0.0 - 2022-10-XX =
+= 2.0.0 - 2022-10-17 =
+
+**ElasticPress Labs 2.0 has new requirements:**
+
+* New minimum versions are:
+
+	||Min|Max|
+	|---|:---:|:---:|
+	|ElasticPress|4.3.0|latest|
+	|Elasticsearch|5.2|7.10|
+	|WordPress|5.6+|latest|
+	|PHP|7.0+|latest|
 
 __Added:__
 

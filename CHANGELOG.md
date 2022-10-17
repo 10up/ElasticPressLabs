@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [Unreleased]
 
-## [2.0.0] - 2022-10-XX
+## [2.0.0] - 2022-10-17
+
+**ElasticPress Labs 2.0 has new requirements:**
+
+* New minimum versions are:
+
+	||Min|Max|
+	|---|:---:|:---:|
+	|ElasticPress|4.3.0|latest|
+	|Elasticsearch|5.2|7.10|
+	|WordPress|5.6+|latest|
+	|PHP|7.0+|latest|
 
 ### Added
 - Documentation updates. Props [@jeffpaul](https://github.com/jeffpaul) via [#10](https://github.com/10up/ElasticPressLabs/pull/10).
