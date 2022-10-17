@@ -15,6 +15,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ElasticPressLabs extends \ElasticPress\Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Registered subfeatures
 	 *
 	 * @var array
@@ -106,20 +113,20 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$id_field_enabled  = $slug . '_enabled';
 		$id_field_disabled = $slug . '_disabled';
 		$name_field        = $slug . '_subfeature';
+		$setting_checked   = ! empty( $settings[ $name_field ] );
 
 		?>
-		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+		<div class="field">
 			<div class="field-name status">
 				<?php echo esc_html( $label ); ?>
 			</div>
 			<div class="input-wrap">
 				<label for="<?php echo esc_attr( $id_field_enabled ); ?>">
 					<input
-						name="<?php echo esc_attr( $name_field ); ?>"
+						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_enabled ); ?>"
-						data-field-name="<?php echo esc_attr( $name_field ); ?>"
 						class="setting-field"
-						<?php checked( (bool) $settings[ $name_field ] ); ?>
+						<?php checked( $setting_checked ); ?>
 						type="radio"
 						value="1"
 					><?php esc_html_e( 'Register feature', 'elasticpress-labs' ); ?>
@@ -127,11 +134,10 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 				<br>
 				<label for="<?php echo esc_attr( $id_field_disabled ); ?>">
 					<input
-						name="<?php echo esc_attr( $name_field ); ?>"
+						name="settings[<?php echo esc_attr( $name_field ); ?>]"
 						id="<?php echo esc_attr( $id_field_disabled ); ?>"
-						data-field-name="<?php echo esc_attr( $name_field ); ?>"
 						class="setting-field"
-						<?php checked( (bool) $settings[ $name_field ], false ); ?>
+						<?php checked( ! $setting_checked ); ?>
 						type="radio"
 						value="0"
 					><?php esc_html_e( 'Unregister feature', 'elasticpress-labs' ); ?>
@@ -163,9 +169,9 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 	private function register_subfeatures() {
 		$settings = $this->get_settings();
 
-		$current_file = $features_dir . __FILE__;
-
 		$features_dir = plugin_dir_path( __FILE__ );
+
+		$current_file = __FILE__;
 
 		$features_files = array_diff(
 			glob( "{$features_dir}*.php" ),

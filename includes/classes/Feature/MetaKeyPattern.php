@@ -19,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MetaKeyPattern extends \ElasticPress\Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Initialize feature settings.
 	 */
 	public function __construct() {
@@ -28,8 +35,8 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
-			'feature_meta_key_allow_pattern_setting' => '',
-			'feature_meta_key_deny_pattern_setting'  => '',
+			'meta_key_allow_pattern' => '',
+			'meta_key_deny_pattern'  => '',
 		];
 
 		parent::__construct();
@@ -60,17 +67,18 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( $settings['active'] ) {
-			add_filter( 'ep_prepare_meta_data', array( $this, 'exclude_meta_key_patterns' ), 5, 2 );
-			add_filter( 'ep_prepare_meta_data', array( $this, 'include_meta_key_patterns' ), 10, 2 );
-			add_filter(
-				'ep_weighting_configuration_for_search',
-				array( $this, 'update_weighting_configuration_for_search' )
-			);
-			add_action( 'update_postmeta', array( $this, 'delete_transient_on_meta_update' ), 10, 3 );
-			add_action( 'wp_ajax_epl_meta_key_pattern_after_save', array( $this, 'after_save_settings' ) );
+		if ( empty( $settings['active'] ) ) {
+			return;
 		}
 
+		add_filter( 'ep_prepare_meta_data', array( $this, 'exclude_meta_key_patterns' ), 5, 2 );
+		add_filter( 'ep_prepare_meta_data', array( $this, 'include_meta_key_patterns' ), 10, 2 );
+		add_filter(
+			'ep_weighting_configuration_for_search',
+			array( $this, 'update_weighting_configuration_for_search' )
+		);
+		add_action( 'update_postmeta', array( $this, 'delete_transient_on_meta_update' ), 10, 3 );
+		add_action( 'ep_after_update_feature', array( $this, 'after_save_settings' ) );
 	}
 
 	/**
@@ -88,17 +96,17 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 		?>
 		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
 			<div class="field-name status">
-				<label for="feature_my_feature_setting">
+				<label for="meta_key_allow_pattern">
 					<?php esc_html_e( 'Allow patterns', 'elasticpress-labs' ); ?>
 				</label>
 			</div>
 			<div class="input-wrap">
 				<textarea
-					class="setting-field"
-					id="feature_meta_key_allow_pattern_setting"
+					class="setting-field large-text code"
+					id="meta_key_allow_pattern"
 					rows="4"
-					data-field-name="feature_meta_key_allow_pattern_setting"
-				><?php echo empty( $settings['feature_meta_key_allow_pattern_setting'] ) ? '' : esc_attr( $settings['feature_meta_key_allow_pattern_setting'] ); ?></textarea>
+					name="settings[meta_key_allow_pattern]"
+				><?php echo empty( $settings['meta_key_allow_pattern'] ) ? '' : esc_textarea( $settings['meta_key_allow_pattern'] ); ?></textarea>
 				<p class="field-description">
 					<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
 					<?php esc_html_e( 'Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5', 'elasticpress-labs' ); ?>
@@ -108,17 +116,17 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 
 		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
 			<div class="field-name status">
-				<label for="feature_my_feature_setting">
+				<label for="meta_key_deny_pattern">
 					<?php esc_html_e( 'Deny patterns', 'elasticpress-labs' ); ?>
 				</label>
 			</div>
 			<div class="input-wrap">
 				<textarea
-					class="setting-field"
-					id="feature_meta_key_deny_pattern_setting"
+					class="setting-field large-text code"
+					id="meta_key_deny_pattern"
 					rows="4"
-					data-field-name="feature_meta_key_deny_pattern_setting"
-				><?php echo empty( $settings['feature_meta_key_deny_pattern_setting'] ) ? '' : esc_attr( $settings['feature_meta_key_deny_pattern_setting'] ); ?></textarea>
+					name="settings[meta_key_deny_pattern]"
+				><?php echo empty( $settings['meta_key_deny_pattern'] ) ? '' : esc_textarea( $settings['meta_key_deny_pattern'] ); ?></textarea>
 				<p class="field-description">
 					<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
 				</p>
@@ -198,7 +206,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	private function get_allowed_meta_key_patterns() {
 		$settings = $this->get_settings();
 
-		$allowed_patterns = preg_split( "/\r\n|\n|\r/", $settings['feature_meta_key_allow_pattern_setting'] );
+		$allowed_patterns = preg_split( "/\r\n|\n|\r/", $settings['meta_key_allow_pattern'] );
 
 		$allowed_patterns = array_map(
 			function( $pattern ) {
@@ -241,7 +249,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	private function get_denied_meta_key_patterns() {
 		$settings = $this->get_settings();
 
-		$denied_patterns = preg_split( "/\r\n|\n|\r/", $settings['feature_meta_key_deny_pattern_setting'] );
+		$denied_patterns = preg_split( "/\r\n|\n|\r/", $settings['meta_key_deny_pattern'] );
 
 		return $denied_patterns;
 	}
@@ -343,7 +351,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	private function get_weight_pattern( $pattern ) {
 		$settings = $this->get_settings();
 
-		$save_patterns = preg_split( "/\r\n|\n|\r/", $settings['feature_meta_key_allow_pattern_setting'] );
+		$save_patterns = preg_split( "/\r\n|\n|\r/", $settings['meta_key_allow_pattern'] );
 
 		foreach ( $save_patterns as $save_pattern ) {
 			if ( $pattern === $save_pattern ) {
@@ -410,18 +418,14 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	/**
 	 * Do actions after save the settings
 	 *
-	 * @return void
+	 * @param string $slug Feature slug
 	 */
-	public function after_save_settings() {
-		if ( ! check_ajax_referer( 'epl_nonce', 'nonce', false ) ) {
-			wp_send_json_error();
-			exit;
+	public function after_save_settings( $slug ) {
+		if ( $slug !== $this->slug ) {
+			return;
 		}
 
 		delete_transient( 'custom_ep_distinct_post_meta' );
-		update_site_option( 'epl_last_save_meta_key_patterns', time() );
-
-		wp_send_json_success();
 	}
 
 	/**
@@ -431,24 +435,21 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	 * @since 2.4
 	 */
 	public function requirements_status() {
-		$last_save = get_site_option( 'epl_last_save_meta_key_patterns' );
-		$last_sync = get_site_option( 'ep_last_sync' );
+		$status = new ElasticPress\FeatureRequirementsStatus( 0 );
 
-		if ( ! isset( $_GET['do_sync'] ) && $last_save > $last_sync ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$status = new ElasticPress\FeatureRequirementsStatus( 1 );
-
-			$status->message = [];
-
-			if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
-				$url = admin_url( 'network/admin.php?page=elasticpress&do_sync' );
-			} else {
-				$url = admin_url( 'admin.php?page=elasticpress&do_sync' );
-			}
-
-			$status->message[] = sprintf( __( 'You will need to <a href="%1$s">run a sync</a> to update your index.', 'elasticpress-labs' ), esc_url( $url ) );
-
-			return $status;
+		if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
+			$url = admin_url( 'network/admin.php?page=elasticpress-sync' );
+		} else {
+			$url = admin_url( 'admin.php?page=elasticpress-sync' );
 		}
+
+		$status->message = sprintf(
+			/* translators: Sync Page URL */
+			__( 'Changes in this feature will only be applied after you <a href="%1$s">delete all data and sync</a>.', 'elasticpress-labs' ),
+			esc_url( $url )
+		);
+
+		return $status;
 	}
 
 }

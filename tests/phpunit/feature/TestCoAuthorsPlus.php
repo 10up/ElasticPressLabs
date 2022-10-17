@@ -74,7 +74,7 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_summary();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Add support for Co-Authors Plus plugin.', $output );
+		$this->assertContains( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name', $output );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_long();
         $output = ob_get_clean();
 
-		$this->assertContains( 'You need to active the Protected Content feature.', $output );
+		$this->assertContains( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
 	}
 
 	/**

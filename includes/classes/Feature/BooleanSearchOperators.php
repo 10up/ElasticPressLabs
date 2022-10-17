@@ -24,6 +24,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BooleanSearchOperators extends Feature {
 
 	/**
+	 * Order of the feature in ElasticPress's Dashboard.
+	 *
+	 * @var integer
+	 */
+	public $order = 10;
+
+	/**
 	 * Initialize feature setting it's config
 	 */
 	public function __construct() {
@@ -45,21 +52,23 @@ class BooleanSearchOperators extends Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( $settings['active'] ) {
-			/** Features Class @var Features $features */
-			$features = Features::factory();
-
-			/** Search Feature @var Feature\Search\Search $search */
-			$search = $features->get_registered_feature( 'search' );
-
-			if ( ! $search->is_active() && $this->is_active() ) {
-				$features->deactivate_feature( $this->slug );
-
-				return false;
-			}
-
-			add_filter( 'ep_elasticpress_enabled', [ $this, 'integrate_boolean_search_operators' ], 10, 2 );
+		if ( empty( $settings['active'] ) ) {
+			return false;
 		}
+
+		/** Features Class @var Features $features */
+		$features = Features::factory();
+
+		/** Search Feature @var Feature\Search\Search $search */
+		$search = $features->get_registered_feature( 'search' );
+
+		if ( ! $search->is_active() && $this->is_active() ) {
+			$features->deactivate_feature( $this->slug );
+
+			return false;
+		}
+
+		add_filter( 'ep_elasticpress_enabled', [ $this, 'integrate_boolean_search_operators' ], 15, 2 );
 	}
 
 	/**
@@ -77,10 +86,9 @@ class BooleanSearchOperators extends Feature {
 			return false;
 		}
 
-		if ( true === $query->query_vars['ep_integrate'] &&
-			( $this->is_active() || true === $query->query_vars['ep_boolean_operators'] ) ) {
+		if ( $this->is_active() || true === $query->query_vars['ep_boolean_operators'] ) {
 
-			\add_filter( 'ep_formatted_args_query', [ $this, 'replace_query_if_boolean' ], 999, 4 );
+			\add_filter( 'ep_post_formatted_args_query', [ $this, 'replace_query_if_boolean' ], 999, 4 );
 		}
 
 		return true;
@@ -89,7 +97,7 @@ class BooleanSearchOperators extends Feature {
 	/**
 	 * Check if a search query uses boolean operators and switch queries accordingly
 	 *
-	 * @hook  ep_formatted_args_query
+	 * @hook  ep_post_formatted_args_query
 	 *
 	 * @param {array}  $query         Current query
 	 * @param {array}  $query_vars    Query variables
@@ -100,140 +108,139 @@ class BooleanSearchOperators extends Feature {
 	 */
 	public function replace_query_if_boolean( $query, $query_vars, $search_text, $search_fields ) {
 
-		if ( $this->query_uses_boolean_operators( $search_text ) ) {
+		if ( ! $this->query_uses_boolean_operators( $search_text ) ) {
+			return $query;
+		}
 
-			$simple_query = array(
-				'simple_query_string' => array(
-					/**
-					 * Filter the fields to use in boolean operator searches
-					 *
-					 * @hook   ep_labs_boolean_operators_fields
-					 * @since  1.2.0
-					 *
-					 * @param  {array} $search_fields
-					 * @param  {array}  $query_vars    Query variables
-					 * @param  {string} $search_text   Search text modified to replace tokens
-					 * @param  {array}  $search_fields Search fields
-					 * @param  {array}  $query         The original query
-					 *
-					 * @return {array} New fields
-					 */
-					'fields'           => \apply_filters( 'ep_labs_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
-
-					/**
-					 * Filter the default boolean operator
-					 * Valid values: OR, AND
-					 *
-					 * @hook   ep_labs_boolean_operators_default
-					 * @since  1.2.0
-					 *
-					 * @param  {string} $default
-					 * @param  {array}  $query_vars    Query variables
-					 * @param  {string} $search_text   Search text modified to replace tokens
-					 * @param  {array}  $search_fields Search fields
-					 * @param  {array}  $query         The original query
-					 *
-					 * @return {string} New operator
-					 */
-					'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
-
-					/**
-					 * Filter allowed boolean operators.
-					 * Valid flags: ALL, AND, ESCAPE, FUZZY, NEAR, NONE, NOT, OR, PHRASE, PRECEDENCE, PREFIX, SLOP, WHITESPACE
-					 * Must return a string with a single flag or use pipe separators, e.g.: 'OR|AND|PREFIX'
-					 *
-					 * @hook    ep_labs_boolean_operators_flags
-					 * @since   1.2.0
-					 *
-					 * @param  {string} $flags
-					 * @param  {array}  $query_vars    Query variables
-					 * @param  {string} $search_text   Search text modified to replace tokens
-					 * @param  {array}  $search_fields Search fields
-					 * @param  {array}  $query         The original query
-					 *
-					 * @return {string} New flags
-					 */
-					'flags'            => \apply_filters( 'ep_labs_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
-				),
-			);
-
-			if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '6.0', '>=' ) ) {
+		$simple_query = array(
+			'simple_query_string' => array(
 				/**
-				 * Filter automatic synonym generation for boolean operators queries
+				 * Filter the fields to use in boolean operator searches
 				 *
-				 * @hook    ep_labs_boolean_operators_generate_synonyms
-				 * @since   1.2.0
+				 * @hook   ep_labs_boolean_operators_fields
+				 * @since  1.2.0
 				 *
-				 * @param  {bool} $auto_generate_synonyms
+				 * @param  {array} $search_fields
 				 * @param  {array}  $query_vars    Query variables
 				 * @param  {string} $search_text   Search text modified to replace tokens
 				 * @param  {array}  $search_fields Search fields
 				 * @param  {array}  $query         The original query
 				 *
-				 * @return {bool} New fuzziness
+				 * @return {array} New fields
 				 */
-				$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_labs_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
-			}
+				'fields'           => \apply_filters( 'ep_labs_boolean_operators_fields', $search_fields, $query_vars, $search_text, $query ),
 
-			$original_text = $search_text;
+				/**
+				 * Filter the default boolean operator
+				 * Valid values: OR, AND
+				 *
+				 * @hook   ep_labs_boolean_operators_default
+				 * @since  1.2.0
+				 *
+				 * @param  {string} $default
+				 * @param  {array}  $query_vars    Query variables
+				 * @param  {string} $search_text   Search text modified to replace tokens
+				 * @param  {array}  $search_fields Search fields
+				 * @param  {array}  $query         The original query
+				 *
+				 * @return {string} New operator
+				 */
+				'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
 
-			if ( 'ALL' === $simple_query['simple_query_string']['flags'] ) {
-				$search_text = \str_replace( array( ' AND ', ' OR ', ' NOT ' ), array( ' +', ' | ', ' -' ), $search_text );
-			} else {
-				$flags = explode( '|', $simple_query['simple_query_string']['flags'] );
-				$ops   = array( 'AND', 'OR', 'NOT' );
+				/**
+				 * Filter allowed boolean operators.
+				 * Valid flags: ALL, AND, ESCAPE, FUZZY, NEAR, NONE, NOT, OR, PHRASE, PRECEDENCE, PREFIX, SLOP, WHITESPACE
+				 * Must return a string with a single flag or use pipe separators, e.g.: 'OR|AND|PREFIX'
+				 *
+				 * @hook    ep_labs_boolean_operators_flags
+				 * @since   1.2.0
+				 *
+				 * @param  {string} $flags
+				 * @param  {array}  $query_vars    Query variables
+				 * @param  {string} $search_text   Search text modified to replace tokens
+				 * @param  {array}  $search_fields Search fields
+				 * @param  {array}  $query         The original query
+				 *
+				 * @return {string} New flags
+				 */
+				'flags'            => \apply_filters( 'ep_labs_boolean_operators_flags', 'ALL', $query_vars, $search_text, $search_fields, $query ),
+			),
+		);
 
-				foreach ( $ops as $flag ) {
-					if ( \in_array( $flag, $flags, true ) ) {
-						switch ( $flag ) {
-							case 'AND':
-								$search_text = \str_replace( " $flag ", ' +', $search_text );
-								break;
-							case 'OR':
-								$search_text = \str_replace( " $flag ", ' | ', $search_text );
-								break;
-							case 'NOT':
-								$search_text = \str_replace( " $flag ", ' -', $search_text );
-								break;
-						}
+		if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '6.0', '>=' ) ) {
+			/**
+			 * Filter automatic synonym generation for boolean operators queries
+			 *
+			 * @hook    ep_labs_boolean_operators_generate_synonyms
+			 * @since   1.2.0
+			 *
+			 * @param  {bool} $auto_generate_synonyms
+			 * @param  {array}  $query_vars    Query variables
+			 * @param  {string} $search_text   Search text modified to replace tokens
+			 * @param  {array}  $search_fields Search fields
+			 * @param  {array}  $query         The original query
+			 *
+			 * @return {bool} New fuzziness
+			 */
+			$simple_query['simple_query_string']['auto_generate_synonyms_phrase_query'] = \apply_filters( 'ep_labs_boolean_operators_generate_synonyms', true, $query_vars, $search_text, $search_fields, $query );
+		}
+
+		$original_text = $search_text;
+
+		if ( 'ALL' === $simple_query['simple_query_string']['flags'] ) {
+			$search_text = \str_replace( array( ' AND ', ' OR ', ' NOT ' ), array( ' +', ' | ', ' -' ), $search_text );
+		} else {
+			$flags = explode( '|', $simple_query['simple_query_string']['flags'] );
+			$ops   = array( 'AND', 'OR', 'NOT' );
+
+			foreach ( $ops as $flag ) {
+				if ( \in_array( $flag, $flags, true ) ) {
+					switch ( $flag ) {
+						case 'AND':
+							$search_text = \str_replace( " $flag ", ' +', $search_text );
+							break;
+						case 'OR':
+							$search_text = \str_replace( " $flag ", ' | ', $search_text );
+							break;
+						case 'NOT':
+							$search_text = \str_replace( " $flag ", ' -', $search_text );
+							break;
 					}
 				}
 			}
-
-			/**
-			 * Filter the search text to use in boolean operator queries
-			 *
-			 * @hook   ep_labs_boolean_operators_search_text
-			 * @since  1.2.0
-			 *
-			 * @param  {string} $search_text   Search text modified to replace tokens
-			 * @param  {string} $original_text The original search text
-			 * @param  {array}  $query_vars    Query variables
-			 * @param  {array}  $search_fields Search fields
-			 * @param  {array}  $query         The original query
-			 *
-			 * @return {string} New search text
-			 */
-			$simple_query['simple_query_string']['query'] = \apply_filters( 'ep_labs_boolean_operators_search_text', $search_text, $original_text, $query_vars, $search_fields, $query );
-
-			/**
-			 * Filter formatted Elasticsearch simple query string query (only contains query part)
-			 *
-			 * @hook   ep_boolean_operators_query_args
-			 * @since  1.2.0
-			 *
-			 * @param  {array}  $simple_query  Current query
-			 * @param  {array}  $query_vars    Query variables
-			 * @param  {string} $search_text   Search text modified to replace tokens
-			 * @param  {array}  $search_fields Search fields
-			 * @param  {array}  $query         The original query
-			 *
-			 * @return {array} New query
-			 */
-			return \apply_filters( 'ep_labs_boolean_operators_query_args', $simple_query, $query_vars, $search_text, $search_fields, $query );
 		}
 
-		return $query;
+		/**
+		 * Filter the search text to use in boolean operator queries
+		 *
+		 * @hook   ep_labs_boolean_operators_search_text
+		 * @since  1.2.0
+		 *
+		 * @param  {string} $search_text   Search text modified to replace tokens
+		 * @param  {string} $original_text The original search text
+		 * @param  {array}  $query_vars    Query variables
+		 * @param  {array}  $search_fields Search fields
+		 * @param  {array}  $query         The original query
+		 *
+		 * @return {string} New search text
+		 */
+		$simple_query['simple_query_string']['query'] = \apply_filters( 'ep_labs_boolean_operators_search_text', $search_text, $original_text, $query_vars, $search_fields, $query );
+
+		/**
+		 * Filter formatted Elasticsearch simple query string query (only contains query part)
+		 *
+		 * @hook   ep_labs_boolean_operators_query_args
+		 * @since  1.2.0
+		 *
+		 * @param  {array}  $simple_query  Current query
+		 * @param  {array}  $query_vars    Query variables
+		 * @param  {string} $search_text   Search text modified to replace tokens
+		 * @param  {array}  $search_fields Search fields
+		 * @param  {array}  $query         The original query
+		 *
+		 * @return {array} New query
+		 */
+		return \apply_filters( 'ep_labs_boolean_operators_query_args', $simple_query, $query_vars, $search_text, $search_fields, $query );
 	}
 
 	/**
