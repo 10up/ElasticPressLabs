@@ -172,7 +172,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$features_dir = plugin_dir_path( __FILE__ );
 
 		foreach ( glob( "{$features_dir}*.php" ) as $filename ) {
-			if ( realpath($filename) === __FILE__ ) {
+			if ( realpath( $filename ) === __FILE__ ) {
 				continue;
 			}
 
