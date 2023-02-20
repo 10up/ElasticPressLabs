@@ -21,7 +21,7 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 	 *
 	 * @since  1.2.0
 	 */
-	public function setUp() {
+	public function set_up() {
 		$instance = new ElasticPressLabs\Feature\BooleanSearchOperators();
 		\ElasticPress\Features::factory()->register_feature($instance);
 	}
@@ -58,7 +58,7 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_summary();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Allow boolean operators in search queries', $output );
+		$this->assertStringContainsString( 'Allow boolean operators in search queries', $output );
 	}
 
 	/**
@@ -71,7 +71,7 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_long();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Allows users to search using the following boolean operators:', $output );
+		$this->assertStringContainsString( 'Allows users to search using the following boolean operators:', $output );
 	}
 
 	/**
