@@ -12,7 +12,7 @@
     }
   ],
   "require": {
-    "php": ">=7.0"
+    "php": "^7.0|^8.0"
   },
   "autoload": {
     "psr-4": {
@@ -20,8 +20,8 @@
     }
   },
   "require-dev": {
-    "phpunit/phpunit": "^7",
-    "10up/wp_mock": "dev-master",
+    "phpunit/phpunit": "^9",
+    "10up/wp_mock": "dev-trunk",
     "10up/phpcs-composer": "dev-master",
     "10up/elasticpress": "*",
     "yoast/phpunit-polyfills": "^1.0"
