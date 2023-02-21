@@ -15,3 +15,5 @@ if ( ! $_tests_dir ) {
 
 require_once $_tests_dir . '/includes/functions.php';
 require_once $_tests_dir . '/includes/bootstrap.php';
+require_once __DIR__ . '/phpunit/BaseTestCase.php';
+require_once __DIR__ . '/phpunit/factory/UserFactory.php';
