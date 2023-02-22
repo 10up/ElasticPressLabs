@@ -28,6 +28,8 @@ class TestUser extends BaseTestCase {
 		parent::set_up();
 		$wpdb->suppress_errors();
 
+		\ElasticPress\register_indexable_posts();
+
 		$instance = new \ElasticPressLabs\Feature\Users();
 		ElasticPress\Features::factory()->register_feature( $instance );
 
