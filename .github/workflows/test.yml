@@ -36,6 +36,11 @@ jobs:
         sudo sysctl -w fs.file-max=262144
         sudo sysctl -w vm.max_map_count=262144
 
+    - name: Setup Elasticsearch
+      uses: getong/elasticsearch-action@v1.2
+      with:
+        elasticsearch version: '7.5.0'
+
     - name: Set standard 10up cache directories
       run: |
         composer config -g cache-dir "${{ env.COMPOSER_CACHE }}"

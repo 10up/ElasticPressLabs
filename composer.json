@@ -23,14 +23,14 @@
     "phpunit/phpunit": "^9",
     "10up/wp_mock": "dev-trunk",
     "10up/phpcs-composer": "dev-master",
-    "10up/elasticpress": "*",
+    "10up/elasticpress": "dev-develop",
     "yoast/phpunit-polyfills": "^1.0"
   },
   "scripts": {
     "lint": "phpcs .",
     "lint-fix": "phpcbf .",
     "test": "phpunit",
-    "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password mysql trunk true"
+    "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true"
   },
   "config": {
     "allow-plugins": {
