@@ -22,7 +22,7 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 	 *
 	 * @since 3.5
 	 */
-	public function setUp() {
+	public function set_up() {
 		$instance = new ElasticPressLabs\Feature\MetaKeyPattern();
 		\ElasticPress\Features::factory()->register_feature($instance);
 	}
@@ -51,7 +51,7 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_summary();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Include or exclude meta key patterns.', $output );
+		$this->assertStringContainsString( 'Include or exclude meta key patterns.', $output );
 	}
 
 	public function testBoxLong() {
@@ -59,7 +59,7 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_long();
         $output = ob_get_clean();
 
-		$this->assertContains( 'This feature will give you the most control over the metadata indexed.', $output );
+		$this->assertStringContainsString( 'This feature will give you the most control over the metadata indexed.', $output );
 	}
 
 	public function testOutputFeatureBoxSettings() {
@@ -67,8 +67,8 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_settings();
 		$output = ob_get_clean();
 
-		$this->assertContains( 'Allow patterns', $output );
-		$this->assertContains( 'Deny patterns', $output );
+		$this->assertStringContainsString( 'Allow patterns', $output );
+		$this->assertStringContainsString( 'Deny patterns', $output );
 	}
 
 	public function testIsMatch() {

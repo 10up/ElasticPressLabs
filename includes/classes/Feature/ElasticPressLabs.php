@@ -176,7 +176,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 				continue;
 			}
 
-			require ELASTICPRESS_LABS_INC . 'classes/Feature/' . basename( $filename );
+			require_once ELASTICPRESS_LABS_INC . 'classes/Feature/' . basename( $filename );
 
 			$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
 
