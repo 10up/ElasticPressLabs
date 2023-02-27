@@ -45,6 +45,7 @@ function load_plugin() {
 		$host = 'http://127.0.0.1:9200';
 	}
 
+	include_once __DIR__ . '/../vendor/elasticpress/elasticpress.php';
 	include_once __DIR__ . '/../vendor/woocommerce/woocommerce.php';
 
 	update_option( 'ep_host', $host );
