@@ -21,7 +21,7 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	 *
 	 * @since  1.1.0
 	 */
-	public function setUp() {
+	public function set_up() {
 		$instance = new ElasticPressLabs\Feature\CoAuthorsPlus();
 		\ElasticPress\Features::factory()->register_feature($instance);
 	}
@@ -74,7 +74,7 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_summary();
         $output = ob_get_clean();
 
-		$this->assertContains( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name', $output );
+		$this->assertStringContainsString( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name', $output );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 		$this->get_feature()->output_feature_box_long();
         $output = ob_get_clean();
 
-		$this->assertContains( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
+		$this->assertStringContainsString( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
 	}
 
 	/**
