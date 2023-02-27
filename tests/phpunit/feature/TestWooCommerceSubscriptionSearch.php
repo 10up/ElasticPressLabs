@@ -2,6 +2,7 @@
 /**
  * Test subscription search feature
  *
+ * @since 2.1.0
  * @package ElasticPressLabs
  */
 
@@ -10,22 +11,19 @@ namespace ElasticPressLabsTest;
 require __DIR__ . '/../../../vendor/10up/elasticpress/elasticpress.php';
 
 use ElasticPressLabs;
-use WP_Mock\Tools\TestCase as BaseTestCase;
 
 /**
  * Subscription Search test class
  *
  * @since  2.0.0
  */
-class TestSubscriptionSearch extends \WP_UnitTestCase {
+class TestWooCommerceSubscriptionSearch extends \WP_UnitTestCase {
 	/**
 	 * Setup each test.
-	 *
-	 * @since  2.0.0
 	 */
 	public function setUp() {
-		$instance = new ElasticPressLabs\Feature\SubscriptionSearch();
-		\ElasticPress\Features::factory()->register_feature($instance);
+		$instance = new ElasticPressLabs\Feature\WooCommerceSubscriptionSearch();
+		\ElasticPress\Features::factory()->register_feature( $instance );
 		\ElasticPress\Features::factory()->activate_feature( 'protected_content' );
 		\ElasticPress\Features::factory()->activate_feature( 'woocommerce' );
 		\ElasticPress\Features::factory()->setup_features();
@@ -34,7 +32,6 @@ class TestSubscriptionSearch extends \WP_UnitTestCase {
 	/**
 	 * Get Subscription Search feature
 	 *
-	 * @since  2.0.0
 	 * @return BooleanSearchOperators
 	 */
 	protected function get_feature() {
@@ -44,7 +41,6 @@ class TestSubscriptionSearch extends \WP_UnitTestCase {
 	/**
 	 * Test search integration is on for shop subscriptions
 	 *
-	 * @since 2.0.0
 	 * @group woocommerce
 	 */
 	public function testSearchOnShopSubscriptionAdmin() {

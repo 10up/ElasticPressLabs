@@ -2,6 +2,7 @@
 /**
  * WooCommerce Subscription Search Feature
  *
+ * @since 2.1.0
  * @package ElasticPressLabs
  */
 
@@ -12,9 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * SubscriptionSearch class.
+ * WooCommerceSubscriptionSearch class.
  */
-class SubscriptionSearch extends \ElasticPress\Feature {
+class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 
 	/**
 	 * Order of the feature in ElasticPress's Dashboard.
@@ -31,7 +32,7 @@ class SubscriptionSearch extends \ElasticPress\Feature {
 
 		$this->title = esc_html__( 'WooCommerce Admin Subscription Search', 'elasticpress-labs' );
 
-		$this->requires_install_reindex = false;
+		$this->requires_install_reindex = true;
 
 		parent::__construct();
 	}
@@ -128,12 +129,18 @@ class SubscriptionSearch extends \ElasticPress\Feature {
 	 * Tell user whether requirements for feature are met or not.
 	 *
 	 * @return array $status Status array
-	 * @since 2.0
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 0 );
+		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
 
-		$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
+		$woocommerce_feature       = \ElasticPress\Features::factory()->get_registered_feature( 'woocommerce' );
+		$protected_content_feature = \ElasticPress\Features::factory()->get_registered_feature( 'protected_content' );
+		if ( ! $woocommerce_feature->is_active() || ! $protected_content_feature->is_active() ) {
+			$status->code    = 2;
+			$status->message = esc_html__( 'This feature requires the WooCommerce and Protected Content features to be enabled.', 'elasticpress-labs' ); 
+		} else {
+			$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
+		}
 
 		return $status;
 	}
