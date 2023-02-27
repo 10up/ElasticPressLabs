@@ -45,6 +45,8 @@ function load_plugin() {
 		$host = 'http://127.0.0.1:9200';
 	}
 
+	include_once __DIR__ . '/../vendor/woocommerce/woocommerce.php';
+
 	update_option( 'ep_host', $host );
 	update_site_option( 'ep_host', $host );
 
@@ -69,6 +71,29 @@ function load_plugin() {
 	}
 }
 tests_add_filter( 'muplugins_loaded', __NAMESPACE__ . '\load_plugin' );
+
+/**
+ * Setup WooCommerce for tests
+ *
+ * @since 2.1.0
+ */
+function setup_wc() {
+	if ( ! class_exists( '\WC_Install' ) ) {
+		return;
+	}
+
+	define( 'WP_UNINSTALL_PLUGIN', true );
+
+	update_option( 'woocommerce_status_options', array( 'uninstall_data' => 1 ) );
+	include_once __DIR__ . '/../vendor/woocommerce/uninstall.php';
+
+	\WC_Install::install();
+
+	$GLOBALS['wp_roles'] = new \WP_Roles();
+
+	echo 'Installing WooCommerce version ' . \WC()->version . ' ...' . PHP_EOL; // phpcs:ignore
+}
+tests_add_filter( 'setup_theme', __NAMESPACE__ . '\setup_wc' );
 
 /**
  * Completely skip looking up translations

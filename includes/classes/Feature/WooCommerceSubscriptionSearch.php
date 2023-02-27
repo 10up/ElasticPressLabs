@@ -28,7 +28,7 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 	 * Initialize feature settings.
 	 */
 	public function __construct() {
-		$this->slug = 'subscription_search';
+		$this->slug = 'woocommerce_subscription_search';
 
 		$this->title = esc_html__( 'WooCommerce Admin Subscription Search', 'elasticpress-labs' );
 
@@ -69,7 +69,6 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 		add_filter( 'ep_woocommerce_default_supported_post_types', [ $this, 'adjust_supported_post_types' ] );
 		add_filter( 'ep_woocommerce_admin_searchable_post_types', [ $this, 'admin_searchable_post_types' ] );
 		add_action( 'ep_woocommerce_hook_search_fields', [ $this, 'maybe_hook_woocommerce_search_fields' ], 1 );
-
 	}
 
 	/**
