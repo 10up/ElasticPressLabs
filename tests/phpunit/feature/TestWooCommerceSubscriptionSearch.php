@@ -21,7 +21,7 @@ class TestWooCommerceSubscriptionSearch extends \WP_UnitTestCase {
 	/**
 	 * Setup each test.
 	 */
-	public function setUp() {
+	public function set_up() {
 		$instance = new ElasticPressLabs\Feature\WooCommerceSubscriptionSearch();
 		\ElasticPress\Features::factory()->register_feature( $instance );
 		\ElasticPress\Features::factory()->activate_feature( 'protected_content' );
