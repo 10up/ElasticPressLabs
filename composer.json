@@ -27,8 +27,8 @@
     "yoast/phpunit-polyfills": "^1.0"
   },
   "scripts": {
-    "lint": "phpcs elasticpresslabs.php includes --runtime-set testVersion 7.0-",
-    "lint-fix": "phpcbf elasticpresslabs.php includes",
+    "lint": "phpcs . --runtime-set testVersion 7.0-",
+    "lint-fix": "phpcbf . --runtime-set testVersion 7.0-",
     "test": "phpunit",
     "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true"
   },

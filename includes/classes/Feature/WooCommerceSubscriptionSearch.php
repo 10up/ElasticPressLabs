@@ -137,7 +137,7 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 		$protected_content_feature = \ElasticPress\Features::factory()->get_registered_feature( 'protected_content' );
 		if ( ! $woocommerce_feature->is_active() || ! $protected_content_feature->is_active() ) {
 			$status->code    = 2;
-			$status->message = esc_html__( 'This feature requires the WooCommerce and Protected Content features to be enabled.', 'elasticpress-labs' ); 
+			$status->message = esc_html__( 'This feature requires the WooCommerce and Protected Content features to be enabled.', 'elasticpress-labs' );
 		} else {
 			$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
 		}
