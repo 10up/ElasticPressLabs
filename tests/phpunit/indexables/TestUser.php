@@ -93,7 +93,7 @@ class TestUser extends BaseTestCase {
 					'user_num'   => 5,
 					'long_key'   => 'here is a text field',
 				],
-			],
+			]
 		);
 
 		$user_2 = $this->ep_factory->user->create(
@@ -688,7 +688,7 @@ class TestUser extends BaseTestCase {
 	 * We should not use a text/string field to sort
 	 * in Elasticsearch.
 	 *
-	 * @return void	 * @group user
+	 * @return void  * @group user
 	 */
 	public function testFormatArgsOrderByUserNicename() {
 		$user = new \ElasticPress\Indexable\User\User();
@@ -922,7 +922,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with simple args
-	 *
 	 */
 	public function testUserMetaQuerySimple() {
 		$this->createAndIndexUsers();
@@ -954,7 +953,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with simple args and meta_compare does not equal
-	 *
 	 */
 	public function testUserMetaQuerySimpleCompare() {
 		$this->createAndIndexUsers();
@@ -974,7 +972,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with no compare
-	 *
 	 */
 	public function testUserMetaQueryNoCompare() {
 		$this->createAndIndexUsers();
@@ -998,7 +995,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query compare equals
-	 *
 	 */
 	public function testUserMetaQueryCompareEquals() {
 		$this->createAndIndexUsers();
@@ -1023,7 +1019,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with multiple statements
-	 *
 	 */
 	public function testUserMetaQueryMulti() {
 		$this->createAndIndexUsers();
@@ -1051,7 +1046,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with multiple statements and relation OR
-	 *
 	 */
 	public function testUserMetaQueryMultiRelationOr() {
 		$this->createAndIndexUsers();
@@ -1079,7 +1073,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test meta query with multiple statements and relation AND
-	 *
 	 */
 	public function testUserMetaQueryMultiRelationAnd() {
 		$this->createAndIndexUsers();
@@ -1107,7 +1100,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test basic user search
-	 *
 	 */
 	public function testBasicUserSearch() {
 		$this->createAndIndexUsers();
@@ -1125,7 +1117,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test basic user search via user login
-	 *
 	 */
 	public function testBasicUserSearchUserLogin() {
 		$this->createAndIndexUsers();
@@ -1143,7 +1134,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test basic user search via user url
-	 *
 	 */
 	public function testBasicUserSearchUserUrl() {
 		$this->createAndIndexUsers();
@@ -1164,7 +1154,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test basic user search via meta
-	 *
 	 */
 	public function testBasicUserSearchMeta() {
 		$this->createAndIndexUsers();
@@ -1301,7 +1290,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test users that does not belong to any blog.
-	 *
 	 */
 	public function testUserSearchLimitedToOneBlog() {
 		// This user does not belong to any blog.
@@ -1354,7 +1342,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test user query search by user login.
-	 *
 	 */
 	public function testUserQueryUserLogin() {
 		$this->createAndIndexUsers();
@@ -1375,7 +1362,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test user query search by user nicename.
-	 *
 	 */
 	public function testUserQueryUserNiceName() {
 		$this->createAndIndexUsers();
@@ -1396,7 +1382,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test user query default orderby set to asc.
-	 *
 	 */
 	public function testUserQueryDefaultOrderBy() {
 		$this->createAndIndexUsers();
@@ -1429,7 +1414,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test default order set to the score when orderby is set to empty
-	 *
 	 */
 	public function testUserQueryDefaultOrder() {
 		$this->createAndIndexUsers();
@@ -1461,7 +1445,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test protected meta does not index.
-	 *
 	 */
 	public function testProtectedMetaNotIndex() {
 
@@ -1482,7 +1465,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test whitelisted meta does index.
-	 *
 	 */
 	public function testProtectedWhiteListMetaIndex() {
 
@@ -1511,7 +1493,6 @@ class TestUser extends BaseTestCase {
 
 	/**
 	 * Test query_db() function.
-	 *
 	 */
 	public function testQueryDb() {
 
