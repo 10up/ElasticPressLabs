@@ -68,7 +68,7 @@ class TestWooCommerceSubscriptionSearch extends BaseTestCase {
 		 * Adding the order type, so WooCommerce can iterate of items (although inexistent)
 		 */
 		wc_register_order_type( 'shop_subscription', [] );
-		
+
 		$subscription = new \WC_Order();
 		$subscription->set_billing_first_name( 'findme' );
 		$subscription->save();
@@ -84,9 +84,9 @@ class TestWooCommerceSubscriptionSearch extends BaseTestCase {
 		$query = new \WP_Query();
 
 		$args = array(
-			's'           => 'findme',
-			'post_type'   => 'shop_subscription',
-			'post_status' => 'wc-pending',
+			's'            => 'findme',
+			'post_type'    => 'shop_subscription',
+			'post_status'  => 'wc-pending',
 			'has_password' => true,
 		);
 
