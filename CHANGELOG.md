@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [Unreleased]
 
+<!--
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+-->
+
+## [2.1.0] - 2023-03-XX
+
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
 ## [2.0.0] - 2022-10-17
 
 ### Added
