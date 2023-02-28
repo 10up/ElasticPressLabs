@@ -16,11 +16,17 @@ All notable changes to this project will be documented in this file, per [the Ke
 ## [2.1.0] - 2023-03-XX
 
 ### Added
-### Changed
-### Deprecated
-### Removed
+- Compatibility with the [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) add-on. Props [@ecaron](https://github.com/ecaron) and [@felipeelia](https://github.com/felipeelia) via [#51](https://github.com/10up/ElasticPressLabs/pull/51).
+- Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia) and [@MARQAS](https://github.com/MARQAS) via [#50](https://github.com/10up/ElasticPressLabs/pull/50).
+
 ### Fixed
+- Adjusted the method used to determine if classes are loaded. Props [@ecaron](https://github.com/ecaron) via [#51](https://github.com/10up/ElasticPressLabs/pull/51).
+- Ensure feature classes are only loaded once. Props [@ecaron](https://github.com/ecaron) via [#43](https://github.com/10up/ElasticPressLabs/pull/43).
+- PHP Lint on PHP 8. Props [@felipeelia](https://github.com/felipeelia) via [#49](https://github.com/10up/ElasticPressLabs/pull/49).
+
 ### Security
+- Bumped `loader-utils` from 2.0.2 to 2.0.4. Props [@dependabot](https://github.com/dependabot) via [#46](https://github.com/10up/ElasticPressLabs/pull/46).
+- Bumped `json5` from 1.0.1 to 1.0.2. Props [@dependabot](https://github.com/dependabot) via [#47](https://github.com/10up/ElasticPressLabs/pull/46).
 
 ## [2.0.0] - 2022-10-17
 
@@ -59,6 +65,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/10up/ElasticPressLabs/compare/1.2.0...2.0.0
 [1.2.0]: https://github.com/10up/ElasticPressLabs/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/10up/ElasticPressLabs/compare/1.0.0...1.1.0
