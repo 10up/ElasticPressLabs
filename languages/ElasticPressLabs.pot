@@ -1,17 +1,17 @@
-# Copyright (C) 2022 10up
-# This file is distributed under the same license as the ElasticPress Labs plugin.
+# Copyright (C) 2023 10up
+# This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpresslabs\n"
+"Project-Id-Version: ElasticPress Labs 2.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-10-17T14:03:31+00:00\n"
+"POT-Creation-Date: 2023-02-28T13:04:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.4.0\n"
+"X-Generator: WP-CLI 2.7.1\n"
 "X-Domain: elasticpress-labs\n"
 
 #. Plugin Name of the plugin
@@ -165,14 +165,31 @@ msgid "Version"
 msgstr ""
 
 #: includes/classes/Feature/SearchAlgorithm.php:138
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:141
 msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
-#: includes/functions/core.php:217
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:33
+msgid "WooCommerce Admin Subscription Search"
+msgstr ""
+
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:45
+msgid "Have WooCommerce Subscription admin search use EP."
+msgstr ""
+
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:54
+msgid "By default, WooCommerce Subscriptions does not use ElasticPress. This tells it to index and search those, just like ElasticPress does for orders."
+msgstr ""
+
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:139
+msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
+msgstr ""
+
+#: includes/functions/core.php:219
 msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
 #. translators: Min. EP version
-#: includes/functions/core.php:232
+#: includes/functions/core.php:234
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""
