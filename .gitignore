@@ -4,6 +4,7 @@ release
 vendor
 .idea
 *.log
+.phpunit.result.cache
 
 # Editors
 *.esproj
