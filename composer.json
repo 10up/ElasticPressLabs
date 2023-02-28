@@ -19,22 +19,38 @@
       "ElasticPressLabs\\": "includes/classes/"
     }
   },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://wpackagist.org"
+    }
+  ],
   "require-dev": {
     "phpunit/phpunit": "^9",
     "10up/wp_mock": "dev-trunk",
     "10up/phpcs-composer": "dev-master",
     "10up/elasticpress": "dev-develop",
-    "yoast/phpunit-polyfills": "^1.0"
+    "yoast/phpunit-polyfills": "^1.0",
+    "wpackagist-plugin/woocommerce": "*"
   },
   "scripts": {
-    "lint": "phpcs .",
-    "lint-fix": "phpcbf .",
+    "lint": "phpcs . --runtime-set testVersion 7.0-",
+    "lint-fix": "phpcbf . --runtime-set testVersion 7.0-",
     "test": "phpunit",
     "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true"
   },
+  "extra": {
+    "installer-paths": {
+      "vendor/{$name}/": [
+        "type:wordpress-plugin",
+        "type:wordpress-theme"
+      ]
+    }
+  },
   "config": {
     "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "composer/installers": true
     }
   }
 }

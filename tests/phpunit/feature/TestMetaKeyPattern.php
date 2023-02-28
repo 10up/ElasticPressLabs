@@ -2,15 +2,12 @@
 /**
  * Test synonym feature
  *
- * @package elasticpress
+ * @package ElasticPressLabs
  */
 
 namespace ElasticPressLabsTest;
 
-require __DIR__ . '/../../../vendor/10up/elasticpress/elasticpress.php';
-
 use ElasticPressLabs;
-use WP_Mock\Tools\TestCase as BaseTestCase;
 
 /**
  * Meta Key Pattern test class

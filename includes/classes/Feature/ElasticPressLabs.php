@@ -171,14 +171,11 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 
 		$features_dir = plugin_dir_path( __FILE__ );
 
-		$current_file = __FILE__;
+		foreach ( glob( "{$features_dir}*.php" ) as $filename ) {
+			if ( realpath( $filename ) === __FILE__ ) {
+				continue;
+			}
 
-		$features_files = array_diff(
-			glob( "{$features_dir}*.php" ),
-			array( $current_file )
-		);
-
-		foreach ( $features_files as $filename ) {
 			require_once ELASTICPRESS_LABS_INC . 'classes/Feature/' . basename( $filename );
 
 			$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
