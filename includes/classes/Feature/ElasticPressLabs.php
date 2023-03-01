@@ -196,7 +196,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 						'slug'         => $subfeature->slug,
 						'title'        => $subfeature->title,
 						'description'  => $description,
-						'is_available' => $subfeature->is_available(),
+						'is_available' => method_exists( $subfeature, 'is_available' ) ? $subfeature->is_available() : true,
 						'is_active'    => $subfeature->is_active(),
 					)
 				);
