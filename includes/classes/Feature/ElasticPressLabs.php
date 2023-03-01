@@ -81,6 +81,10 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$settings = wp_parse_args( $settings, $this->default_settings );
 
 		foreach ( $this->subfeatures as $subfeature ) {
+			if ( ! $subfeature->is_available && ! $subfeature->is_active ) {
+				continue;
+			}
+
 			$this->subfeature_field(
 				$subfeature->slug,
 				$subfeature->title,
@@ -176,8 +180,6 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 				continue;
 			}
 
-			require_once ELASTICPRESS_LABS_INC . 'classes/Feature/' . basename( $filename );
-
 			$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
 
 			if ( class_exists( $class_name ) ) {
@@ -189,9 +191,11 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 
 				$this->add_to_subfeatures(
 					array(
-						'slug'        => $subfeature->slug,
-						'title'       => $subfeature->title,
-						'description' => $description,
+						'slug'         => $subfeature->slug,
+						'title'        => $subfeature->title,
+						'description'  => $description,
+						'is_available' => method_exists( $subfeature, 'is_available' ) ? $subfeature->is_available() : true,
+						'is_active'    => $subfeature->is_active(),
 					)
 				);
 
