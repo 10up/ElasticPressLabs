@@ -81,6 +81,10 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$settings = wp_parse_args( $settings, $this->default_settings );
 
 		foreach ( $this->subfeatures as $subfeature ) {
+			if ( ! $subfeature->is_visible ) {
+				continue;
+			}
+
 			$this->subfeature_field(
 				$subfeature->slug,
 				$subfeature->title,
@@ -192,6 +196,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 						'slug'        => $subfeature->slug,
 						'title'       => $subfeature->title,
 						'description' => $description,
+						'is_visible'  => $subfeature->is_visible(),
 					)
 				);
 

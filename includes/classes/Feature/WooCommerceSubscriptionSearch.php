@@ -34,6 +34,8 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 
 		$this->requires_install_reindex = true;
 
+		$this->maybe_hide_feature();
+
 		parent::__construct();
 	}
 
@@ -142,5 +144,16 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Hide feature if WooCommerce Subscriptions is not active.
+	 *
+	 * @return void
+	 */
+	public function maybe_hide_feature() {
+		if ( ! class_exists( '\WooCommerce' ) || ! class_exists( '\WC_Subscriptions' ) ) {
+			$this->is_visible = false;
+		}
 	}
 }
