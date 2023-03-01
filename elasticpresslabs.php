@@ -25,6 +25,37 @@ define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 
 define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.3.0' );
 
+/**
+ * PSR-4-ish autoloading
+ *
+ * @since 2.1
+ */
+spl_autoload_register(
+	function( $class ) {
+		// project-specific namespace prefix.
+		$prefix = 'ElasticPressLabs\\';
+
+		// base directory for the namespace prefix.
+		$base_dir = __DIR__ . '/includes/classes/';
+
+		// does the class use the namespace prefix?
+		$len = strlen( $prefix );
+
+		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+			return;
+		}
+
+		$relative_class = substr( $class, $len );
+
+		$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+		// if the file exists, require it.
+		if ( file_exists( $file ) ) {
+			require $file;
+		}
+	}
+);
+
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
 
