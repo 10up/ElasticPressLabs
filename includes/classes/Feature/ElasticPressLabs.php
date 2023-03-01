@@ -81,7 +81,7 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 		$settings = wp_parse_args( $settings, $this->default_settings );
 
 		foreach ( $this->subfeatures as $subfeature ) {
-			if ( ! $subfeature->is_visible ) {
+			if ( ! $subfeature->is_available && ! $subfeature->is_active ) {
 				continue;
 			}
 
@@ -193,10 +193,11 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 
 				$this->add_to_subfeatures(
 					array(
-						'slug'        => $subfeature->slug,
-						'title'       => $subfeature->title,
-						'description' => $description,
-						'is_visible'  => $subfeature->is_visible(),
+						'slug'         => $subfeature->slug,
+						'title'        => $subfeature->title,
+						'description'  => $description,
+						'is_available' => $subfeature->is_available(),
+						'is_active'    => $subfeature->is_active(),
 					)
 				);
 

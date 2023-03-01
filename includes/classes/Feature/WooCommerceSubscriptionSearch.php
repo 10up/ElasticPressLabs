@@ -34,8 +34,6 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 
 		$this->requires_install_reindex = true;
 
-		$this->maybe_hide_feature();
-
 		parent::__construct();
 	}
 
@@ -137,7 +135,7 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 		$woocommerce_feature       = \ElasticPress\Features::factory()->get_registered_feature( 'woocommerce' );
 		$protected_content_feature = \ElasticPress\Features::factory()->get_registered_feature( 'protected_content' );
 
-		if ( ! $this->is_visible ) {
+		if ( ! $this->is_subscription_plugin_activated() ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'This feature requires the WooCommerce Subscriptions plugin to be activated.', 'elasticpress-labs' );
 		} elseif ( ! $woocommerce_feature->is_active() || ! $protected_content_feature->is_active() ) {
@@ -151,13 +149,11 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 	}
 
 	/**
-	 * Hide feature if WooCommerce Subscriptions is not active.
+	 * Check if WooCommerce Subscriptions plugin is activated.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function maybe_hide_feature() {
-		if ( ! class_exists( '\WC_Subscriptions' ) ) {
-			$this->is_visible = false;
-		}
+	public function is_subscription_plugin_activated() : bool {
+		return is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ) && class_exists( '\WC_Subscriptions' );
 	}
 }
