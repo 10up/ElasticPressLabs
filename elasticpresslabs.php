@@ -25,36 +25,36 @@ define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
 
 define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.3.0' );
 
-/**
- * PSR-4-ish autoloading
- *
- * @since 2.1
- */
-spl_autoload_register(
-	function( $class ) {
-		// project-specific namespace prefix.
-		$prefix = 'ElasticPressLabs\\';
+// Require Composer autoloader if it exists.
+if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
+	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
+} else {
+	spl_autoload_register(
+		function( $class ) {
+			// project-specific namespace prefix.
+			$prefix = 'ElasticPressLabs\\';
 
-		// base directory for the namespace prefix.
-		$base_dir = __DIR__ . '/includes/classes/';
+			// base directory for the namespace prefix.
+			$base_dir = __DIR__ . '/includes/classes/';
 
-		// does the class use the namespace prefix?
-		$len = strlen( $prefix );
+			// does the class use the namespace prefix?
+			$len = strlen( $prefix );
 
-		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-			return;
+			if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+				return;
+			}
+
+			$relative_class = substr( $class, $len );
+
+			$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+			// if the file exists, require it.
+			if ( file_exists( $file ) ) {
+				require_once $file;
+			}
 		}
-
-		$relative_class = substr( $class, $len );
-
-		$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-		// if the file exists, require it.
-		if ( file_exists( $file ) ) {
-			require_once $file;
-		}
-	}
-);
+	);
+}
 
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
@@ -65,8 +65,3 @@ register_deactivation_hook( __FILE__, '\ElasticPressLabs\Core\deactivate' );
 
 // Bootstrap.
 ElasticPressLabs\Core\setup();
-
-// Require Composer autoloader if it exists.
-if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
-	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
-}

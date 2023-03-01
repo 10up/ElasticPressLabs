@@ -180,8 +180,6 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 				continue;
 			}
 
-			require_once ELASTICPRESS_LABS_INC . 'classes/Feature/' . basename( $filename );
-
 			$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
 
 			if ( class_exists( $class_name ) ) {
