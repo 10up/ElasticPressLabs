@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Added
 - Compatibility with the [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) add-on. Props [@ecaron](https://github.com/ecaron) and [@felipeelia](https://github.com/felipeelia) via [#51](https://github.com/10up/ElasticPressLabs/pull/51).
-- Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia) and [@MARQAS](https://github.com/MARQAS) via [#50](https://github.com/10up/ElasticPressLabs/pull/50).
+- Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia), [@MARQAS](https://github.com/MARQAS), and [@burhandodhy](https://github.com/burhandodhy) via [#50](https://github.com/10up/ElasticPressLabs/pull/50) and [#59](https://github.com/10up/ElasticPressLabs/pull/50).
 - Load PHP classes via `spl_autoload_register()`. Props [@burhandodhy](https://github.com/burhandodhy) via [#57](https://github.com/10up/ElasticPressLabs/pull/57).
 
 ## Changed
