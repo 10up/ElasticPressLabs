@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ## [Unreleased]
 
+<!--
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+-->
+
+## [2.1.0] - 2023-03-02
+
+### Added
+- Compatibility with the [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) add-on. Props [@ecaron](https://github.com/ecaron) and [@felipeelia](https://github.com/felipeelia) via [#51](https://github.com/10up/ElasticPressLabs/pull/51).
+- Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia), [@MARQAS](https://github.com/MARQAS), and [@burhandodhy](https://github.com/burhandodhy) via [#50](https://github.com/10up/ElasticPressLabs/pull/50) and [#59](https://github.com/10up/ElasticPressLabs/pull/50).
+- Load PHP classes via `spl_autoload_register()`. Props [@burhandodhy](https://github.com/burhandodhy) via [#57](https://github.com/10up/ElasticPressLabs/pull/57).
+
+## Changed
+- Code standards are now applied to the test suite too. Props [@felipeelia](https://github.com/felipeelia) via [#54](https://github.com/10up/ElasticPressLabs/pull/54).
+- Hide subfeatures if the required plugins are not activated. Props [@burhandodhy](https://github.com/burhandodhy) via [#56](https://github.com/10up/ElasticPressLabs/pull/56).
+
+### Fixed
+- Adjusted the method used to determine if classes are loaded. Props [@ecaron](https://github.com/ecaron) via [#51](https://github.com/10up/ElasticPressLabs/pull/51).
+- Ensure feature classes are only loaded once. Props [@ecaron](https://github.com/ecaron) via [#43](https://github.com/10up/ElasticPressLabs/pull/43).
+- PHP Lint on PHP 8. Props [@felipeelia](https://github.com/felipeelia) via [#49](https://github.com/10up/ElasticPressLabs/pull/49).
+
+### Security
+- Bumped `loader-utils` from 2.0.2 to 2.0.4. Props [@dependabot](https://github.com/dependabot) via [#46](https://github.com/10up/ElasticPressLabs/pull/46).
+- Bumped `json5` from 1.0.1 to 1.0.2. Props [@dependabot](https://github.com/dependabot) via [#47](https://github.com/10up/ElasticPressLabs/pull/46).
+
 ## [2.0.0] - 2022-10-17
 
 ### Added
@@ -41,6 +70,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/10up/ElasticPressLabs/compare/1.2.0...2.0.0
 [1.2.0]: https://github.com/10up/ElasticPressLabs/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/10up/ElasticPressLabs/compare/1.0.0...1.1.0

@@ -30,6 +30,8 @@ function setup() {
 
 	add_action( 'plugins_loaded', $n( 'maybe_load_features' ) );
 
+	add_filter( 'ep_user_register_feature', '__return_false' );
+
 	do_action( 'elasticpress_labs_loaded' );
 }
 
@@ -201,7 +203,7 @@ function maybe_load_features() {
 	}
 
 	// Include your class file.
-	require ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
+	require_once ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
 	// Register your feature in ElasticPress.
 	\ElasticPress\Features::factory()->register_feature(
 		new \ElasticPressLabs()

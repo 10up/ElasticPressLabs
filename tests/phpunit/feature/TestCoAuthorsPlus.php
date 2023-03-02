@@ -21,9 +21,9 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	 *
 	 * @since  1.1.0
 	 */
-	public function setUp() {
+	public function set_up() {
 		$instance = new ElasticPressLabs\Feature\CoAuthorsPlus();
-		\ElasticPress\Features::factory()->register_feature($instance);
+		\ElasticPress\Features::factory()->register_feature( $instance );
 	}
 
 	/**
@@ -40,13 +40,13 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	 * Get protected function as public
 	 *
 	 * @since  1.1.0
-	 * @param string $functionName
-	 * @param string $className
+	 * @param string $function_name Function name
+	 * @param string $class_name    Class name
 	 * @return ReflectionClass
 	 */
-	protected function get_protected_function( $functionName, $className = 'ElasticPressLabs\Feature\CoAuthorsPlus' ) {
-		$reflector = new \ReflectionClass( $className );
-		$function  = $reflector->getMethod( $functionName );
+	protected function get_protected_function( $function_name, $class_name = 'ElasticPressLabs\Feature\CoAuthorsPlus' ) {
+		$reflector = new \ReflectionClass( $class_name );
+		$function  = $reflector->getMethod( $function_name );
 		$function->setAccessible( true );
 
 		return $function;
@@ -60,8 +60,8 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	public function testConstruct() {
 		$instance = $this->get_feature();
 
-        $this->assertEquals( 'co_authors_plus', $instance->slug );
-        $this->assertEquals( 'Co-Authors Plus', $instance->title );
+		$this->assertEquals( 'co_authors_plus', $instance->slug );
+		$this->assertEquals( 'Co-Authors Plus', $instance->title );
 	}
 
 	/**
@@ -72,9 +72,9 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	public function testBoxSummary() {
 		ob_start();
 		$this->get_feature()->output_feature_box_summary();
-        $output = ob_get_clean();
+		$output = ob_get_clean();
 
-		$this->assertContains( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name', $output );
+		$this->assertStringContainsString( 'Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name', $output );
 	}
 
 	/**
@@ -85,9 +85,9 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	public function testBoxLong() {
 		ob_start();
 		$this->get_feature()->output_feature_box_long();
-        $output = ob_get_clean();
+		$output = ob_get_clean();
 
-		$this->assertContains( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
+		$this->assertStringContainsString( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
 	}
 
 	/**
@@ -96,12 +96,12 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	 * @since  1.1.0
 	 */
 	public function testFilterOutAuthorNameAndId() {
-		$feature  = $this->get_feature();
+		$feature = $this->get_feature();
 		$function_filter_out_author_name_and_id_from_es_filter = $this->get_protected_function( 'filter_out_author_name_and_id_from_es_filter' );
 
-		$this->assertEquals([], $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array([])));
+		$this->assertEquals( [], $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array( [] ) ) );
 
-		$this->assertEquals('', $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array( '' ) ) );
+		$this->assertEquals( '', $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, array( '' ) ) );
 
 		$formatted_args = [
 			'post_filter' => [
@@ -109,12 +109,12 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 					'must' => [
 						[
 							'term' => [
-								'post_author.display_name' => [ 'test' ]
-							]
-						]
-					]
-				]
-			]
+								'post_author.display_name' => [ 'test' ],
+							],
+						],
+					],
+				],
+			],
 		];
 
 		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
@@ -123,8 +123,8 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 
 		$formatted_args['post_filter']['bool']['must'][] = [
 			'terms' => [
-				'post_type.raw' => [ 'post' ]
-			]
+				'post_type.raw' => [ 'post' ],
+			],
 		];
 
 		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
@@ -135,8 +135,8 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 
 		$formatted_args['post_filter']['bool']['must'][] = [
 			'term' => [
-				'post_author.id' => [ 1 ]
-			]
+				'post_author.id' => [ 1 ],
+			],
 		];
 
 		$filtered_formatted_args = $function_filter_out_author_name_and_id_from_es_filter->invokeArgs( $feature, [ $formatted_args ] );
