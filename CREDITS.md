@@ -20,6 +20,7 @@ Thank you to all the people who have already contributed to this repository via 
 [Oscar Sanchez S. (@oscarssanchez)](https://github.com/oscarssanchez),
 [Burhan Nasir (@burhandodhy)](https://github.com/burhandodhy),
 [Mohammed Razzaq (@MARQAS)](https://github.com/MARQAS),
+[Eric Caron (@ecaron)](https://github.com/ecaron),
 and
 [Felipe Elia (@felipeelia)](https://github.com/felipeelia).
 

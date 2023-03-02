@@ -24,7 +24,7 @@ For more on how 10up writes and manages code, check out our [10up Engineering Be
 
 ## Workflow
 
-The `develop` branch is the development branch which means it contains the next version to be released.  `trunk` contains the corresponding stable development version.  Always work on the `develop` branch and open up PRs against `develop`.
+The `develop` branch is the development branch which means it contains the next version to be released. `trunk` contains the corresponding stable development version. Always work on the `develop` branch and open up PRs against `develop`.
 
 ## Release instructions
 
@@ -32,14 +32,14 @@ The `develop` branch is the development branch which means it contains the next 
 1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/ElasticPressLabs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
 1. Changelog: Add/update the changelog in `CHANGELOG.md` and `readme.txt`, ensuring to link the [X.Y.Z] release reference in the footer of `CHANGELOG.md` (e.g., https://github.com/10up/ElasticPressLabs/compare/X.Y.Z-1...X.Y.Z).
 1. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
-1. Readme updates: Make any other readme changes as necessary.  `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content.  The two are slightly different.
+1. Readme updates: Make any other readme changes as necessary. `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content. The two are slightly different.
 1. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
-1. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`).  `trunk` contains the stable development version.
+1. POT file: Run `wp i18n make-pot . languages/ElasticPressLabs.pot` and commit the file. In case of errors, try to disable Xdebug (see [#3079](https://github.com/10up/ElasticPress/pull/3079#issuecomment-1291028290).)
+1. Release date: Double check the release date in both changelog files.
+1. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
 1. Test: While still on the `trunk` branch, test for functionality locally.
 1. Push: Push your `trunk` branch to GitHub (e.g. `git push origin trunk`).
 1. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new), naming the tag and the release with the new version number, and targeting the `trunk` branch.  Paste the release changelog from `CHANGELOG.md` into the body of the release and include a link to the closed issues on the [milestone](https://github.com/10up/elasticpresslabs/milestone/#?closed=1).
-1. SVN: Wait for the [GitHub Action](https://github.com/10up/ElasticPresslabs/actions) to finish deploying to the WordPress.org repository.  If all goes well, users with SVN commit access for that plugin will receive an emailed diff of changes.
-1. Check WordPress.org: Ensure that the changes are live on https://wordpress.org/plugins/elasticpresslabs/.  This may take a few minutes.
 1. Close milestone: Edit the [milestone](https://github.com/10up/elasticpresslabs/milestone/#) with release date (in the `Due date (optional)` field) and link to GitHub release (in the `Description` field), then close the milestone.
 1. Punt incomplete items: If any open issues or PRs which were milestoned for `X.Y.Z` do not make it into the release, update their milestone to `X.Y.Z+1`, `X.Y+1.0`, `X+1.0.0` or `Future Release`.
 
@@ -53,12 +53,12 @@ There may be cases where we have an urgent/important fix that ideally gets into 
 1. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
 1. Readme updates: Make any other readme changes as necessary.  `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content.  The two are slightly different.
 1. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
+1. POT file: Run `wp i18n make-pot . lang/elasticpress.pot` and commit the file.
+1. Release date: Double check the release date in both changelog files.
 1. Merge: Merge the release branch/PR into `trunk`.  `trunk` contains the stable development version.
 1. Test: While still on the `trunk` branch, test for functionality locally.
 1. Push: Push your `trunk` branch to GitHub (e.g. `git push origin trunk`).
 1. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new), naming the tag and the release with the new version number, and targeting the `trunk` branch.  Paste the release changelog from `CHANGELOG.md` into the body of the release and include a link to the closed issues on the [milestone](https://github.com/10up/elasticpresslabs/milestone/#?closed=1).
-1. SVN: Wait for the [GitHub Action](https://github.com/10up/ElasticPressLabs/actions) to finish deploying to the WordPress.org repository.  If all goes well, users with SVN commit access for that plugin will receive an emailed diff of changes.
-1. Check WordPress.org: Ensure that the changes are live on https://wordpress.org/plugins/elasticpresslabs/.  This may take a few minutes.
 1. Close milestone: Edit the [milestone](https://github.com/10up/elasticpresslabs/milestone/#) with release date (in the `Due date (optional)` field) and link to GitHub release (in the `Description` field), then close the milestone.
 1. Punt incomplete items: If any open issues or PRs which were milestoned for `X.Y.Z` do not make it into the hotfix release, update their milestone to `X.Y.Z+1`, `X.Y+1.0`, `X+1.0.0` or `Future Release`.
 1. Apply hotfix changes to `develop`: Make a non-fast-forward merge from `trunk` into `develop` (`git checkout develop && git merge --no-ff trunk`) to ensure your hotfix change(s) are in sync with active development.

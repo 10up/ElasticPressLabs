@@ -2,7 +2,7 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 5.6
-Tested up to:      6.0
+Tested up to:      6.1
 Stable tag:        2.0.0
 Requires PHP:      7.0
 License:           GPLv2 or later
@@ -27,6 +27,30 @@ This plugin provides a simple interface to enable and disable features.
 5. Settings to change the version of the search algorithm between 3.4 and 3.5.
 
 == Changelog ==
+
+= 2.1.0 - 2023-03-XX =
+
+__Added:__
+
+* Compatibility with the [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) add-on. Props [@ecaron](https://github.com/ecaron) and [@felipeelia](https://github.com/felipeelia).
+* Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia), [@MARQAS](https://github.com/MARQAS), and [@burhandodhy](https://github.com/burhandodhy).
+* Load PHP classes via `spl_autoload_register()`. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Changed:__
+
+* Code standards are now applied to the test suite too. Props [@felipeelia](https://github.com/felipeelia).
+* Hide subfeatures if the required plugins are not activated. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Fixed:__
+
+* Adjusted the method used to determine if classes are loaded. Props [@ecaron](https://github.com/ecaron).
+* Ensure feature classes are only loaded once. Props [@ecaron](https://github.com/ecaron).
+* PHP Lint on PHP 8. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Bumped `loader-utils` from 2.0.2 to 2.0.4. Props [@dependabot](https://github.com/dependabot).
+* Bumped `json5` from 1.0.1 to 1.0.2. Props [@dependabot](https://github.com/dependabot).
 
 = 2.0.0 - 2022-10-17 =
 
