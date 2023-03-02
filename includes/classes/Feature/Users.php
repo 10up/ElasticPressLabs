@@ -39,7 +39,9 @@ class Users extends Feature {
 	 * Hook search functionality
 	 */
 	public function setup() {
-		Indexables::factory()->activate( 'user' );
+		if ( method_exists( Indexables::factory(), 'activate' ) ) {
+			Indexables::factory()->activate( 'user' );
+		}
 
 		add_action( 'init', [ $this, 'search_setup' ] );
 	}
