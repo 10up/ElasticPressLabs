@@ -33,6 +33,29 @@ function setup() {
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
 	do_action( 'elasticpress_labs_loaded' );
+
+	add_action( 'plugins_loaded', $n( 'check_active_plugins' ) );
+}
+
+/**
+ * Define constants to check whether plugins are active or not
+ *
+ * @since  2.2.0
+ */
+function check_active_plugins() {
+
+	if ( is_user_logged_in() ) {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		// Co Authors Plus
+		if ( ! defined( 'EP_LABS_COAUTHOR' ) ) {
+			define( 'EP_LABS_COAUTHOR', is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) );
+		}
+		// WooCommerce Subscriptions
+		if ( ! defined( 'EP_LABS_WOOSUB' ) ) {
+			define( 'EP_LABS_WOOSUB', is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ) );
+		}
+	}
+
 }
 
 /**

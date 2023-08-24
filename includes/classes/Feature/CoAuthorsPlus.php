@@ -208,7 +208,7 @@ class CoAuthorsPlus extends Feature {
 	public function requirements_status() {
 		$status = new FeatureRequirementsStatus( 0 );
 
-		if ( ! is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) || ! class_exists( 'CoAuthors_Plus' ) ) {
+		if ( ( defined( 'EP_LABS_COAUTHOR' ) && false === EP_LABS_COAUTHOR ) || ! class_exists( '\CoAuthors_Plus' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Co-Authors Plus installed and activated.', 'elasticpress-labs' );
 		} elseif ( ! $this->is_protected_content_feature_active ) {
