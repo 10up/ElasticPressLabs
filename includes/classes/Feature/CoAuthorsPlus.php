@@ -206,9 +206,10 @@ class CoAuthorsPlus extends Feature {
 	 * @return FeatureRequirementsStatus
 	 */
 	public function requirements_status() {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		$status = new FeatureRequirementsStatus( 0 );
 
-		if ( ( defined( 'EP_LABS_COAUTHOR' ) && false === EP_LABS_COAUTHOR ) || ! class_exists( '\CoAuthors_Plus' ) ) {
+		if ( ! \is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) || ! class_exists( '\CoAuthors_Plus' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Co-Authors Plus installed and activated.', 'elasticpress-labs' );
 		} elseif ( ! $this->is_protected_content_feature_active ) {
