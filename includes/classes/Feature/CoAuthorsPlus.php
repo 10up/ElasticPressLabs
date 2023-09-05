@@ -31,6 +31,14 @@ class CoAuthorsPlus extends Feature {
 	public $order = 10;
 
 	/**
+	 * Whether the Protected Content feature is active or not
+	 *
+	 * @since 2.1.1
+	 * @var bool
+	 */
+	protected $is_protected_content_feature_active = false;
+
+	/**
 	 * Initialize feature setting it's config
 	 *
 	 * @since 1.1.0

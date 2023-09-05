@@ -96,13 +96,11 @@ function get_enqueue_contexts() {
  * @return string|WP_Error URL
  */
 function script_url( $script, $context ) {
-
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
 		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs script loader.' );
 	}
 
-	return ELASTICPRESS_LABS_URL . "dist/js/${script}.js";
-
+	return ELASTICPRESS_LABS_URL . "dist/js/{$script}.js";
 }
 
 /**
@@ -114,13 +112,11 @@ function script_url( $script, $context ) {
  * @return string URL
  */
 function style_url( $stylesheet, $context ) {
-
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
 		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs stylesheet loader.' );
 	}
 
-	return ELASTICPRESS_LABS_URL . "dist/css/${stylesheet}.css";
-
+	return ELASTICPRESS_LABS_URL . "dist/css/{$stylesheet}.css";
 }
 
 /**
