@@ -154,6 +154,7 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 	 * @return bool
 	 */
 	public function is_subscription_plugin_activated() : bool {
-		return is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ) && class_exists( '\WC_Subscriptions' );
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		return \is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ) && class_exists( '\WC_Subscriptions' );
 	}
 }
