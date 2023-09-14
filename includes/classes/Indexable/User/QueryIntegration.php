@@ -30,7 +30,7 @@ class QueryIntegration {
 		/**
 		 * Filter whether to enable query integration during indexing
 		 *
-		 * @since 2.2.0
+		 * @since 2.1.1
 		 * @hook ep_enable_query_integration_during_indexing
 		 *
 		 * @param {bool} $enable To allow query integration during indexing

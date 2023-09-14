@@ -128,7 +128,7 @@ return array(
 					/**
 					 * Filter Elasticsearch default language in mapping
 					 *
-					 * @since 2.2.0
+					 * @since 2.1.1
 					 * @hook ep_analyzer_language
 					 * @param  {string} $lang Default language
 					 * @param {string} $lang_context Language context
