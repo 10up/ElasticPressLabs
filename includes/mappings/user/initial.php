@@ -52,7 +52,7 @@ return array(
 			'analyzer'   => array(
 				'default'          => array(
 					'tokenizer' => 'standard',
-					'filter'    => array( 'standard', 'ewp_word_delimiter', 'lowercase', 'stop', 'ewp_snowball' ),
+					'filter'    => array( 'standard', 'ewp_word_delimiter', 'lowercase', 'ep_stop', 'ewp_snowball' ),
 					/**
 					 * Filter Elasticsearch default language in mapping
 					 *
@@ -104,6 +104,20 @@ return array(
 					'min_gram' => 3,
 					'type'     => 'edgeNGram',
 				),
+				'ep_stop'            => [
+					'type'        => 'stop',
+					'ignore_case' => true,
+					/**
+					 * Filter Elasticsearch default language in mapping
+					 *
+					 * @since 2.2.0
+					 * @hook ep_analyzer_language
+					 * @param  {string} $lang Default language
+					 * @param {string} $lang_context Language context
+					 * @return {string} New language
+					 */
+					'stopwords'   => apply_filters( 'ep_analyzer_language', 'english', 'filter_ep_stop' ),
+				],
 			),
 			'normalizer' => array(
 				'lowerasciinormalizer' => array(
