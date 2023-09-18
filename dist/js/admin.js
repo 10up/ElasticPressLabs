@@ -1,1 +1,0 @@
-!function(){const e=document.querySelector(".ep-features");if(e){const t=window.fetch,n=async(e,n)=>{const a=await t(e,n);return window.location.reload(),a},a=e=>{const a=e.target;window.fetch="elasticpress_labs"===a.feature.value?n:t};e.addEventListener("submit",a,{capture:!0})}}();
