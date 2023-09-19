@@ -7,6 +7,7 @@
 
 namespace ElasticPressLabs\Core;
 
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 use \WP_Error as WP_Error;
 
 /**
@@ -33,6 +34,8 @@ function setup() {
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
 	do_action( 'elasticpress_labs_loaded' );
+
+	setup_updater();
 }
 
 /**
@@ -234,4 +237,27 @@ function admin_notice_min_ep_version() {
 		</p>
 	</div>
 	<?php
+}
+
+/**
+ * Setup the updater
+ *
+ * @since 2.1.1
+ * @return void
+ */
+function setup_updater() {
+	$tenup_plugin_updater = PucFactory::buildUpdateChecker(
+		'https://github.com/10up/ElasticPressLabs/',
+		ELASTICPRESS_LABS_MAIN_FILE,
+		'ElasticPressLabs'
+	);
+
+	$tenup_plugin_updater->addResultFilter(
+		function( $plugin_info ) {
+			$plugin_info->icons = array(
+				'svg' => ELASTICPRESS_LABS_URL . 'assets/img/logo-icon.svg',
+			);
+			return $plugin_info;
+		}
+	);
 }

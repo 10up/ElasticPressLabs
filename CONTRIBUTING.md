@@ -39,7 +39,8 @@ The `develop` branch is the development branch which means it contains the next 
 1. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
 1. Test: While still on the `trunk` branch, test for functionality locally.
 1. Push: Push your `trunk` branch to GitHub (e.g. `git push origin trunk`).
-1. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new), naming the tag and the release with the new version number, and targeting the `trunk` branch.  Paste the release changelog from `CHANGELOG.md` into the body of the release and include a link to the closed issues on the [milestone](https://github.com/10up/elasticpresslabs/milestone/#?closed=1).
+1. [Check the _Build and Tag_ action](https://github.com/10up/elasticpresslabs/actions/workflows/build-and-tag.yml): a new tag named with the version number should've been created. It should contain all the built assets.
+1. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new), naming the release with the new version number, and targeting the tag created in the previous step. Paste the release changelog from `CHANGELOG.md` into the body of the release and include a link to the closed issues on the [milestone](https://github.com/10up/elasticpresslabs/milestone/#?closed=1).
 1. Close milestone: Edit the [milestone](https://github.com/10up/elasticpresslabs/milestone/#) with release date (in the `Due date (optional)` field) and link to GitHub release (in the `Description` field), then close the milestone.
 1. Punt incomplete items: If any open issues or PRs which were milestoned for `X.Y.Z` do not make it into the release, update their milestone to `X.Y.Z+1`, `X.Y+1.0`, `X+1.0.0` or `Future Release`.
 
