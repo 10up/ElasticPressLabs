@@ -90,7 +90,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
-[2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1
+[2.1.1]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/10up/ElasticPressLabs/compare/1.2.0...2.0.0
 [1.2.0]: https://github.com/10up/ElasticPressLabs/compare/1.1.0...1.2.0
