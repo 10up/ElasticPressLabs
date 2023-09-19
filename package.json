@@ -15,6 +15,7 @@
     "build": "10up-toolkit build",
     "watch": "10up-toolkit start",
     "build-release": "npm install && composer install --no-dev -o && npm run build",
+    "build:zip": "./bin/build-zip.sh",
     "lint-release": "npm install && composer install && npm run lint",
     "lint-style": "10up-toolkit lint-style",
     "lint-js": "10up-toolkit lint-js assets/js",
