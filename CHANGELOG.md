@@ -13,6 +13,26 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
+## [2.1.1] - 2023-09-XX
+
+### Added
+- Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia) via [#76](https://github.com/10up/ElasticPress/pull/76).
+
+### Changed
+- Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72).
+
+### Removed
+- Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72).
+
+### Fixed
+- Boolean Operator (Not) not giving the expected result. Props [@MARQAS](https://github.com/MARQAS) via [#67](https://github.com/10up/ElasticPress/pull/67).
+- Fatal Error in command line. Props [@MARQAS](https://github.com/MARQAS) via [#69](https://github.com/10up/ElasticPress/pull/69).
+- PHP Warnings. Props [@felipeelia](https://github.com/felipeelia) via [#71](https://github.com/10up/ElasticPress/pull/71).
+
+### Security
+- Bumped `webpack` from 5.74.0 to 5.76.1. Props [@dependabot](https://github.com/dependabot) via [#64](https://github.com/10up/ElasticPressLabs/pull/64).
+- Bumped `tough-cookie` from 4.1.2 to 4.1.3. Props [@dependabot](https://github.com/dependabot) via [#78](https://github.com/10up/ElasticPressLabs/pull/78).
+
 ## [2.1.0] - 2023-03-02
 
 ### Added
@@ -70,6 +90,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/10up/ElasticPressLabs/compare/1.2.0...2.0.0
 [1.2.0]: https://github.com/10up/ElasticPressLabs/compare/1.1.0...1.2.0
