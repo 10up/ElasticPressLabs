@@ -17,35 +17,33 @@
  * @package           ElasticPressLabs
  */
 
-use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-
 // Useful global constants.
 define( 'ELASTICPRESS_LABS_VERSION', '2.1.0' );
 define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
+define( 'ELASTICPRESS_LABS_MAIN_FILE', __FILE__ );
 
 define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.3.0' );
 
-// Require Composer autoloader if it exists.
-if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
-	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
+/**
+ * Generate a notice if autoload fails.
+ *
+ * @since 2.1.1
+ */
+function ep_labs_autoload_notice() {
+	$message = esc_html__( 'Error: Please run $ composer install in the ElasticPress Labs plugin directory.', 'elasticpress-labs' );
+	printf( '<div class="notice notice-error"><p>%s</p></div>', $message ); // @codingStandardsIgnoreLine Text is escaped in the variable already.
+	error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 }
 
-$tenup_plugin_updater = PucFactory::buildUpdateChecker(
-	'https://github.com/10up/ElasticPressLabs/',
-	__FILE__,
-	'ElasticPressLabs'
-);
-
-$tenup_plugin_updater->addResultFilter(
-	function( $plugin_info ) {
-		$plugin_info->icons = array(
-			'svg' => ELASTICPRESS_LABS_URL . 'assets/img/logo-icon.svg',
-		);
-		return $plugin_info;
-	}
-);
+// Require the autoloader if it exists. Do not run any other code otherwise
+if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
+	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
+} else {
+	add_action( 'admin_notices', 'ep_labs_autoload_notice' );
+	return;
+}
 
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
