@@ -39,7 +39,7 @@ jobs:
     - name: Make artifacts available
       uses: actions/upload-artifact@v3
       with:
-        name: Plugin Zip
+        name: elasticpress-labs
         retention-days: 2
         path: |
           ${{ github.workspace }}/elasticpress-labs.zip
