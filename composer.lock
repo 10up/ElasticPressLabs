@@ -13,21 +13,23 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "4a1736bdb480175beafe8329cf36593c165156dc"
+                "reference": "dc6a2ea675d0fd992ac8a482df718db47d3b9ac3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/4a1736bdb480175beafe8329cf36593c165156dc",
-                "reference": "4a1736bdb480175beafe8329cf36593c165156dc",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/dc6a2ea675d0fd992ac8a482df718db47d3b9ac3",
+                "reference": "dc6a2ea675d0fd992ac8a482df718db47d3b9ac3",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.0"
+                "composer/installers": "^1.0 || ^2.0",
+                "php": ">=7.0",
+                "psr/container": "1.0.0"
             },
             "require-dev": {
                 "10up/phpcs-composer": "dev-master",
+                "brianhenryie/strauss": "^0.14.0",
                 "phpcompatibility/phpcompatibility-wp": "*",
-                "phpunit/phpunit": "^9.5",
                 "wpackagist-plugin/woocommerce": "*",
                 "yoast/phpunit-polyfills": "^1.0"
             },
@@ -39,6 +41,12 @@
                         "type:wordpress-plugin",
                         "type:wordpress-theme"
                     ]
+                },
+                "strauss": {
+                    "target_directory": "vendor-prefixed",
+                    "namespace_prefix": "ElasticPress\\Vendor_Prefixed\\",
+                    "classmap_prefix": "ElasticPress_Vendor_Prefixed_",
+                    "constant_prefix": "EP_VENDOR_"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -72,7 +80,7 @@
                 "issues": "https://github.com/10up/ElasticPress/issues",
                 "source": "https://github.com/10up/ElasticPress/tree/develop"
             },
-            "time": "2023-02-27T20:31:25+00:00"
+            "time": "2023-08-31T18:45:07+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -1500,6 +1508,59 @@
                 }
             ],
             "time": "2023-02-27T13:06:37+00:00"
+        },
+        {
+            "name": "psr/container",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/container.git",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/container/zipball/b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common Container Interface (PHP FIG PSR-11)",
+            "homepage": "https://github.com/php-fig/container",
+            "keywords": [
+                "PSR-11",
+                "container",
+                "container-interface",
+                "container-interop",
+                "psr"
+            ],
+            "support": {
+                "issues": "https://github.com/php-fig/container/issues",
+                "source": "https://github.com/php-fig/container/tree/master"
+            },
+            "time": "2017-02-14T16:28:37+00:00"
         },
         {
             "name": "sebastian/cli-parser",
