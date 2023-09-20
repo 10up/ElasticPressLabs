@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c43372e35407116cbc96427731d3af0",
+    "content-hash": "11ce45da6f11ce4c572e02f0d4eec166",
     "packages": [],
     "packages-dev": [
         {
             "name": "10up/elasticpress",
-            "version": "dev-develop",
+            "version": "4.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "dc6a2ea675d0fd992ac8a482df718db47d3b9ac3"
+                "reference": "f157e59cd98972daa671353547f00346d28c42c3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/dc6a2ea675d0fd992ac8a482df718db47d3b9ac3",
-                "reference": "dc6a2ea675d0fd992ac8a482df718db47d3b9ac3",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/f157e59cd98972daa671353547f00346d28c42c3",
+                "reference": "f157e59cd98972daa671353547f00346d28c42c3",
                 "shasum": ""
             },
             "require": {
@@ -33,7 +33,6 @@
                 "wpackagist-plugin/woocommerce": "*",
                 "yoast/phpunit-polyfills": "^1.0"
             },
-            "default-branch": true,
             "type": "wordpress-plugin",
             "extra": {
                 "installer-paths": {
@@ -78,9 +77,9 @@
             ],
             "support": {
                 "issues": "https://github.com/10up/ElasticPress/issues",
-                "source": "https://github.com/10up/ElasticPress/tree/develop"
+                "source": "https://github.com/10up/ElasticPress/tree/4.7.1"
             },
-            "time": "2023-08-31T18:45:07+00:00"
+            "time": "2023-08-31T18:03:05+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -2825,8 +2824,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "10up/wp_mock": 20,
-        "10up/phpcs-composer": 20,
-        "10up/elasticpress": 20
+        "10up/phpcs-composer": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

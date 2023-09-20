@@ -29,7 +29,7 @@
     "phpunit/phpunit": "^9",
     "10up/wp_mock": "dev-trunk",
     "10up/phpcs-composer": "dev-master",
-    "10up/elasticpress": "dev-develop",
+    "10up/elasticpress": "*",
     "yoast/phpunit-polyfills": "^1.0",
     "wpackagist-plugin/woocommerce": "*"
   },
