@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia) via [#76](https://github.com/10up/ElasticPress/pull/76).
 
 ### Changed
-- Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72).
+- Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72) and [#79](https://github.com/10up/ElasticPress/pull/79).
 
 ### Removed
 - Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72).

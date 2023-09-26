@@ -28,6 +28,32 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
+= 2.1.1 - 2023-09-XX =
+
+__Added:__
+
+* Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia).
+
+__Changed:__
+
+* Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS).
+
+__Removed:__
+
+* Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS).
+
+__Fixed:__
+
+* Boolean Operator (Not) not giving the expected result. Props [@MARQAS](https://github.com/MARQAS).
+* Fatal Error in command line. Props [@MARQAS](https://github.com/MARQAS).
+* PHP Warnings. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Bumped `webpack` from 5.74.0 to 5.76.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `tough-cookie` from 4.1.2 to 4.1.3. Props [@dependabot](https://github.com/dependabot).
+
+
 = 2.1.0 - 2023-03-02 =
 
 __Added:__
