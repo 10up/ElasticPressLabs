@@ -24,7 +24,7 @@ class TestWooCommerceSubscriptionSearch extends BaseTestCase {
 
 		\ElasticPress\register_indexable_posts();
 
-		$instance = new ElasticPressLabs\Feature\WooCommerceSubscriptionSearch();
+		$instance = new \ElasticPressLabs\Feature\WooCommerceSubscriptionSearch();
 		\ElasticPress\Features::factory()->register_feature( $instance );
 
 		\ElasticPress\Features::factory()->activate_feature( 'protected_content' );
