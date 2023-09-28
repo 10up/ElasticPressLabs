@@ -7,6 +7,7 @@
 
 namespace ElasticPressLabs\Core;
 
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 use \WP_Error as WP_Error;
 
 /**
@@ -33,6 +34,8 @@ function setup() {
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
 	do_action( 'elasticpress_labs_loaded' );
+
+	setup_updater();
 }
 
 /**
@@ -96,13 +99,11 @@ function get_enqueue_contexts() {
  * @return string|WP_Error URL
  */
 function script_url( $script, $context ) {
-
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
 		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs script loader.' );
 	}
 
-	return ELASTICPRESS_LABS_URL . "dist/js/${script}.js";
-
+	return ELASTICPRESS_LABS_URL . "dist/js/{$script}.js";
 }
 
 /**
@@ -114,13 +115,11 @@ function script_url( $script, $context ) {
  * @return string URL
  */
 function style_url( $stylesheet, $context ) {
-
 	if ( ! in_array( $context, get_enqueue_contexts(), true ) ) {
 		return new WP_Error( 'invalid_enqueue_context', 'Invalid $context specified in ElasticPressLabs stylesheet loader.' );
 	}
 
-	return ELASTICPRESS_LABS_URL . "dist/css/${stylesheet}.css";
-
+	return ELASTICPRESS_LABS_URL . "dist/css/{$stylesheet}.css";
 }
 
 /**
@@ -238,4 +237,27 @@ function admin_notice_min_ep_version() {
 		</p>
 	</div>
 	<?php
+}
+
+/**
+ * Setup the updater
+ *
+ * @since 2.1.1
+ * @return void
+ */
+function setup_updater() {
+	$tenup_plugin_updater = PucFactory::buildUpdateChecker(
+		'https://github.com/10up/ElasticPressLabs/',
+		ELASTICPRESS_LABS_MAIN_FILE,
+		'ElasticPressLabs'
+	);
+
+	$tenup_plugin_updater->addResultFilter(
+		function( $plugin_info ) {
+			$plugin_info->icons = array(
+				'svg' => ELASTICPRESS_LABS_URL . 'assets/img/logo-icon.svg',
+			);
+			return $plugin_info;
+		}
+	);
 }

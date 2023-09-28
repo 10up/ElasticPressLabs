@@ -31,6 +31,14 @@ class CoAuthorsPlus extends Feature {
 	public $order = 10;
 
 	/**
+	 * Whether the Protected Content feature is active or not
+	 *
+	 * @since 2.1.1
+	 * @var bool
+	 */
+	protected $is_protected_content_feature_active = false;
+
+	/**
 	 * Initialize feature setting it's config
 	 *
 	 * @since 1.1.0
@@ -206,9 +214,10 @@ class CoAuthorsPlus extends Feature {
 	 * @return FeatureRequirementsStatus
 	 */
 	public function requirements_status() {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		$status = new FeatureRequirementsStatus( 0 );
 
-		if ( ! is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) || ! class_exists( 'CoAuthors_Plus' ) ) {
+		if ( ! \is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) || ! class_exists( '\CoAuthors_Plus' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Co-Authors Plus installed and activated.', 'elasticpress-labs' );
 		} elseif ( ! $this->is_protected_content_feature_active ) {

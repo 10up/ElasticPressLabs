@@ -22,38 +22,27 @@ define( 'ELASTICPRESS_LABS_VERSION', '2.1.0' );
 define( 'ELASTICPRESS_LABS_URL', plugin_dir_url( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ELASTICPRESS_LABS_INC', ELASTICPRESS_LABS_PATH . 'includes/' );
+define( 'ELASTICPRESS_LABS_MAIN_FILE', __FILE__ );
 
 define( 'ELASTICPRESS_LABS_MIN_EP_VERSION', '4.3.0' );
 
-// Require Composer autoloader if it exists.
+/**
+ * Generate a notice if autoload fails.
+ *
+ * @since 2.1.1
+ */
+function ep_labs_autoload_notice() {
+	$message = esc_html__( 'Error: Please run $ composer install in the ElasticPress Labs plugin directory.', 'elasticpress-labs' );
+	printf( '<div class="notice notice-error"><p>%s</p></div>', $message ); // @codingStandardsIgnoreLine Text is escaped in the variable already.
+	error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+}
+
+// Require the autoloader if it exists. Do not run any other code otherwise
 if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
 	require_once ELASTICPRESS_LABS_PATH . 'vendor/autoload.php';
 } else {
-	spl_autoload_register(
-		function( $class ) {
-			// project-specific namespace prefix.
-			$prefix = 'ElasticPressLabs\\';
-
-			// base directory for the namespace prefix.
-			$base_dir = __DIR__ . '/includes/classes/';
-
-			// does the class use the namespace prefix?
-			$len = strlen( $prefix );
-
-			if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-				return;
-			}
-
-			$relative_class = substr( $class, $len );
-
-			$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-			// if the file exists, require it.
-			if ( file_exists( $file ) ) {
-				require_once $file;
-			}
-		}
-	);
+	add_action( 'admin_notices', 'ep_labs_autoload_notice' );
+	return;
 }
 
 // Include files.

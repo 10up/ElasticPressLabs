@@ -145,7 +145,7 @@ class BooleanSearchOperators extends Feature {
 				 *
 				 * @return {string} New operator
 				 */
-				'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'OR', $query_vars, $search_text, $search_fields, $query ),
+				'default_operator' => \apply_filters( 'ep_labs_boolean_operators_default', 'AND', $query_vars, $search_text, $search_fields, $query ),
 
 				/**
 				 * Filter allowed boolean operators.

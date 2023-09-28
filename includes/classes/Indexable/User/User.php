@@ -639,13 +639,19 @@ class User extends Indexable {
 		 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
 		 * way to do that.
 		 */
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$objects = $wpdb->get_results( $wpdb->prepare( "SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d", (int) $args['offset'], (int) $args['number'] ) );
-
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$objects = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d",
+				(int) $args['offset'],
+				(int) $args['number']
+			)
+		);
 		return [
 			'objects'       => $objects,
 			'total_objects' => ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' ),
 		];
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -669,9 +675,7 @@ class User extends Indexable {
 
 		$mapping_file = 'initial.php';
 
-		if ( version_compare( $es_version, '5.0', '<' ) ) {
-			$mapping_file = 'pre-5-0.php';
-		} elseif ( version_compare( $es_version, '7.0', '>=' ) ) {
+		if ( version_compare( $es_version, '7.0', '>=' ) ) {
 			$mapping_file = '7-0.php';
 		}
 

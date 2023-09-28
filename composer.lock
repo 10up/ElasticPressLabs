@@ -4,34 +4,86 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c43372e35407116cbc96427731d3af0",
-    "packages": [],
-    "packages-dev": [
+    "content-hash": "4b241c80fbe9238a28eae418e782d2e1",
+    "packages": [
         {
-            "name": "10up/elasticpress",
-            "version": "dev-develop",
+            "name": "yahnis-elsts/plugin-update-checker",
+            "version": "v5.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "4a1736bdb480175beafe8329cf36593c165156dc"
+                "url": "https://github.com/YahnisElsts/plugin-update-checker.git",
+                "reference": "5a270988c5f76bfdfbbb42cccc7c9627f7dd64d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/4a1736bdb480175beafe8329cf36593c165156dc",
-                "reference": "4a1736bdb480175beafe8329cf36593c165156dc",
+                "url": "https://api.github.com/repos/YahnisElsts/plugin-update-checker/zipball/5a270988c5f76bfdfbbb42cccc7c9627f7dd64d0",
+                "reference": "5a270988c5f76bfdfbbb42cccc7c9627f7dd64d0",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.0"
+                "ext-json": "*",
+                "php": ">=5.6.20"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "load-v5p2.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Yahnis Elsts",
+                    "email": "whiteshadow@w-shadow.com",
+                    "homepage": "https://w-shadow.com/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A custom update checker for WordPress plugins and themes. Useful if you can't host your plugin in the official WP repository but still want it to support automatic updates.",
+            "homepage": "https://github.com/YahnisElsts/plugin-update-checker/",
+            "keywords": [
+                "automatic updates",
+                "plugin updates",
+                "theme updates",
+                "wordpress"
+            ],
+            "support": {
+                "issues": "https://github.com/YahnisElsts/plugin-update-checker/issues",
+                "source": "https://github.com/YahnisElsts/plugin-update-checker/tree/v5.2"
+            },
+            "time": "2023-08-17T12:44:32+00:00"
+        }
+    ],
+    "packages-dev": [
+        {
+            "name": "10up/elasticpress",
+            "version": "4.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/10up/ElasticPress.git",
+                "reference": "f157e59cd98972daa671353547f00346d28c42c3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/f157e59cd98972daa671353547f00346d28c42c3",
+                "reference": "f157e59cd98972daa671353547f00346d28c42c3",
+                "shasum": ""
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0",
+                "php": ">=7.0",
+                "psr/container": "1.0.0"
             },
             "require-dev": {
                 "10up/phpcs-composer": "dev-master",
+                "brianhenryie/strauss": "^0.14.0",
                 "phpcompatibility/phpcompatibility-wp": "*",
-                "phpunit/phpunit": "^9.5",
                 "wpackagist-plugin/woocommerce": "*",
                 "yoast/phpunit-polyfills": "^1.0"
             },
-            "default-branch": true,
             "type": "wordpress-plugin",
             "extra": {
                 "installer-paths": {
@@ -39,6 +91,12 @@
                         "type:wordpress-plugin",
                         "type:wordpress-theme"
                     ]
+                },
+                "strauss": {
+                    "target_directory": "vendor-prefixed",
+                    "namespace_prefix": "ElasticPress\\Vendor_Prefixed\\",
+                    "classmap_prefix": "ElasticPress_Vendor_Prefixed_",
+                    "constant_prefix": "EP_VENDOR_"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -70,9 +128,9 @@
             ],
             "support": {
                 "issues": "https://github.com/10up/ElasticPress/issues",
-                "source": "https://github.com/10up/ElasticPress/tree/develop"
+                "source": "https://github.com/10up/ElasticPress/tree/4.7.1"
             },
-            "time": "2023-02-27T20:31:25+00:00"
+            "time": "2023-08-31T18:03:05+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -1502,6 +1560,59 @@
             "time": "2023-02-27T13:06:37+00:00"
         },
         {
+            "name": "psr/container",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/container.git",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/container/zipball/b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common Container Interface (PHP FIG PSR-11)",
+            "homepage": "https://github.com/php-fig/container",
+            "keywords": [
+                "PSR-11",
+                "container",
+                "container-interface",
+                "container-interop",
+                "psr"
+            ],
+            "support": {
+                "issues": "https://github.com/php-fig/container/issues",
+                "source": "https://github.com/php-fig/container/tree/master"
+            },
+            "time": "2017-02-14T16:28:37+00:00"
+        },
+        {
             "name": "sebastian/cli-parser",
             "version": "1.0.1",
             "source": {
@@ -2764,8 +2875,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "10up/wp_mock": 20,
-        "10up/phpcs-composer": 20,
-        "10up/elasticpress": 20
+        "10up/phpcs-composer": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
