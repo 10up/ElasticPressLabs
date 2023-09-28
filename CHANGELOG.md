@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
-## [2.1.1] - 2023-09-XX
+## [2.1.1] - 2023-09-28
 
 ### Added
 - Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia) via [#76](https://github.com/10up/ElasticPress/pull/76).
