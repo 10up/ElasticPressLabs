@@ -2,16 +2,16 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.1.0\n"
+"Project-Id-Version: ElasticPress Labs 2.1.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-02-28T13:04:54+00:00\n"
+"POT-Creation-Date: 2023-09-28T12:19:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.7.1\n"
+"X-Generator: WP-CLI 2.8.1\n"
 "X-Domain: elasticpress-labs\n"
 
 #. Plugin Name of the plugin
@@ -33,6 +33,10 @@ msgstr ""
 
 #. Author URI of the plugin
 msgid "https://10up.com"
+msgstr ""
+
+#: elasticpresslabs.php:35
+msgid "Error: Please run $ composer install in the ElasticPress Labs plugin directory."
 msgstr ""
 
 #: includes/classes/Feature/BooleanSearchOperators.php:39
@@ -86,23 +90,23 @@ msgstr ""
 msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:41
+#: includes/classes/Feature/CoAuthorsPlus.php:49
 msgid "Co-Authors Plus"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:187
+#: includes/classes/Feature/CoAuthorsPlus.php:195
 msgid "Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:198
+#: includes/classes/Feature/CoAuthorsPlus.php:206
 msgid "If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:213
+#: includes/classes/Feature/CoAuthorsPlus.php:222
 msgid "You need to have Co-Authors Plus installed and activated."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:216
+#: includes/classes/Feature/CoAuthorsPlus.php:225
 msgid "You need to activate the Protected Content Feature to this feature work properly."
 msgstr ""
 
@@ -110,11 +114,11 @@ msgstr ""
 msgid "Enable or disable the ElastisPress Labs Features."
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:132
+#: includes/classes/Feature/ElasticPressLabs.php:136
 msgid "Register feature"
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:143
+#: includes/classes/Feature/ElasticPressLabs.php:147
 msgid "Unregister feature"
 msgstr ""
 
@@ -165,7 +169,7 @@ msgid "Version"
 msgstr ""
 
 #: includes/classes/Feature/SearchAlgorithm.php:138
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:141
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:145
 msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
@@ -181,15 +185,19 @@ msgstr ""
 msgid "By default, WooCommerce Subscriptions does not use ElasticPress. This tells it to index and search those, just like ElasticPress does for orders."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:139
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:140
+msgid "This feature requires the WooCommerce Subscriptions plugin to be activated."
+msgstr ""
+
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:143
 msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
 msgstr ""
 
-#: includes/functions/core.php:219
+#: includes/functions/core.php:218
 msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
 #. translators: Min. EP version
-#: includes/functions/core.php:234
+#: includes/functions/core.php:233
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""
