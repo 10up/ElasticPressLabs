@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 5.6
-Tested up to:      6.1
-Stable tag:        2.0.0
+Tested up to:      6.3
+Stable tag:        2.1.1
 Requires PHP:      7.0
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,6 +27,32 @@ This plugin provides a simple interface to enable and disable features.
 5. Settings to change the version of the search algorithm between 3.4 and 3.5.
 
 == Changelog ==
+
+= 2.1.1 - 2023-09-28 =
+
+__Added:__
+
+* Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia).
+
+__Changed:__
+
+* Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS).
+
+__Removed:__
+
+* Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS).
+
+__Fixed:__
+
+* Boolean Operator (Not) not giving the expected result. Props [@MARQAS](https://github.com/MARQAS).
+* Fatal Error in command line. Props [@MARQAS](https://github.com/MARQAS).
+* PHP Warnings. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Bumped `webpack` from 5.74.0 to 5.76.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `tough-cookie` from 4.1.2 to 4.1.3. Props [@dependabot](https://github.com/dependabot).
+
 
 = 2.1.0 - 2023-03-02 =
 
