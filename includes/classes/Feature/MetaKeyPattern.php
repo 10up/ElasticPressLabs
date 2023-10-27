@@ -85,54 +85,87 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	 * Display field settings on the Dashboard.
 	 */
 	public function output_feature_box_settings() {
-		$settings = $this->get_settings();
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.0.0', '<' ) ) {
+			$settings = $this->get_settings();
 
-		if ( ! $settings ) {
-			$settings = [];
+			if ( ! $settings ) {
+				$settings = [];
+			}
+
+			$settings = wp_parse_args( $settings, $this->default_settings );
+
+			?>
+			<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+				<div class="field-name status">
+					<label for="meta_key_allow_pattern">
+						<?php esc_html_e( 'Allow patterns', 'elasticpress-labs' ); ?>
+					</label>
+				</div>
+				<div class="input-wrap">
+					<textarea
+						class="setting-field large-text code"
+						id="meta_key_allow_pattern"
+						rows="4"
+						name="settings[meta_key_allow_pattern]"
+					><?php echo empty( $settings['meta_key_allow_pattern'] ) ? '' : esc_textarea( $settings['meta_key_allow_pattern'] ); ?></textarea>
+					<p class="field-description">
+						<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
+						<?php esc_html_e( 'Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5', 'elasticpress-labs' ); ?>
+					</p>
+				</div>
+			</div>
+
+			<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
+				<div class="field-name status">
+					<label for="meta_key_deny_pattern">
+						<?php esc_html_e( 'Deny patterns', 'elasticpress-labs' ); ?>
+					</label>
+				</div>
+				<div class="input-wrap">
+					<textarea
+						class="setting-field large-text code"
+						id="meta_key_deny_pattern"
+						rows="4"
+						name="settings[meta_key_deny_pattern]"
+					><?php echo empty( $settings['meta_key_deny_pattern'] ) ? '' : esc_textarea( $settings['meta_key_deny_pattern'] ); ?></textarea>
+					<p class="field-description">
+						<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
+					</p>
+				</div>
+			</div>
+			<?php
+			return;
 		}
 
-		$settings = wp_parse_args( $settings, $this->default_settings );
+		_doing_it_wrong(
+			__METHOD__,
+			esc_html__( 'Settings are now generated via the set_settings_schema() method.' ),
+			'ElasticPress Labs 2.2.0'
+		);
+	}
 
-		?>
-		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
-			<div class="field-name status">
-				<label for="meta_key_allow_pattern">
-					<?php esc_html_e( 'Allow patterns', 'elasticpress-labs' ); ?>
-				</label>
-			</div>
-			<div class="input-wrap">
-				<textarea
-					class="setting-field large-text code"
-					id="meta_key_allow_pattern"
-					rows="4"
-					name="settings[meta_key_allow_pattern]"
-				><?php echo empty( $settings['meta_key_allow_pattern'] ) ? '' : esc_textarea( $settings['meta_key_allow_pattern'] ); ?></textarea>
-				<p class="field-description">
-					<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
-					<?php esc_html_e( 'Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5', 'elasticpress-labs' ); ?>
-				</p>
-			</div>
-		</div>
-
-		<div class="field js-toggle-feature" data-feature="<?php echo esc_attr( $this->slug ); ?>">
-			<div class="field-name status">
-				<label for="meta_key_deny_pattern">
-					<?php esc_html_e( 'Deny patterns', 'elasticpress-labs' ); ?>
-				</label>
-			</div>
-			<div class="input-wrap">
-				<textarea
-					class="setting-field large-text code"
-					id="meta_key_deny_pattern"
-					rows="4"
-					name="settings[meta_key_deny_pattern]"
-				><?php echo empty( $settings['meta_key_deny_pattern'] ) ? '' : esc_textarea( $settings['meta_key_deny_pattern'] ); ?></textarea>
-				<p class="field-description">
-					<?php esc_html_e( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ); ?>
-				</p>
-			</div>
-		</div>
-		<?php
+	/**
+	 * Set the `settings_schema` attribute
+	 *
+	 * @since 2.2.0
+	 */
+	public function set_settings_schema() {
+		$this->settings_schema = [
+			[
+				'default' => '',
+				'help'    => __( '<p>Separate multiple regular expressions with line breaks.</p><p>Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5</p>', 'elasticpress-labs' ),
+				'key'     => 'meta_key_allow_pattern',
+				'label'   => __( 'Allow patterns', 'elasticpress-labs' ),
+				'type'    => 'textarea',
+			],
+			[
+				'default' => '',
+				'help'    => __( 'Separate multiple regular expressions with line breaks.', 'elasticpress-labs' ),
+				'key'     => 'meta_key_deny_pattern',
+				'label'   => __( 'Deny patterns', 'elasticpress-labs' ),
+				'type'    => 'textarea',
+			],
+		];
 	}
 
 	/**
