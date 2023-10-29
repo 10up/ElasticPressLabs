@@ -13,6 +13,15 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
+## [2.2.0] - 2023-XX-XX
+
+### Added
+- Compatibility with ElasticPress 5.0.0. Props [@felipeelia](https://github.com/felipeelia) via [#81](https://github.com/10up/ElasticPress/pull/81).
+
+### Security
+- Bumped `@babel/traverse` from 7.19.3 to 7.23.2. Props [@dependabot](https://github.com/dependabot) via [#80](https://github.com/10up/ElasticPressLabs/pull/80).
+
+
 ## [2.1.1] - 2023-09-28
 
 ### Added
@@ -90,6 +99,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.2.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.1...2.2.0
 [2.1.1]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/10up/ElasticPressLabs/compare/1.2.0...2.0.0
