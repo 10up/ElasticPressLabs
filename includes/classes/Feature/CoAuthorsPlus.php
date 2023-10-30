@@ -54,6 +54,8 @@ class CoAuthorsPlus extends Feature {
 
 		$this->is_protected_content_feature_active = $protected_content_feature && $protected_content_feature->is_active();
 
+		$this->requires_feature = 'protected_content';
+
 		parent::__construct();
 	}
 
@@ -202,9 +204,33 @@ class CoAuthorsPlus extends Feature {
 	 * @since 1.1.0
 	 */
 	public function output_feature_box_long() {
-		?>
-		<p><?php echo wp_kses_post( __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) ); ?></p>
-		<?php
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.0.0', '<' ) ) {
+			?>
+			<p><?php echo wp_kses_post( __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) ); ?></p>
+			<?php
+			return;
+		}
+
+		_doing_it_wrong(
+			__METHOD__,
+			esc_html__( 'Settings are now generated via the set_settings_schema() method.' ),
+			'ElasticPress Labs 2.2.0'
+		);
+	}
+
+	/**
+	 * Set the `settings_schema` attribute
+	 *
+	 * @since 2.2.0
+	 */
+	public function set_settings_schema() {
+		$this->settings_schema = [
+			[
+				'key'   => 'instructions',
+				'label' => '<p>' . __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) . '</p>',
+				'type'  => 'markup',
+			],
+		];
 	}
 
 	/**
