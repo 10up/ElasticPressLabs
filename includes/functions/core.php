@@ -210,6 +210,13 @@ function maybe_load_features() {
 		return;
 	}
 
+	// Remove the old `elasticpress_labs` feature from EP settings
+	$feature_settings = \ElasticPress\Features::factory()->get_feature_settings();
+	if ( isset( $feature_settings['elasticpress_labs'] ) ) {
+		unset( $feature_settings['elasticpress_labs'] );
+		\ElasticPress\Utils\update_option( 'ep_feature_settings', $feature_settings );
+	}
+
 	$sep          = DIRECTORY_SEPARATOR;
 	$features_dir = ELASTICPRESS_LABS_PATH . "includes{$sep}classes{$sep}Feature{$sep}";
 
