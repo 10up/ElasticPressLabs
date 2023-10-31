@@ -231,7 +231,6 @@ function maybe_load_features() {
 			$subfeature = new $class_name();
 
 			\ElasticPress\Features::factory()->register_feature( $subfeature );
-			$subfeature->setup();
 		}
 	}
 }
