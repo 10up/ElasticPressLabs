@@ -468,7 +468,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	 * @since 2.4
 	 */
 	public function requirements_status() {
-		$status = new ElasticPress\FeatureRequirementsStatus( 0 );
+		$status = new ElasticPress\FeatureRequirementsStatus( 1 );
 
 		if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
 			$url = admin_url( 'network/admin.php?page=elasticpress-sync' );

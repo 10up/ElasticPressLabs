@@ -302,7 +302,7 @@ class BooleanSearchOperators extends Feature {
 			return new FeatureRequirementsStatus( 2, esc_html__( 'This feature requires the "Post Search" feature to be enabled', 'elasticpress-labs' ) );
 		}
 
-		return parent::requirements_status();
+		return new FeatureRequirementsStatus( 1 );
 	}
 
 	/**
