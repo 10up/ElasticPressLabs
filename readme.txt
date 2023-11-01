@@ -3,7 +3,7 @@ Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 5.6
 Tested up to:      6.3
-Stable tag:        2.1.1
+Stable tag:        2.2.0
 Requires PHP:      7.0
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,13 +20,28 @@ This plugin provides a simple interface to enable and disable features.
 
 == Screenshots ==
 
-1. ElasticPress Labs options section within ElasticPress Features settings screen, showing with `Status: Enabled`.
-2. Settings to allow boolean search operators in search queries.
-3. Settings to add Co-Authors Plus plugin support.
-4. Settings to include or exclude meta key patterns.
-5. Settings to change the version of the search algorithm between 3.4 and 3.5.
+1. Settings to allow boolean search operators in search queries.
+2. Settings to add Co-Authors Plus plugin support.
+3. Settings to include or exclude meta key patterns.
+4. Settings to change the version of the search algorithm between 3.4 and 3.5.
 
 == Changelog ==
+
+
+= 2.2.0 - 2023-11-01 =
+
+__Added:__
+
+* Compatibility with ElasticPress 5.0.0. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+
+__Changed:__
+
+* Features do not autoactivate anymore. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Bumped `@babel/traverse` from 7.19.3 to 7.23.2. Props [@dependabot](https://github.com/dependabot).
+
 
 = 2.1.1 - 2023-09-28 =
 

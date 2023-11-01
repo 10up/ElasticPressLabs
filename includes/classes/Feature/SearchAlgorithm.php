@@ -75,43 +75,77 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * Display field settings on the Dashboard.
 	 */
 	public function output_feature_box_settings() {
-		$settings = $this->get_settings();
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.0.0', '<' ) ) {
+			$settings = $this->get_settings();
 
-		if ( ! $settings ) {
-			$settings = [];
+			if ( ! $settings ) {
+				$settings = [];
+			}
+
+			$settings = wp_parse_args( $settings, $this->default_settings );
+
+			?>
+			<div class="field">
+				<div class="field-name status">
+					<?php esc_html_e( 'Version', 'elasticpress-labs' ); ?>
+				</div>
+
+				<div class="input-wrap">
+					<?php
+					$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
+					foreach ( $search_algorithms as $search_algorithm ) {
+						?>
+						<label>
+							<input
+								name="settings[search_algorithm_version]"
+								type="radio"
+								<?php checked( $settings['search_algorithm_version'], $search_algorithm->get_slug() ); ?>
+								value="<?php echo esc_attr( $search_algorithm->get_slug() ); ?>">
+							<?php echo esc_html( $search_algorithm->get_name() ); ?>
+						</label>
+						<p class="field-description">
+							<?php echo wp_kses_post( $search_algorithm->get_description() ); ?>
+						</p>
+						<br>
+						<?php
+					}
+					?>
+				</div>
+			</div>
+			<?php
+			return;
 		}
 
-		$settings = wp_parse_args( $settings, $this->default_settings );
+		_doing_it_wrong(
+			__METHOD__,
+			esc_html__( 'Settings are now generated via the set_settings_schema() method.' ),
+			'ElasticPress Labs 2.2.0'
+		);
+	}
 
-		?>
-		<div class="field">
-			<div class="field-name status">
-				<?php esc_html_e( 'Version', 'elasticpress-labs' ); ?>
-			</div>
+	/**
+	 * Set the `settings_schema` attribute
+	 *
+	 * @since 2.2.0
+	 */
+	public function set_settings_schema() {
+		$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
+		$options           = [];
 
-			<div class="input-wrap">
-				<?php
-				$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
-				foreach ( $search_algorithms as $search_algorithm ) {
-					?>
-					<label>
-						<input
-							name="settings[search_algorithm_version]"
-							type="radio"
-							<?php checked( $settings['search_algorithm_version'], $search_algorithm->get_slug() ); ?>
-							value="<?php echo esc_attr( $search_algorithm->get_slug() ); ?>">
-						<?php echo esc_html( $search_algorithm->get_name() ); ?>
-					</label>
-					<p class="field-description">
-						<?php echo wp_kses_post( $search_algorithm->get_description() ); ?>
-					</p>
-					<br>
-					<?php
-				}
-				?>
-			</div>
-		</div>
-		<?php
+		foreach ( $search_algorithms as $search_algorithm ) {
+			$options[] = [
+				'label' => $search_algorithm->get_name() . '<br><small>' . $search_algorithm->get_description() . '</small>',
+				'value' => $search_algorithm->get_slug(),
+			];
+		}
+
+		$this->settings_schema[] = [
+			'default' => '3.5',
+			'key'     => 'search_algorithm_version',
+			'label'   => __( 'Version', 'elasticpress-labs' ),
+			'options' => $options,
+			'type'    => 'radio',
+		];
 	}
 
 	/**
@@ -133,7 +167,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @since 2.0
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 0 );
+		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
 
 		$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
 

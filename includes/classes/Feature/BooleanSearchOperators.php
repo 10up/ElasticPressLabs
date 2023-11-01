@@ -302,7 +302,7 @@ class BooleanSearchOperators extends Feature {
 			return new FeatureRequirementsStatus( 2, esc_html__( 'This feature requires the "Post Search" feature to be enabled', 'elasticpress-labs' ) );
 		}
 
-		return parent::requirements_status();
+		return new FeatureRequirementsStatus( 1 );
 	}
 
 	/**
@@ -318,6 +318,25 @@ class BooleanSearchOperators extends Feature {
 	 * Output feature box long
 	 */
 	public function output_feature_box_long() {
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.0.0', '<' ) ) {
+			echo wp_kses( $this->get_instructions(), 'ep-html' );
+			return;
+		}
+
+		_doing_it_wrong(
+			__METHOD__,
+			esc_html__( 'Settings are now generated via the set_settings_schema() method.' ),
+			'ElasticPress Labs 2.2.0'
+		);
+	}
+
+	/**
+	 * Generate the instructions text
+	 *
+	 * @since 2.2.0
+	 */
+	public function get_instructions() {
+		ob_start();
 		?>
 		<p><?php esc_html_e( 'Allows users to search using the following boolean operators:', 'elasticpress-labs' ); ?></p>
 		<ul>
@@ -403,5 +422,21 @@ class BooleanSearchOperators extends Feature {
 			</li>
 		</ul>
 		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Set the `settings_schema` attribute
+	 *
+	 * @since 2.2.0
+	 */
+	public function set_settings_schema() {
+		$this->settings_schema = [
+			[
+				'key'   => 'instructions',
+				'label' => $this->get_instructions(),
+				'type'  => 'markup',
+			],
+		];
 	}
 }

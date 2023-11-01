@@ -29,7 +29,7 @@ function setup() {
 	// Hook to allow async or defer on asset loading.
 	add_filter( 'script_loader_tag', $n( 'script_loader_tag' ), 10, 2 );
 
-	add_action( 'plugins_loaded', $n( 'maybe_load_features' ) );
+	add_action( 'plugins_loaded', $n( 'maybe_load_features' ), 11 );
 
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
@@ -201,12 +201,38 @@ function maybe_load_features() {
 		return;
 	}
 
-	// Include your class file.
-	require_once ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
-	// Register your feature in ElasticPress.
-	\ElasticPress\Features::factory()->register_feature(
-		new \ElasticPressLabs()
-	);
+	if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.0.0', '<' ) ) {
+		// Include your class file.
+		require_once ELASTICPRESS_LABS_INC . 'classes/Feature/ElasticPressLabs.php';
+		\ElasticPress\Features::factory()->register_feature(
+			new \ElasticPressLabs()
+		);
+		return;
+	}
+
+	// Remove the old `elasticpress_labs` feature from EP settings
+	$feature_settings = \ElasticPress\Features::factory()->get_feature_settings();
+	if ( isset( $feature_settings['elasticpress_labs'] ) ) {
+		unset( $feature_settings['elasticpress_labs'] );
+		\ElasticPress\Utils\update_option( 'ep_feature_settings', $feature_settings );
+	}
+
+	$sep          = DIRECTORY_SEPARATOR;
+	$features_dir = ELASTICPRESS_LABS_PATH . "includes{$sep}classes{$sep}Feature{$sep}";
+
+	foreach ( glob( "{$features_dir}*.php" ) as $filename ) {
+		if ( realpath( $filename ) === __FILE__ ) {
+			continue;
+		}
+
+		$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
+
+		if ( class_exists( $class_name ) ) {
+			$subfeature = new $class_name();
+
+			\ElasticPress\Features::factory()->register_feature( $subfeature );
+		}
+	}
 }
 
 /**
