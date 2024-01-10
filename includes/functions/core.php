@@ -8,7 +8,7 @@
 namespace ElasticPressLabs\Core;
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-use \WP_Error as WP_Error;
+use WP_Error;
 
 /**
  * Default setup routine
@@ -16,8 +16,8 @@ use \WP_Error as WP_Error;
  * @return void
  */
 function setup() {
-	$n = function( $function ) {
-		return __NAMESPACE__ . "\\$function";
+	$n = function ( $function_name ) {
+		return __NAMESPACE__ . "\\$function_name";
 	};
 
 	add_action( 'init', $n( 'i18n' ) );
@@ -77,7 +77,6 @@ function activate() {
  * @return void
  */
 function deactivate() {
-
 }
 
 
@@ -279,7 +278,7 @@ function setup_updater() {
 	);
 
 	$tenup_plugin_updater->addResultFilter(
-		function( $plugin_info ) {
+		function ( $plugin_info ) {
 			$plugin_info->icons = array(
 				'svg' => ELASTICPRESS_LABS_URL . 'assets/img/logo-icon.svg',
 			);

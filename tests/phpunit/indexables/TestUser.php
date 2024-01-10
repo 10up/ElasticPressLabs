@@ -149,7 +149,7 @@ class TestUser extends BaseTestCase {
 	public function testUserSync() {
 		add_action(
 			'ep_sync_user_on_transition',
-			function() {
+			function () {
 				$this->fired_actions['ep_sync_user_on_transition'] = true;
 			}
 		);
@@ -216,14 +216,14 @@ class TestUser extends BaseTestCase {
 
 		add_action(
 			'ep_sync_user_on_transition',
-			function() {
+			function () {
 				$this->fired_actions['ep_sync_user_on_transition'] = true;
 			}
 		);
 
 		add_filter(
 			'ep_user_sync_kill',
-			function( $kill, $user_id ) use ( $created_user_id ) {
+			function ( $kill, $user_id ) use ( $created_user_id ) {
 				if ( $created_user_id === $user_id ) {
 					return true;
 				}
@@ -614,7 +614,6 @@ class TestUser extends BaseTestCase {
 
 		$this->assertEquals( 'admin', $users_display_name_fetched[0] );
 		$this->assertEquals( 'Zoey', $users_display_name_fetched[4] );
-
 	}
 
 	/**
@@ -1422,7 +1421,7 @@ class TestUser extends BaseTestCase {
 
 		add_action(
 			'pre_http_request',
-			function( $preempt, $parsed_args, $url ) {
+			function ( $preempt, $parsed_args ) {
 				$body = json_decode( $parsed_args['body'], true );
 
 				$this->assertNotEmpty( $body['sort'][0]['_score'] );
@@ -1430,7 +1429,7 @@ class TestUser extends BaseTestCase {
 				return $preempt;
 			},
 			10,
-			3
+			2
 		);
 
 		$user_query = new \WP_User_Query(
@@ -1470,7 +1469,7 @@ class TestUser extends BaseTestCase {
 
 		add_filter(
 			'ep_prepare_user_meta_allowed_protected_keys',
-			function( $meta_keys ) {
+			function ( $meta_keys ) {
 				$meta_keys[] = '_phone_number';
 
 				return $meta_keys;
@@ -1543,7 +1542,7 @@ class TestUser extends BaseTestCase {
 		$this->assertContains( 'ep_stop', $index_settings['index.analysis.analyzer.default.filter'] );
 		$this->assertSame( '_english_', $index_settings['index.analysis.filter.ep_stop.stopwords'] );
 
-		$change_lang = function( $lang, $context ) {
+		$change_lang = function ( $lang, $context ) {
 			return 'filter_ep_stop' === $context ? '_arabic_' : $lang;
 		};
 		add_filter( 'ep_analyzer_language', $change_lang, 11, 2 );
@@ -1555,5 +1554,4 @@ class TestUser extends BaseTestCase {
 		$index_settings = $settings[ $index_name ]['settings'];
 		$this->assertSame( '_arabic_', $index_settings['index.analysis.filter.ep_stop.stopwords'] );
 	}
-
 }

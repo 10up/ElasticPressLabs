@@ -105,5 +105,4 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum)' ) );
 		$this->assertNotTrue( $feature->query_uses_boolean_operators( 'museum *art' ) );
 	}
-
 }
