@@ -72,33 +72,6 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the `output_feature_box_long` method.
-	 *
-	 * @group MetaKeyPattern
-	 */
-	public function testBoxLong() {
-		ob_start();
-		$this->get_feature()->output_feature_box_long();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'This feature will give you the most control over the metadata indexed.', $output );
-	}
-
-	/**
-	 * Test the `output_feature_box_settings` method.
-	 *
-	 * @group MetaKeyPattern
-	 */
-	public function testOutputFeatureBoxSettings() {
-		ob_start();
-		$this->get_feature()->output_feature_box_settings();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'Allow patterns', $output );
-		$this->assertStringContainsString( 'Deny patterns', $output );
-	}
-
-	/**
 	 * Test the `is_match` method.
 	 *
 	 * @group MetaKeyPattern

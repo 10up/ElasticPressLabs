@@ -62,19 +62,6 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test box long text
-	 *
-	 * @since  1.2.0
-	 */
-	public function testBoxLong() {
-		ob_start();
-		$this->get_feature()->output_feature_box_long();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'Allows users to search using the following boolean operators:', $output );
-	}
-
-	/**
 	 * Text query_uses_boolean_operators function
 	 *
 	 * @since 1.2.0

@@ -77,7 +77,9 @@ class TestUser extends BaseTestCase {
 	public function createAndIndexUsers() {
 		ElasticPress\Indexables::factory()->get( 'user' )->sync_manager->add_to_queue( 1 );
 
-		ElasticPress\Indexables::factory()->get( 'user' )->bulk_index( array_keys( ElasticPress\Indexables::factory()->get( 'user' )->sync_manager->sync_queue ) );
+		ElasticPress\Indexables::factory()->get( 'user' )->bulk_index(
+			array_keys( ElasticPress\Indexables::factory()->get( 'user' )->sync_manager->sync_queue[1] )
+		);
 
 		$user_1 = $this->ep_factory->user->create(
 			[
