@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a40018d66ffe21d50195f776225469c2",
+    "content-hash": "cc6f16e26ce19864343da23c81461efd",
     "packages": [
         {
             "name": "yahnis-elsts/plugin-update-checker",
@@ -60,16 +60,16 @@
     "packages-dev": [
         {
             "name": "10up/elasticpress",
-            "version": "5.0.1",
+            "version": "dev-develop",
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "d3c15581301c427dabadb9f82c0951c9545dcd4e"
+                "reference": "01ce0e9ef18d59b68f54a7286d2fb75443cd2216"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/d3c15581301c427dabadb9f82c0951c9545dcd4e",
-                "reference": "d3c15581301c427dabadb9f82c0951c9545dcd4e",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/01ce0e9ef18d59b68f54a7286d2fb75443cd2216",
+                "reference": "01ce0e9ef18d59b68f54a7286d2fb75443cd2216",
                 "shasum": ""
             },
             "require": {
@@ -84,6 +84,7 @@
                 "wpackagist-plugin/woocommerce": "*",
                 "yoast/phpunit-polyfills": "^1.0"
             },
+            "default-branch": true,
             "type": "wordpress-plugin",
             "extra": {
                 "installer-paths": {
@@ -128,9 +129,9 @@
             ],
             "support": {
                 "issues": "https://github.com/10up/ElasticPress/issues",
-                "source": "https://github.com/10up/ElasticPress/tree/5.0.1"
+                "source": "https://github.com/10up/ElasticPress/tree/develop"
             },
-            "time": "2023-12-12T17:07:53+00:00"
+            "time": "2024-01-11T19:03:21+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -3121,6 +3122,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "10up/wp_mock": 20,
+        "10up/elasticpress": 20,
         "phpcompatibility/php-compatibility": 20
     },
     "prefer-stable": false,

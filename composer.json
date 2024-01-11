@@ -30,7 +30,7 @@
     "phpunit/phpunit": "^9",
     "10up/wp_mock": "dev-trunk",
     "10up/phpcs-composer": "^3.0",
-    "10up/elasticpress": "*",
+    "10up/elasticpress": "dev-develop",
     "yoast/phpunit-polyfills": "^1.0",
     "wpackagist-plugin/woocommerce": "*",
     "phpcompatibility/phpcompatibility-wp": "*",
@@ -40,7 +40,10 @@
     "lint": "phpcs . -s --runtime-set testVersion 7.0-",
     "lint-fix": "phpcbf . --runtime-set testVersion 7.0-",
     "test": "phpunit",
-    "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true"
+    "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true",
+    "post-autoload-dump": [
+      "cd vendor/elasticpress && composer install && npm set-script prepare \"\" && npm ci && npm run build"
+    ]
   },
   "extra": {
     "installer-paths": {
