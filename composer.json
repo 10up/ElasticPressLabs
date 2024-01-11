@@ -42,7 +42,7 @@
     "test": "phpunit",
     "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true",
     "post-autoload-dump": [
-      "cd vendor/elasticpress && composer install && npm set-script prepare \"\" && npm ci && npm run build"
+      "cd vendor/elasticpress && composer install && npm pkg set scripts.prepare=\" \" && npm ci && npm run build"
     ]
   },
   "extra": {
