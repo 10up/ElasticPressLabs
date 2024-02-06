@@ -41,7 +41,7 @@ class ExternalContent extends Feature {
 	public function setup() {
 		add_filter( 'ep_prepare_meta_data', [ $this, 'append_external_content' ] );
 		add_filter( 'ep_external_content_file_content', 'wp_strip_all_tags' );
-		add_filter( 'ep_external_content_file_content', [ $this, 'maybe_remove_js_reserved_words' ], 10, 2 );
+		add_filter( 'ep_external_content_file_content', [ $this, 'maybe_parse_js' ], 10, 2 );
 		add_filter( 'ep_prepare_meta_allowed_protected_keys', [ $this, 'allow_meta_keys' ], 10, 2 );
 	}
 
@@ -133,6 +133,14 @@ class ExternalContent extends Feature {
 	public function get_meta_keys() {
 		$meta_keys = preg_split( "/\r\n|\n|\r/", $this->get_setting( 'meta_fields' ) );
 
+		/**
+		 * Filter the list meta keys that contain paths or URLs to external content
+		 *
+		 * @since 2.3.0
+		 * @hook ep_external_content_meta_keys
+		 * @param {array} $meta_keys List of meta keys
+		 * @return {array} New list of meta keys
+		 */
 		return apply_filters( 'ep_external_content_meta_keys', $meta_keys );
 	}
 
@@ -143,6 +151,19 @@ class ExternalContent extends Feature {
 	 * @return string
 	 */
 	public function get_stored_meta_key( $meta_key ) {
+		/**
+		 * Filter the meta key that will contain the external content.
+		 *
+		 * If a meta key `meta_key_1` has `https://wordpress.org/news/wp-json/wp/v2/posts/16837`
+		 * as its value, the `ep_external_content_meta_key_1` field would have that post JSON as its value.
+		 * With this filter it is possible to change that `ep_external_content_meta_key_1` meta key.
+		 *
+		 * @since 2.3.0
+		 * @hook ep_external_content_stored_meta_key
+		 * @param {string} $stored_meta_key Meta key that holds the actual external content
+		 * @param {string} $meta_key Meta key that contains the external content path or URL
+		 * @return {string} New $stored_meta_key
+		 */
 		return apply_filters( 'ep_external_content_stored_meta_key', "ep_external_content_{$meta_key}", $meta_key );
 	}
 
@@ -177,9 +198,30 @@ class ExternalContent extends Feature {
 	 * @param string $path_or_url File path or URL
 	 * @return string
 	 */
-	public function maybe_remove_js_reserved_words( $content, $path_or_url ) {
-		if ( str_ends_with( $path_or_url, '.js' ) ) {
-			$content = str_replace( get_js_reserved_words(), '', $content );
+	public function maybe_parse_js( $content, $path_or_url ) {
+		if ( stripos( $path_or_url, '.js' ) !== false ) {
+			/**
+			 * Filter the method of parsing JavaScript files.
+			 *
+			 * If the external content path or URL is a JS file, it is possible to parse its content.
+			 * Passing `only_strings` (default) only strings will be stored. Passing `remove_js_reserved_words`
+			 * all JS reserved words will be removed, leaving strings and function names, for example.
+			 * If anything else is sent, the content is not changed.
+			 *
+			 * @since 2.3.0
+			 * @hook ep_external_content_parse_js_method
+			 * @param {string} $method Method to parse the JS file. Could be `only_strings` or `remove_js_reserved_words`.
+			 * @return {string} New $method
+			 */
+			$method = apply_filters( 'ep_external_content_parse_js_method', 'only_strings' );
+
+			if ( 'only_strings' === $method && preg_match_all( '/([\'"])(?:\\\1|(?!\1).)*?\1/', $content, $matches ) ) {
+				$content = implode( ' ', $matches[0] );
+			}
+
+			if ( 'remove_js_reserved_words' === $method ) {
+				$content = str_replace( get_js_reserved_words(), '', $content );
+			}
 		}
 		return $content;
 	}
@@ -194,6 +236,17 @@ class ExternalContent extends Feature {
 	 * @return array
 	 */
 	protected function add_external_content_to_post_meta( $post_meta, $meta_key, $content, $path_or_url ) {
+		/**
+		 * Filter the content.
+		 *
+		 * @since 2.3.0
+		 * @hook ep_external_content_file_content
+		 * @param {string} $content     Content being processed
+		 * @param {string} $path_or_url Path or URL
+		 * @param {string} $meta_key    The meta key that contains the path or URL
+		 * @param {array}  $post_meta   Post meta
+		 * @return {string} New $content
+		 */
 		$content = apply_filters( 'ep_external_content_file_content', $content, $path_or_url, $meta_key, $post_meta );
 
 		if ( empty( $content ) ) {
