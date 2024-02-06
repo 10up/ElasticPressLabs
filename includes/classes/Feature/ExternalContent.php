@@ -2,6 +2,11 @@
 /**
  * External Content integration Feature
  *
+ * With this feature, if a meta key contains a path or a URL, it is possible to
+ * index the content of that path or URL. If the meta key is `meta_key` and its
+ * value is `https://wordpress.org/news/wp-json/wp/v2/posts/16837` the JSON returned
+ * by that REST API endpoint will be indexed in a meta key called `ep_external_content_meta_key`.
+ *
  * @since 2.3.0
  * @package ElasticPressLabs
  */
