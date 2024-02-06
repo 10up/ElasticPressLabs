@@ -10,7 +10,7 @@ namespace ElasticPressLabs\Indexable\User;
 
 use ElasticPress\Indexable;
 use ElasticPress\Elasticsearch;
-use \WP_User_Query;
+use WP_User_Query;
 use ElasticPress\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -579,7 +579,13 @@ class User extends Indexable {
 				if ( empty( $args['meta_key'] ) ) {
 					continue;
 				} else {
-					$from_to['meta_value']     = 'meta.' . $args['meta_key'] . '.raw';
+					/*
+					 * Fixing a false alarm of PHPCS
+					 * phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+					 */
+					$from_to['meta_value'] = 'meta.' . $args['meta_key'] . '.raw';
+					// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+
 					$from_to['meta_value_num'] = 'meta.' . $args['meta_key'] . '.long';
 				}
 			}
@@ -848,11 +854,9 @@ class User extends Indexable {
 				if ( true === $allowed_protected_keys || in_array( $key, $allowed_protected_keys, true ) ) {
 					$allow_index = true;
 				}
-			} else {
+			} elseif ( true !== $excluded_public_keys && ! in_array( $key, $excluded_public_keys, true ) ) {
 
-				if ( true !== $excluded_public_keys && ! in_array( $key, $excluded_public_keys, true ) ) {
 					$allow_index = true;
-				}
 			}
 
 			/**

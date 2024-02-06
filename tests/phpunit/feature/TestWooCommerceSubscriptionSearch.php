@@ -49,7 +49,7 @@ class TestWooCommerceSubscriptionSearch extends BaseTestCase {
 		/**
 		 * The post type is registered by the WooCommerce add-on
 		 */
-		$add_type = function( $post_types ) {
+		$add_type = function ( $post_types ) {
 			$post_types['shop_subscription'] = 'shop_subscription';
 			return $post_types;
 		};
@@ -58,7 +58,7 @@ class TestWooCommerceSubscriptionSearch extends BaseTestCase {
 		/**
 		 * This is needed to store the order as a subscription.
 		 */
-		$set_type = function( $data ) {
+		$set_type = function ( $data ) {
 			$data['post_type'] = 'shop_subscription';
 			return $data;
 		};

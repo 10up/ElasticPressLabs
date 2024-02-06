@@ -39,7 +39,7 @@ jobs:
     - name: Setup Elasticsearch
       uses: getong/elasticsearch-action@v1.2
       with:
-        elasticsearch version: '7.5.0'
+        elasticsearch version: '7.10.1'
 
     - name: Set standard 10up cache directories
       run: |
@@ -56,7 +56,7 @@ jobs:
     - name: Set PHP version
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '7.4'
+        php-version: '8.2'
         coverage: none
 
     - name: Install dependencies
