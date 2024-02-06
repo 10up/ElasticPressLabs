@@ -205,7 +205,7 @@ class TestExternalContent extends \WP_UnitTestCase {
 	 */
 	public function set_http_request_value() {
 		return [
-			'body' => json_encode(
+			'body' => wp_json_encode(
 				[
 					'id'      => 123,
 					'content' => 'Lorem ipsum',
