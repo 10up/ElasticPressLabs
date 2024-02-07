@@ -8,21 +8,32 @@
 
 namespace ElasticPressLabsTest;
 
-use ElasticPressLabs;
+use ElasticPress\Features;
 use ElasticPressLabs\Feature\ExternalContent;
 
 /**
  * External Content test class
  */
 class TestExternalContent extends \WP_UnitTestCase {
+
+	/**
+	 * The body reponse for HTTP requests
+	 *
+	 * @var string
+	 */
+	protected $html_return = '';
+
 	/**
 	 * Setup each test
 	 */
 	public function set_up() {
 		$instance = new ExternalContent();
-		\ElasticPress\Features::factory()->register_feature( $instance );
+		Features::factory()->register_feature( $instance );
+		Features::factory()->activate_feature( 'external_content' );
+		Features::factory()->setup_features();
+
 		add_filter( 'pre_option_ep_feature_settings', [ $this, 'set_settings' ] );
-		add_filter( 'pre_http_request', [ $this, 'set_http_request_value' ] );
+		add_filter( 'pre_http_request', [ $this, 'force_http_response' ] );
 	}
 
 	/**
@@ -30,7 +41,7 @@ class TestExternalContent extends \WP_UnitTestCase {
 	 */
 	public function tear_down() {
 		remove_filter( 'pre_option_ep_feature_settings', [ $this, 'set_settings' ] );
-		remove_filter( 'pre_http_request', [ $this, 'set_http_request_value' ] );
+		remove_filter( 'pre_http_request', [ $this, 'force_http_response' ] );
 	}
 
 	/**
@@ -44,6 +55,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test construct
+	 *
+	 * @group external-content
 	 */
 	public function test_construct() {
 		$instance = $this->get_feature();
@@ -54,6 +67,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test requirements_status
+	 *
+	 * @group external-content
 	 */
 	public function test_requirements_status() {
 		$requirements_status = $this->get_feature()->requirements_status();
@@ -63,6 +78,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test set_settings_schema
+	 *
+	 * @group external-content
 	 */
 	public function test_set_settings_schema() {
 		$this->get_feature()->set_settings_schema();
@@ -80,8 +97,12 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test append_external_content
+	 *
+	 * @group external-content
 	 */
 	public function test_append_external_content() {
+		$this->html_return = '{"id":123,"content":"Lorem ipsum"}';
+
 		$original_post_meta = [
 			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
 		];
@@ -100,10 +121,68 @@ class TestExternalContent extends \WP_UnitTestCase {
 		$this->assertSame( $post_meta['ep_external_content_meta_key_1'], ' Something different' );
 
 		remove_filter( 'ep_external_content_file_content', $change_via_filter );
+
+		$this->assertSame( 2, did_action( 'ep_external_content_item_processed' ) );
+	}
+
+	/**
+	 * Test that append_external_content strips all tags
+	 *
+	 * @group external-content
+	 */
+	public function test_append_external_content_strip_all_tags() {
+		$this->html_return = '<script>alert("XSS Injection");</script><p>Some text</p>';
+
+		$original_post_meta = [
+			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
+		];
+
+		$post_meta = $this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->assertSame( $post_meta['ep_external_content_meta_key_1'], ' Some text' );
+	}
+
+	/**
+	 * Test append_external_content request filters
+	 *
+	 * @group external-content
+	 */
+	public function test_append_external_content_remote_request_filters() {
+		$change_url = function ( $url ) {
+			$this->assertSame( 'https://example.org/news/wp-json/wp/v2/posts/1', $url );
+			return 'https://example.local/changed';
+		};
+		add_filter( 'ep_external_content_remote_request_url', $change_url );
+
+		$change_args = function ( $args ) {
+			$this->assertEmpty( $args );
+			return [ 'method' => 'DELETE' ];
+		};
+		add_filter( 'ep_external_content_remote_request_args', $change_args );
+
+		$check = function ( $http_request, $parsed_args, $url ) {
+			$this->assertSame( $parsed_args['method'], 'DELETE' );
+			$this->assertSame( $url, 'https://example.local/changed' );
+
+			return $http_request;
+		};
+		add_filter( 'pre_http_request', $check, 10, 3 );
+
+		$original_post_meta = [
+			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
+		];
+
+		$this->get_feature()->append_external_content( $original_post_meta );
+
+		remove_filter( 'ep_external_content_remote_request_url', $change_url );
+		remove_filter( 'ep_external_content_remote_request_args', $change_args );
+		remove_filter( 'pre_http_request', $check );
 	}
 
 	/**
 	 * Test get_meta_keys
+	 *
+	 * @group external-content
 	 */
 	public function test_get_meta_keys() {
 		$expected = [ 'meta_key_1', 'meta_key_2' ];
@@ -123,6 +202,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test get_stored_meta_key
+	 *
+	 * @group external-content
 	 */
 	public function test_get_stored_meta_key() {
 		$this->assertSame( $this->get_feature()->get_stored_meta_key( 'meta_key' ), 'ep_external_content_meta_key' );
@@ -141,6 +222,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test allow_meta_keys
+	 *
+	 * @group external-content
 	 */
 	public function test_allow_meta_keys() {
 		$expected = [
@@ -153,7 +236,66 @@ class TestExternalContent extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test maybe_limit_size
+	 *
+	 * @group external-content
+	 * @dataProvider limit_size_provider
+	 * @param string $content Content of the file
+	 * @param string $assert  Assertion to be made
+	 */
+	public function test_maybe_limit_size( $content, $assert ) {
+		$this->html_return = $content;
+
+		$original_post_meta = [
+			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
+		];
+
+		$post_meta = $this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->$assert( ' (trimmed)', $post_meta['ep_external_content_meta_key_1'] );
+	}
+
+	/**
+	 * Data Provider of the test_maybe_limit_size test
+	 *
+	 * @return array
+	 */
+	public function limit_size_provider() {
+		return [
+			[ $this->generate_random_string( 15 * KB_IN_BYTES ), 'assertStringNotContainsString' ],
+			[ $this->generate_random_string( 22 * KB_IN_BYTES ), 'assertStringContainsString' ],
+		];
+	}
+
+	/**
+	 * Test maybe_limit_size with the ep_external_content_max_size filter
+	 *
+	 * @group external-content
+	 */
+	public function test_maybe_limit_size_filter_max_size() {
+		$this->html_return = $this->generate_random_string( 50 * KB_IN_BYTES );
+
+		$change_size = function ( $size ) {
+			$this->assertSame( $size, 20 * KB_IN_BYTES );
+			return 0;
+		};
+		add_filter( 'ep_external_content_max_size', $change_size );
+
+		$original_post_meta = [
+			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
+		];
+
+		$post_meta = $this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->assertStringNotContainsString( ' (trimmed)', $post_meta['ep_external_content_meta_key_1'] );
+
+		remove_filter( 'ep_external_content_max_size', $change_size );
+	}
+
+	/**
 	 * Test maybe_parse_js
+	 *
+	 * @group external-content
 	 */
 	public function test_maybe_parse_js() {
 		$content = $this->get_javascript_contents();
@@ -171,6 +313,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Test maybe_parse_js with `remove_js_reserved_words`
+	 *
+	 * @group external-content
 	 */
 	public function test_maybe_parse_js_remove_js_reserved_words() {
 		$content = $this->get_javascript_contents();
@@ -191,6 +335,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
 	 * Set the feature settings
+	 *
+	 * @group external-content
 	 */
 	public function set_settings() {
 		return [
@@ -201,21 +347,18 @@ class TestExternalContent extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Set the feature settings
+	 * Utilitary function to force HTTP responses
+	 *
+	 * @return array
 	 */
-	public function set_http_request_value() {
-		return [
-			'body' => wp_json_encode(
-				[
-					'id'      => 123,
-					'content' => 'Lorem ipsum',
-				]
-			),
-		];
+	public function force_http_response() {
+		return [ 'body' => $this->html_return ];
 	}
 
 	/**
 	 * Utilitary function to get a JS file contents
+	 *
+	 * @return string
 	 */
 	protected function get_javascript_contents() {
 		return '
@@ -248,5 +391,23 @@ class TestExternalContent extends \WP_UnitTestCase {
 				</PluginPostStatusInfo>
 			);
 		};';
+	}
+
+	/**
+	 * Generates a random string
+	 *
+	 * @param integer $length length of the string
+	 * @return string
+	 */
+	protected function generate_random_string( $length = 10 ) {
+		$characters        = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$characters_length = strlen( $characters );
+		$random_string     = '';
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$random_string .= $characters[ random_int( 0, $characters_length - 1 ) ];
+		}
+
+		return $random_string;
 	}
 }

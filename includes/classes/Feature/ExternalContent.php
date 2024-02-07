@@ -45,9 +45,17 @@ class ExternalContent extends Feature {
 	 */
 	public function setup() {
 		add_filter( 'ep_prepare_meta_data', [ $this, 'append_external_content' ] );
-		add_filter( 'ep_external_content_file_content', 'wp_strip_all_tags' );
-		add_filter( 'ep_external_content_file_content', [ $this, 'maybe_parse_js' ], 10, 2 );
 		add_filter( 'ep_prepare_meta_allowed_protected_keys', [ $this, 'allow_meta_keys' ], 10, 2 );
+
+		/**
+		 * By default, content is sanitized by removing all HTML tags.
+		 *
+		 * If you need to remove it, call
+		 * `remove_filter( 'ep_external_content_file_content', 'wp_strip_all_tags' );`
+		 */
+		add_filter( 'ep_external_content_file_content', 'wp_strip_all_tags' );
+		add_filter( 'ep_external_content_file_content', [ $this, 'maybe_limit_size' ], 10, 2 );
+		add_filter( 'ep_external_content_file_content', [ $this, 'maybe_parse_js' ], 10, 2 );
 	}
 
 	/**
@@ -116,7 +124,27 @@ class ExternalContent extends Feature {
 						$external_path_and_url
 					);
 				} else {
-					$remote_get = wp_remote_get( $external_path_and_url );
+					/**
+					 * Filter the URL of the remote request
+					 *
+					 * @since 2.3.0
+					 * @hook ep_external_content_remote_request_url
+					 * @param {string} $external_path_and_url URL to be requested
+					 * @return {string} New URL to be requested
+					 */
+					$request_url = apply_filters( 'ep_external_content_remote_request_url', $external_path_and_url );
+
+					/**
+					 * Filter the arguments of the remote request
+					 *
+					 * @since 2.3.0
+					 * @hook ep_external_content_remote_request_args
+					 * @param {array} $request_args Request arguments
+					 * @return {array} New request arguments
+					 */
+					$request_args = apply_filters( 'ep_external_content_remote_request_args', [] );
+
+					$remote_get = wp_remote_request( $request_url, $request_args );
 					$post_meta  = $this->add_external_content_to_post_meta(
 						$post_meta,
 						$meta_key,
@@ -124,6 +152,17 @@ class ExternalContent extends Feature {
 						$external_path_and_url
 					);
 				}
+
+				/**
+				 * Fires after an item is processed
+				 *
+				 * @since 2.3.0
+				 * @hook ep_external_content_item_processed
+				 * @param {string} $external_path_and_url Path or URL processed
+				 * @param {string} $meta_key              Current meta key
+				 * @param {array}  $post_meta             Post meta array
+				 */
+				do_action( 'ep_external_content_item_processed', $external_path_and_url, $meta_key, $post_meta );
 			}
 		}
 
@@ -194,6 +233,37 @@ class ExternalContent extends Feature {
 				$stored_meta_keys
 			)
 		);
+	}
+
+	/**
+	 * Conditionally limits the maximum size of the external content
+	 *
+	 * @param string $content     File contents
+	 * @param string $path_or_url File path or URL
+	 * @return string
+	 */
+	public function maybe_limit_size( $content, $path_or_url ) {
+		/**
+		 * Filter the maximum size of external content.
+		 *
+		 * Pass `0` to bypass the limit.
+		 *
+		 * @since 2.3.0
+		 * @hook ep_external_content_max_size
+		 * @param {int} $size Maximum size. Defaults to 20kb
+		 * @return {int} New size
+		 */
+		$max_size = apply_filters( 'ep_external_content_max_size', 20 * KB_IN_BYTES );
+
+		if ( ! $max_size ) {
+			return $content;
+		}
+
+		if ( mb_strlen( $content ) > $max_size ) {
+			$content = substr( $content, 0, $max_size ) . ' (trimmed)';
+		}
+
+		return $content;
 	}
 
 	/**
