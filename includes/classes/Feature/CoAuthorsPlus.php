@@ -133,7 +133,7 @@ class CoAuthorsPlus extends Feature {
 		return array_values(
 			array_filter(
 				$formatted_args['post_filter']['bool']['must'],
-				function( $item ) {
+				function ( $item ) {
 					return ! ( isset( $item['term']['post_author.display_name'] ) || isset( $item['term']['post_author.id'] ) );
 				}
 			)
