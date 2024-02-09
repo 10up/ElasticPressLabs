@@ -47,6 +47,7 @@ if ( file_exists( ELASTICPRESS_LABS_PATH . '/vendor/autoload.php' ) ) {
 
 // Include files.
 require_once ELASTICPRESS_LABS_INC . 'functions/core.php';
+require_once ELASTICPRESS_LABS_INC . 'functions/utils.php';
 
 // Activation/Deactivation.
 register_activation_hook( __FILE__, '\ElasticPressLabs\Core\activate' );

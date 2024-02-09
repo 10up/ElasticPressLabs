@@ -78,19 +78,6 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test box long text
-	 *
-	 * @since  1.1.0
-	 */
-	public function testBoxLong() {
-		ob_start();
-		$this->get_feature()->output_feature_box_long();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', $output );
-	}
-
-	/**
 	 * Test filter out author name and id from Elasticsearch query
 	 *
 	 * @since  1.1.0

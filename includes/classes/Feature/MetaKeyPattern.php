@@ -7,7 +7,7 @@
 
 namespace ElasticPressLabs\Feature;
 
-use \ElasticPress;
+use ElasticPress;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -180,7 +180,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 		if ( ! empty( $allow_meta_key_list ) ) {
 			add_filter(
 				'ep_prepare_meta_allowed_protected_keys',
-				function( $meta ) use ( $allow_meta_key_list ) {
+				function ( $meta ) use ( $allow_meta_key_list ) {
 					return array_unique(
 						array_merge(
 							$meta,
@@ -242,7 +242,7 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 		$allowed_patterns = preg_split( "/\r\n|\n|\r/", $settings['meta_key_allow_pattern'] );
 
 		$allowed_patterns = array_map(
-			function( $pattern ) {
+			function ( $pattern ) {
 				return preg_replace( '/\|[0-9]+$/', '', $pattern );
 			},
 			$allowed_patterns
@@ -296,18 +296,18 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	public function update_weighting_configuration_for_search( $weight_config ) {
 		global $wpdb;
 
-		$post_meta = get_transient( 'custom_ep_distinct_post_meta' );
+		$post_meta = wp_cache_get( 'custom_ep_distinct_post_meta' );
 
 		if ( ! $post_meta ) {
 
-			$meta_keys = $wpdb->get_col(
+			$meta_keys = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				"SELECT DISTINCT meta_key
             	FROM $wpdb->postmeta"
 			);
 
 			$post_meta = $this->get_allowed_meta_key_list( $meta_keys );
 
-			set_transient( 'custom_ep_distinct_post_meta', $post_meta );
+			wp_cache_set( 'custom_ep_distinct_post_meta', $post_meta );
 		}
 
 		if ( empty( $weight_config ) ) {
@@ -484,5 +484,4 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 
 		return $status;
 	}
-
 }
