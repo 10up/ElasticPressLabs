@@ -20,10 +20,10 @@ jobs:
         php-version: '8.2'
         coverage: none
 
-    - name: install node v16
+    - name: install node v18
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
 
     - name: Build
       run: |
