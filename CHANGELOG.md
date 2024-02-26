@@ -13,6 +13,19 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
+## [2.3.0] - 2024-XX-XX
+
+This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/02/pew-research-center-external-files-as-a-source-for-your-search) for more info.
+
+
+### Added
+- New "External Content" feature. Props [@felipeelia](https://github.com/felipeelia) via [#94](https://github.com/10up/ElasticPress/pull/94).
+
+### Changed
+- Composer packages update. Props [@felipeelia](https://github.com/felipeelia) via [#95](https://github.com/10up/ElasticPress/pull/95).
+- Compatibility with node v18. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#96](https://github.com/10up/ElasticPress/pull/96).
+
+
 ## [2.2.0] - 2023-11-01
 
 ### Added
@@ -102,6 +115,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.3.0]: https://github.com/10up/ElasticPressLabs/compare/2.2.0...2.3.0
 [2.2.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.1...2.2.0
 [2.1.1]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/10up/ElasticPressLabs/compare/2.0.0...2.1.0
