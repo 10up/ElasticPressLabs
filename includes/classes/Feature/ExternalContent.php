@@ -35,6 +35,11 @@ class ExternalContent extends Feature {
 
 		$this->title = esc_html__( 'External Content', 'elasticpress-labs' );
 
+		$this->summary = __(
+			'List meta keys containing a path or a URL, and ElasticPress will index the content of those path or URL. For example, for a meta key called <code>meta_key</code> with <code>https://wordpress.org/news/wp-json/wp/v2/posts/16837</code> as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called <code>ep_external_content_meta_key</code>.',
+			'elasticpress-labs'
+		);
+
 		parent::__construct();
 	}
 
@@ -44,7 +49,7 @@ class ExternalContent extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		add_filter( 'ep_prepare_meta_data', [ $this, 'append_external_content' ] );
+		add_filter( 'ep_prepare_meta_data', [ $this, 'append_external_content' ], 10, 2 );
 		add_filter( 'ep_prepare_meta_allowed_protected_keys', [ $this, 'allow_meta_keys' ], 10, 2 );
 
 		/**
@@ -71,10 +76,23 @@ class ExternalContent extends Feature {
 	 * Set the `settings_schema` attribute
 	 */
 	public function set_settings_schema() {
+		$weighting_dashboard_url = ( ! defined( 'EP_IS_NETWORK' ) || ! EP_IS_NETWORK ) ?
+			admin_url( 'admin.php?page=elasticpress-weighting' ) :
+			admin_url( 'admin.php?page=elasticpress' );
+
+		$help_text = sprintf(
+			/* translators: Search Fields & Weighting Dashboard URL */
+			__(
+				'Add one field per line. Visit the <a href="%s">Search Fields & Weighting Dashboard</a> if you want to make their <code>ep_external_content_*</code> version searchable.',
+				'elasticpress-labs'
+			),
+			$weighting_dashboard_url
+		);
+
 		$this->settings_schema = [
 			[
 				'default' => '',
-				'help'    => '<p>' . __( 'Add one field per line', 'elasticpress-labs' ) . '</p>',
+				'help'    => '<p>' . $help_text . '</p>',
 				'key'     => 'meta_fields',
 				'label'   => __( 'Meta fields with external URLs', 'elasticpress-labs' ),
 				'type'    => 'textarea',
@@ -85,14 +103,20 @@ class ExternalContent extends Feature {
 	/**
 	 * Append external content to the document meta data
 	 *
-	 * @param array $post_meta Document's meta data
+	 * @param array         $post_meta Document's meta data
+	 * @param \WP_Post|null $post      Post object
 	 * @return array
 	 */
-	public function append_external_content( $post_meta ) {
+	public function append_external_content( $post_meta, $post = null ) {
 		global $wp_filesystem;
 
 		require_once ABSPATH . '/wp-admin/includes/file.php';
 		WP_Filesystem();
+
+		$post_indexable  = \ElasticPress\Indexables::factory()->get( 'post' );
+		$test_meta_value = method_exists( $post_indexable, 'get_test_meta_value' ) ?
+			$post_indexable->get_test_meta_value() :
+			'test-value';
 
 		$meta_keys = $this->get_meta_keys();
 		foreach ( $meta_keys as $meta_key ) {
@@ -102,6 +126,23 @@ class ExternalContent extends Feature {
 
 			$meta_value = (array) $post_meta[ $meta_key ];
 			$meta_value = reset( $meta_value );
+
+			$should_skip = empty( $meta_value ) || $test_meta_value === $meta_value;
+
+			/**
+			 * Filter if the meta value should be skipped
+			 *
+			 * @since 2.3.0
+			 * @hook ep_external_content_should_skip
+			 * @param {bool}         $should_skip Whether the meta value should be skipped
+			 * @param {mixed}        $meta_value  Meta value being analyzed
+			 * @param {string}       $meta_key    Meta key being analyzed
+			 * @param {WP_Post|null} $post        Current post object
+			 * @return {bool} Whether the meta value should be skipped
+			 */
+			if ( apply_filters( 'ep_external_content_should_skip', $should_skip, $meta_value, $meta_key, $post ) ) {
+				continue;
+			}
 
 			/**
 			 * The field value can either be a simple string or a JSON array with a list of URLs.
@@ -134,6 +175,10 @@ class ExternalContent extends Feature {
 					 */
 					$request_url = apply_filters( 'ep_external_content_remote_request_url', $external_path_and_url );
 
+					if ( ! filter_var( $request_url, FILTER_VALIDATE_URL ) ) {
+						continue;
+					}
+
 					/**
 					 * Filter the arguments of the remote request
 					 *
@@ -149,7 +194,8 @@ class ExternalContent extends Feature {
 						$post_meta,
 						$meta_key,
 						wp_remote_retrieve_body( $remote_get ),
-						$external_path_and_url
+						$external_path_and_url,
+						$remote_get
 					);
 				}
 
@@ -218,8 +264,13 @@ class ExternalContent extends Feature {
 	 * @return array
 	 */
 	public function allow_meta_keys( $meta_keys ) {
+		$external_meta_keys = $this->get_meta_keys();
+		if ( empty( $external_meta_keys ) ) {
+			return $meta_keys;
+		}
+
 		$stored_meta_keys = array_reduce(
-			$this->get_meta_keys(),
+			$external_meta_keys,
 			function ( $acc, $meta_key ) {
 				$acc[] = $this->get_stored_meta_key( $meta_key );
 				return $acc;
@@ -304,25 +355,27 @@ class ExternalContent extends Feature {
 	/**
 	 * Add the content of external sources to the post meta array
 	 *
-	 * @param array  $post_meta   Array of all post meta
-	 * @param string $meta_key    Meta key
-	 * @param string $content     Contents of the external source
-	 * @param string $path_or_url Path or URL of the external source
+	 * @param array  $post_meta       Array of all post meta
+	 * @param string $meta_key        Meta key
+	 * @param string $content         Contents of the external source
+	 * @param string $path_or_url     Path or URL of the external source
+	 * @param string $additional_data Additional data. Contains the HTTP response if the content was fetched remotely
 	 * @return array
 	 */
-	protected function add_external_content_to_post_meta( $post_meta, $meta_key, $content, $path_or_url ) {
+	protected function add_external_content_to_post_meta( $post_meta, $meta_key, $content, $path_or_url, $additional_data = [] ) {
 		/**
 		 * Filter the content.
 		 *
 		 * @since 2.3.0
 		 * @hook ep_external_content_file_content
-		 * @param {string} $content     Content being processed
-		 * @param {string} $path_or_url Path or URL
-		 * @param {string} $meta_key    The meta key that contains the path or URL
-		 * @param {array}  $post_meta   Post meta
+		 * @param {string} $content         Content being processed
+		 * @param {string} $path_or_url     Path or URL
+		 * @param {string} $meta_key        The meta key that contains the path or URL
+		 * @param {array}  $post_meta       Post meta
+		 * @param {array}  $additional_data Additional data. Contains the HTTP response if the content was fetched remotely
 		 * @return {string} New $content
 		 */
-		$content = apply_filters( 'ep_external_content_file_content', $content, $path_or_url, $meta_key, $post_meta );
+		$content = apply_filters( 'ep_external_content_file_content', $content, $path_or_url, $meta_key, $post_meta, $additional_data );
 
 		if ( empty( $content ) ) {
 			return $post_meta;
