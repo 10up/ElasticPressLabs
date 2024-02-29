@@ -27,6 +27,8 @@ class TestExternalContent extends \WP_UnitTestCase {
 	 * Setup each test
 	 */
 	public function set_up() {
+		parent::set_up();
+
 		$instance = new ExternalContent();
 		Features::factory()->register_feature( $instance );
 		Features::factory()->activate_feature( 'external_content' );
@@ -34,14 +36,6 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 		add_filter( 'pre_option_ep_feature_settings', [ $this, 'set_settings' ] );
 		add_filter( 'pre_http_request', [ $this, 'force_http_response' ] );
-	}
-
-	/**
-	 * Clean up after each test
-	 */
-	public function tear_down() {
-		remove_filter( 'pre_option_ep_feature_settings', [ $this, 'set_settings' ] );
-		remove_filter( 'pre_http_request', [ $this, 'force_http_response' ] );
 	}
 
 	/**
@@ -86,7 +80,7 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 		$expected_schema = [
 			'default' => '',
-			'help'    => '<p>Add one field per line</p>',
+			'help'    => '<p>Add one field per line. Visit the <a href="http://example.org/wp-admin/admin.php?page=elasticpress-weighting">Search Fields & Weighting Dashboard</a> if you want to make their <code>ep_external_content_*</code> version searchable.</p>',
 			'key'     => 'meta_fields',
 			'label'   => 'Meta fields with external URLs',
 			'type'    => 'textarea',
@@ -111,11 +105,12 @@ class TestExternalContent extends \WP_UnitTestCase {
 
 		$this->assertSame( $post_meta['ep_external_content_meta_key_1'], ' {"id":123,"content":"Lorem ipsum"}' );
 
-		$change_via_filter = function ( $content ) {
+		$change_via_filter = function ( $content, $path_or_url, $meta_key, $post_meta, $additional_data ) {
 			$this->assertSame( $content, '{"id":123,"content":"Lorem ipsum"}' );
+			$this->assertSame( $additional_data['code'], 123 );
 			return 'Something different';
 		};
-		add_filter( 'ep_external_content_file_content', $change_via_filter );
+		add_filter( 'ep_external_content_file_content', $change_via_filter, 10, 5 );
 
 		$post_meta = $this->get_feature()->append_external_content( $original_post_meta );
 		$this->assertSame( $post_meta['ep_external_content_meta_key_1'], ' Something different' );
@@ -173,10 +168,49 @@ class TestExternalContent extends \WP_UnitTestCase {
 		];
 
 		$this->get_feature()->append_external_content( $original_post_meta );
+	}
 
-		remove_filter( 'ep_external_content_remote_request_url', $change_url );
-		remove_filter( 'ep_external_content_remote_request_args', $change_args );
-		remove_filter( 'pre_http_request', $check );
+	/**
+	 * Test the ep_external_content_should_skip filter
+	 *
+	 * @group external-content
+	 */
+	public function test_ep_external_content_should_skip() {
+		$original_post_meta = [
+			'meta_key_1' => 'https://example.org/news/wp-json/wp/v2/posts/1',
+		];
+		$this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->assertSame( 1, did_action( 'ep_external_content_item_processed' ) );
+
+		$skip_meta_value = function ( $should_skip, $meta_value, $meta_key, $post ) {
+			$this->assertFalse( $should_skip );
+			$this->assertSame( $meta_value, 'https://example.org/news/wp-json/wp/v2/posts/1' );
+			$this->assertSame( $meta_key, 'meta_key_1' );
+			$this->assertNull( $post );
+			return true;
+		};
+		add_filter( 'ep_external_content_should_skip', $skip_meta_value, 10, 4 );
+		$this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->assertSame( 1, did_action( 'ep_external_content_item_processed' ) );
+	}
+
+	/**
+	 * Test the append_external_content method with an invalid URL
+	 *
+	 * @group external-content
+	 */
+	public function test_append_external_content_invalid_url() {
+		$original_post_meta = [
+			'meta_key_1' => '/news/wp-json/wp/v2/posts/1',
+		];
+		$this->get_feature()->append_external_content( $original_post_meta );
+
+		$this->assertSame( 1, did_filter( 'ep_external_content_remote_request_url' ) );
+
+		// It will not even try to filter the args, as a request will not be sent.
+		$this->assertSame( 0, did_filter( 'ep_external_content_remote_request_args' ) );
 	}
 
 	/**
@@ -196,8 +230,6 @@ class TestExternalContent extends \WP_UnitTestCase {
 		add_filter( 'ep_external_content_meta_keys', $change_via_filter );
 
 		$this->assertSame( $this->get_feature()->get_meta_keys(), array_merge( $expected, [ 'meta_key_3' ] ) );
-
-		remove_filter( 'ep_external_content_meta_keys', $change_via_filter );
 	}
 
 	/**
@@ -216,8 +248,6 @@ class TestExternalContent extends \WP_UnitTestCase {
 		add_filter( 'ep_external_content_stored_meta_key', $change_via_filter, 10, 2 );
 
 		$this->assertSame( $this->get_feature()->get_stored_meta_key( 'meta_key' ), 'ep_external_content_meta_keychanged' );
-
-		remove_filter( 'ep_external_content_stored_meta_key', $change_via_filter );
 	}
 
 	/**
@@ -231,8 +261,13 @@ class TestExternalContent extends \WP_UnitTestCase {
 			'ep_external_content_meta_key_1',
 			'ep_external_content_meta_key_2',
 		];
-
 		$this->assertSame( $this->get_feature()->allow_meta_keys( [ 'some_other_key' ] ), $expected );
+
+		$expected = [
+			'ep_external_content_meta_key_1',
+			'ep_external_content_meta_key_2',
+		];
+		$this->assertSame( $this->get_feature()->allow_meta_keys( [] ), $expected );
 	}
 
 	/**
@@ -288,8 +323,6 @@ class TestExternalContent extends \WP_UnitTestCase {
 		$post_meta = $this->get_feature()->append_external_content( $original_post_meta );
 
 		$this->assertStringNotContainsString( ' (trimmed)', $post_meta['ep_external_content_meta_key_1'] );
-
-		remove_filter( 'ep_external_content_max_size', $change_size );
 	}
 
 	/**
@@ -352,7 +385,10 @@ class TestExternalContent extends \WP_UnitTestCase {
 	 * @return array
 	 */
 	public function force_http_response() {
-		return [ 'body' => $this->html_return ];
+		return [
+			'code' => 123,
+			'body' => $this->html_return,
+		];
 	}
 
 	/**
