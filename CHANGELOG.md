@@ -13,26 +13,26 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
-## [2.3.0] - 2024-XX-XX
+## [2.3.0] - 2024-03-04
 
-This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/02/pew-research-center-external-files-as-a-source-for-your-search) for more info.
+This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/03/pew-research-center-external-files-as-a-source-for-your-search) for more info.
 
 
 ### Added
-- New "External Content" feature. Props [@felipeelia](https://github.com/felipeelia) via [#94](https://github.com/10up/ElasticPress/pull/94).
+- New "External Content" feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#94](https://github.com/10up/ElasticPressLabs/pull/94) and [#99](https://github.com/10up/ElasticPressLabs/pull/99).
 
 ### Changed
-- Composer packages update. Props [@felipeelia](https://github.com/felipeelia) via [#95](https://github.com/10up/ElasticPress/pull/95).
-- Compatibility with node v18. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#96](https://github.com/10up/ElasticPress/pull/96).
+- Composer packages update. Props [@felipeelia](https://github.com/felipeelia) via [#95](https://github.com/10up/ElasticPressLabs/pull/95).
+- Compatibility with node v18. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#96](https://github.com/10up/ElasticPressLabs/pull/96).
 
 
 ## [2.2.0] - 2023-11-01
 
 ### Added
-- Compatibility with ElasticPress 5.0.0. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#81](https://github.com/10up/ElasticPress/pull/81) and [#85](https://github.com/10up/ElasticPress/pull/85).
+- Compatibility with ElasticPress 5.0.0. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#81](https://github.com/10up/ElasticPressLabs/pull/81) and [#85](https://github.com/10up/ElasticPressLabs/pull/85).
 
 ### Changed
-- Features do not autoactivate anymore. Props [@felipeelia](https://github.com/felipeelia) via [#88](https://github.com/10up/ElasticPress/pull/88).
+- Features do not autoactivate anymore. Props [@felipeelia](https://github.com/felipeelia) via [#88](https://github.com/10up/ElasticPressLabs/pull/88).
 
 ### Security
 - Bumped `@babel/traverse` from 7.19.3 to 7.23.2. Props [@dependabot](https://github.com/dependabot) via [#80](https://github.com/10up/ElasticPressLabs/pull/80).
@@ -41,18 +41,18 @@ This version introduces the new *External Content* feature. Check [our blog post
 ## [2.1.1] - 2023-09-28
 
 ### Added
-- Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia) via [#76](https://github.com/10up/ElasticPress/pull/76).
+- Integrate with WP update system to alert users about new versions. Props [@felipeelia](https://github.com/felipeelia) via [#76](https://github.com/10up/ElasticPressLabs/pull/76).
 
 ### Changed
-- Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72) and [#79](https://github.com/10up/ElasticPress/pull/79).
+- Update the User Indexable files (bringing from the main plugin.) Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPressLabs/pull/72) and [#79](https://github.com/10up/ElasticPressLabs/pull/79).
 
 ### Removed
-- Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPress/pull/72).
+- Remove old Mapping files for Users. Props [@MARQAS](https://github.com/MARQAS) via [#72](https://github.com/10up/ElasticPressLabs/pull/72).
 
 ### Fixed
-- Boolean Operator (Not) not giving the expected result. Props [@MARQAS](https://github.com/MARQAS) via [#67](https://github.com/10up/ElasticPress/pull/67).
-- Fatal Error in command line. Props [@MARQAS](https://github.com/MARQAS) via [#69](https://github.com/10up/ElasticPress/pull/69).
-- PHP Warnings. Props [@felipeelia](https://github.com/felipeelia) via [#71](https://github.com/10up/ElasticPress/pull/71).
+- Boolean Operator (Not) not giving the expected result. Props [@MARQAS](https://github.com/MARQAS) via [#67](https://github.com/10up/ElasticPressLabs/pull/67).
+- Fatal Error in command line. Props [@MARQAS](https://github.com/MARQAS) via [#69](https://github.com/10up/ElasticPressLabs/pull/69).
+- PHP Warnings. Props [@felipeelia](https://github.com/felipeelia) via [#71](https://github.com/10up/ElasticPressLabs/pull/71).
 
 ### Security
 - Bumped `webpack` from 5.74.0 to 5.76.1. Props [@dependabot](https://github.com/dependabot) via [#64](https://github.com/10up/ElasticPressLabs/pull/64).

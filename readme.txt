@@ -28,6 +28,19 @@ This plugin provides a simple interface to enable and disable features.
 == Changelog ==
 
 
+= 2.3.0 - 2024-03-04 =
+
+This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/03/pew-research-center-external-files-as-a-source-for-your-search) for more info.
+
+__Added:__
+
+* New "External Content" feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+
+__Changed:__
+
+* Composer packages update. Props [@felipeelia](https://github.com/felipeelia).
+* Compatibility with node v18. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+
 = 2.2.0 - 2023-11-01 =
 
 __Added:__
