@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 5.6
-Tested up to:      6.3
-Stable tag:        2.2.0
+Tested up to:      6.4
+Stable tag:        2.3.0
 Requires PHP:      7.0
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,9 +24,23 @@ This plugin provides a simple interface to enable and disable features.
 2. Settings to add Co-Authors Plus plugin support.
 3. Settings to include or exclude meta key patterns.
 4. Settings to change the version of the search algorithm between 3.4 and 3.5.
+5. Settings to index external content.
 
 == Changelog ==
 
+
+= 2.3.0 - 2024-03-04 =
+
+This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/03/pew-research-center-external-files-as-a-source-for-your-search) for more info.
+
+__Added:__
+
+* New "External Content" feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+
+__Changed:__
+
+* Composer packages update. Props [@felipeelia](https://github.com/felipeelia).
+* Compatibility with node v18. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
 
 = 2.2.0 - 2023-11-01 =
 

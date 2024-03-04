@@ -37,6 +37,9 @@ This plugin provides a simple interface to enable and disable features.
 4. Settings to change the version of the search algorithm between default, 3.5, and 4.0.
 ![](/.wordpress-org/screenshot-4.png)
 
+5. Settings to index external content.
+![](/.wordpress-org/screenshot-5.png)
+
 ## Support Level
 
 **Active:** 10up is actively working on this, and we expect to continue work for the foreseeable future including keeping tested up to the most recent version of WordPress.  Bug reports, feature requests, questions, and pull requests are welcome.
