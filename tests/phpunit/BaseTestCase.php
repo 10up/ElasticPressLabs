@@ -20,6 +20,14 @@ class BaseTestCase extends \WP_UnitTestCase {
 	protected $ep_factory;
 
 	/**
+	 * Helps us keep track of actions that have fired
+	 *
+	 * @var array
+	 * @since 2.3.0
+	 */
+	protected $fired_actions = array();
+
+	/**
 	 * Set up the test case.
 	 *
 	 * @var obj

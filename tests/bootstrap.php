@@ -47,6 +47,7 @@ function load_plugin() {
 
 	include_once __DIR__ . '/../vendor/elasticpress/elasticpress.php';
 	include_once __DIR__ . '/../vendor/woocommerce/woocommerce.php';
+	include_once __DIR__ . '/../elasticpresslabs.php';
 
 	update_option( 'ep_host', $host );
 	update_site_option( 'ep_host', $host );
