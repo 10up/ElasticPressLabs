@@ -37,7 +37,7 @@ This plugin provides a simple interface to enable and disable features.
 4. Settings to change the version of the search algorithm between default, 3.5, and 4.0.
 ![](/.wordpress-org/screenshot-4.png)
 
-5. Settings to index External content.
+5. Settings to index external content.
 ![](/.wordpress-org/screenshot-5.png)
 
 ## Support Level

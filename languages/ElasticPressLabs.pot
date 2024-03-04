@@ -1,15 +1,15 @@
-# Copyright (C) 2023 10up
+# Copyright (C) 2024 10up
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.2.0\n"
+"Project-Id-Version: ElasticPress Labs 2.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-11-01T13:23:32+00:00\n"
+"POT-Creation-Date: 2024-03-04T12:48:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.8.1\n"
 "X-Domain: elasticpress-labs\n"
@@ -123,6 +123,23 @@ msgstr ""
 msgid "Unregister feature"
 msgstr ""
 
+#: includes/classes/Feature/ExternalContent.php:36
+msgid "External Content"
+msgstr ""
+
+#: includes/classes/Feature/ExternalContent.php:38
+msgid "List meta keys containing a path or a URL, and ElasticPress will index the content of those path or URL. For example, for a meta key called <code>meta_key</code> with <code>https://wordpress.org/news/wp-json/wp/v2/posts/16837</code> as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called <code>ep_external_content_meta_key</code>."
+msgstr ""
+
+#. translators: Search Fields & Weighting Dashboard URL
+#: includes/classes/Feature/ExternalContent.php:85
+msgid "Add one field per line. Visit the <a href=\"%s\">Search Fields & Weighting Dashboard</a> if you want to make their <code>ep_external_content_*</code> version searchable."
+msgstr ""
+
+#: includes/classes/Feature/ExternalContent.php:97
+msgid "Meta fields with external URLs"
+msgstr ""
+
 #: includes/classes/Feature/MetaKeyPattern.php:34
 msgid "Meta Key Pattern"
 msgstr ""
@@ -202,11 +219,11 @@ msgstr ""
 msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
 msgstr ""
 
-#: includes/functions/core.php:244
+#: includes/functions/core.php:243
 msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
 #. translators: Min. EP version
-#: includes/functions/core.php:259
+#: includes/functions/core.php:258
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""

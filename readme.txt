@@ -24,6 +24,7 @@ This plugin provides a simple interface to enable and disable features.
 2. Settings to add Co-Authors Plus plugin support.
 3. Settings to include or exclude meta key patterns.
 4. Settings to change the version of the search algorithm between 3.4 and 3.5.
+5. Settings to index external content.
 
 == Changelog ==
 
