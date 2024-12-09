@@ -49,7 +49,7 @@ jobs:
       run: composer install
 
     - name: Spin up Elasticsearch
-      run: git clone git@github.com:10up/ElasticPress.git elasticpress-plugin && cd elasticpress-plugin && npm run es:start
+      run: git clone https://github.com/10up/ElasticPress.git elasticpress-plugin && cd elasticpress-plugin && npm run es:start
 
     - name: Check ES response
       run: curl --connect-timeout 5 --max-time 10 --retry 5 --retry-max-time 40 --retry-all-errors http://127.0.0.1:8890
