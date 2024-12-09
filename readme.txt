@@ -28,6 +28,17 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
+= 2.3.1 - 2024-12-XX =
+
+__Added:__
+
+* ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul).
+
+__Changed:__
+
+* Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh).
+* Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia).
+
 
 = 2.3.0 - 2024-03-04 =
 

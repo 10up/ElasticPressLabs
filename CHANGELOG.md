@@ -13,6 +13,15 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
+## [2.3.1] - 2024-12-XX
+
+### Added
+- ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul) via [#104](https://github.com/10up/ElasticPress/pull/104).
+
+### Changed
+- Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh) via [#106](https://github.com/10up/ElasticPress/pull/106).
+- Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#110](https://github.com/10up/ElasticPress/pull/110) and [#111](https://github.com/10up/ElasticPress/pull/111).
+
 ## [2.3.0] - 2024-03-04
 
 This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/03/pew-research-center-external-files-as-a-source-for-your-search) for more info.
@@ -115,6 +124,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.3.1]: https://github.com/10up/ElasticPressLabs/compare/2.3.0...2.3.1
 [2.3.0]: https://github.com/10up/ElasticPressLabs/compare/2.2.0...2.3.0
 [2.2.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.1...2.2.0
 [2.1.1]: https://github.com/10up/ElasticPressLabs/compare/2.1.0...2.1.1

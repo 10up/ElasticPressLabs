@@ -21,6 +21,7 @@ Thank you to all the people who have already contributed to this repository via 
 [Burhan Nasir (@burhandodhy)](https://github.com/burhandodhy),
 [Mohammed Razzaq (@MARQAS)](https://github.com/MARQAS),
 [Eric Caron (@ecaron)](https://github.com/ecaron),
+[Dharmesh Patel (@iamdharmesh)](https://github.com/iamdharmesh),
 and
 [Felipe Elia (@felipeelia)](https://github.com/felipeelia).
 
