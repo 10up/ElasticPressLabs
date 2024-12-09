@@ -37,7 +37,7 @@ jobs:
       run: npm run build:zip
 
     - name: Make artifacts available
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: elasticpress-labs
         retention-days: 2
