@@ -26,20 +26,6 @@ jobs:
 
     - name: Start MySQL
       run: sudo systemctl start mysql.service
-
-    - name: Configure sysctl limits
-      run: |
-        sudo swapoff -a
-        sudo sysctl -w vm.swappiness=1
-        sudo sysctl -w fs.file-max=262144
-        sudo sysctl -w vm.max_map_count=262144
-
-    - name: Setup Elasticsearch
-      uses: getong/elasticsearch-action@v1.2
-      with:
-        elasticsearch version: '8.12.2'
-        host port: 8890
-        container port: 8890
     
     - name: Set standard 10up cache directories
       run: |
@@ -61,6 +47,12 @@ jobs:
 
     - name: Install dependencies
       run: composer install
+
+    - name: Spin up Elasticsearch
+      run: cd vendor/elasticpress && npm ci --include=dev && npm run es:start
+
+    - name: Check ES response
+      run: curl --connect-timeout 5 --max-time 10 --retry 5 --retry-max-time 40 --retry-all-errors http://127.0.0.1:8890
 
     - name: Setup WP Tests
       run: |
