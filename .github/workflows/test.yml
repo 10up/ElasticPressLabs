@@ -38,7 +38,9 @@ jobs:
       uses: getong/elasticsearch-action@v1.2
       with:
         elasticsearch version: '8.12.2'
-
+        host port: 8890
+        container port: 8890
+    
     - name: Set standard 10up cache directories
       run: |
         composer config -g cache-dir "${{ env.COMPOSER_CACHE }}"
