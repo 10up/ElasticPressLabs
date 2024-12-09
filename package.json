@@ -21,22 +21,21 @@
     "lint-js": "10up-toolkit lint-js assets/js",
     "lint-php": "composer run lint",
     "format-js": "10up-toolkit format-js assets/js",
-    "lint": "npm run lint-css && npm run lint-js && npm run lint-php",
+    "lint": "npm run lint-style && npm run lint-js && npm run lint-php",
     "format": "npm run format-js",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/10up/ElasticPressLabs"
   },
   "devDependencies": {
-    "10up-toolkit": "^5.2.3",
-    "husky": "^8.0.1",
-    "lint-staged": "^13.0.0",
-    "prettier": "^2.8.8"
+    "10up-toolkit": "^6.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "10up-toolkit": {
     "entry": {

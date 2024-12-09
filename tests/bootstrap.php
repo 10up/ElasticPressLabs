@@ -42,7 +42,7 @@ function load_plugin() {
 	$host = getenv( 'EP_HOST' );
 
 	if ( empty( $host ) ) {
-		$host = 'http://127.0.0.1:9200';
+		$host = 'http://127.0.0.1:8890';
 	}
 
 	include_once __DIR__ . '/../vendor/elasticpress/elasticpress.php';
