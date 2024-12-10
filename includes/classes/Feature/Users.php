@@ -22,11 +22,11 @@ class Users extends Feature {
 	public function __construct() {
 		$this->slug = 'users';
 
-		$this->title = esc_html__( 'Users', 'elasticpress' );
+		$this->title = esc_html__( 'Users', 'elasticpress-labs' );
 
-		$this->summary = __( 'Improve user search relevancy and query performance.', 'elasticpress' );
+		$this->summary = __( 'Improve user search relevancy and query performance.', 'elasticpress-labs' );
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users', 'elasticpress' );
+		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users', 'elasticpress-labs' );
 
 		$this->requires_install_reindex = true;
 
@@ -58,8 +58,8 @@ class Users extends Feature {
 	 */
 	public function output_feature_box_long() {
 		?>
-		<p><?php esc_html_e( 'This feature will empower your website to overcome traditional WordPress user search and query limitations that can present themselves at scale.', 'elasticpress' ); ?></p>
-		<p><?php esc_html_e( 'Be aware that storing user data may bound you to certain legal obligations depending on your local government regulations.', 'elasticpress' ); ?></p>
+		<p><?php esc_html_e( 'This feature will empower your website to overcome traditional WordPress user search and query limitations that can present themselves at scale.', 'elasticpress-labs' ); ?></p>
+		<p><?php esc_html_e( 'Be aware that storing user data may bound you to certain legal obligations depending on your local government regulations.', 'elasticpress-labs' ); ?></p>
 		<?php
 	}
 
