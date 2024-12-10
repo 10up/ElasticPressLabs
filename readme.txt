@@ -39,6 +39,9 @@ __Changed:__
 * Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh).
 * Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia).
 
+__Fixed:__
+
+* Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy).
 
 = 2.3.0 - 2024-03-04 =
 

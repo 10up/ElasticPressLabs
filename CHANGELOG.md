@@ -22,6 +22,9 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh) via [#106](https://github.com/10up/ElasticPress/pull/106).
 - Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#110](https://github.com/10up/ElasticPress/pull/110) and [#111](https://github.com/10up/ElasticPress/pull/111).
 
+## Fixed
+- Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy) via [#114](https://github.com/10up/ElasticPress/pull/114).
+
 ## [2.3.0] - 2024-03-04
 
 This version introduces the new *External Content* feature. Check [our blog post](https://www.elasticpress.io/blog/2024/03/pew-research-center-external-files-as-a-source-for-your-search) for more info.
