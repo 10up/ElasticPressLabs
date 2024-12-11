@@ -29,12 +29,12 @@ The `develop` branch is the development branch which means it contains the next 
 ## Release instructions
 
 1. Branch: Starting from `develop`, cut a release branch named `release/X.Y.Z` for your changes.
-1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/ElasticPressLabs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
+1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/elasticpress-labs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
 1. Changelog: Add/update the changelog in `CHANGELOG.md` and `readme.txt`, ensuring to link the [X.Y.Z] release reference in the footer of `CHANGELOG.md` (e.g., https://github.com/10up/ElasticPressLabs/compare/X.Y.Z-1...X.Y.Z).
 1. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
 1. Readme updates: Make any other readme changes as necessary. `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content. The two are slightly different.
 1. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
-1. POT file: Run `wp i18n make-pot . languages/ElasticPressLabs.pot` and commit the file. In case of errors, try to disable Xdebug (see [#3079](https://github.com/10up/ElasticPress/pull/3079#issuecomment-1291028290).)
+1. POT file: Run `wp i18n make-pot . languages/elasticpress-labs.pot` and commit the file. In case of errors, try to disable Xdebug (see [#3079](https://github.com/10up/ElasticPress/pull/3079#issuecomment-1291028290).)
 1. Release date: Double check the release date in both changelog files.
 1. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
 1. Test: While still on the `trunk` branch, test for functionality locally.
@@ -49,12 +49,12 @@ The `develop` branch is the development branch which means it contains the next 
 There may be cases where we have an urgent/important fix that ideally gets into a release quickly without any other changes (e.g., a "hotfix") so as to reduce (1) the amount or testing before being confident in the release and (2) to reduce the chance of unintended side effects from the extraneous non-urgent/important changes.  In cases where code has previously been merged into `develop` but that ideally is not part of a hotfix, the normal release instructions above will not suffice as they would release all code merged to `develop` alongside the intended urgent/important "hotfix" change(s).  In case of needing to release a "hotfix" the following are the recommended steps to take.
 
 1. Branch: Starting from `trunk`, cut a hotfix release branch named `hotfix/X.Y.Z` for your hotfix change(s).
-1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/ElasticPressLabs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
+1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/elasticpress-labs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
 1. Changelog: Add/update the changelog in `CHANGELOG.md` and `readme.txt`, ensuring to link the [X.Y.Z] release reference in the footer of `CHANGELOG.md` (e.g., https://github.com/10up/ElasticPressLabs/compare/X.Y.Z-1...X.Y.Z).
 1. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
 1. Readme updates: Make any other readme changes as necessary.  `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content.  The two are slightly different.
 1. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
-1. POT file: Run `wp i18n make-pot . lang/elasticpress.pot` and commit the file.
+1. POT file: Run `wp i18n make-pot . lang/elasticpress-labs.pot` and commit the file.
 1. Release date: Double check the release date in both changelog files.
 1. Merge: Merge the release branch/PR into `trunk`.  `trunk` contains the stable development version.
 1. Test: While still on the `trunk` branch, test for functionality locally.

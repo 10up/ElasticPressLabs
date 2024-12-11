@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.3.0\n"
+"Project-Id-Version: ElasticPress Labs 2.3.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-03-04T12:48:18+00:00\n"
+"POT-Creation-Date: 2024-12-11T17:01:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.8.1\n"
 "X-Domain: elasticpress-labs\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid "https://10up.com"
 msgstr ""
 
-#: elasticpresslabs.php:35
+#: elasticpresslabs.php:36
 msgid "Error: Please run $ composer install in the ElasticPress Labs plugin directory."
 msgstr ""
 
@@ -199,6 +199,27 @@ msgstr ""
 msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
+#: includes/classes/Feature/Users.php:25
+#: includes/classes/Indexable/User/User.php:44
+msgid "Users"
+msgstr ""
+
+#: includes/classes/Feature/Users.php:27
+msgid "Improve user search relevancy and query performance."
+msgstr ""
+
+#: includes/classes/Feature/Users.php:29
+msgid "https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users"
+msgstr ""
+
+#: includes/classes/Feature/Users.php:61
+msgid "This feature will empower your website to overcome traditional WordPress user search and query limitations that can present themselves at scale."
+msgstr ""
+
+#: includes/classes/Feature/Users.php:62
+msgid "Be aware that storing user data may bound you to certain legal obligations depending on your local government regulations."
+msgstr ""
+
 #: includes/classes/Feature/WooCommerceSubscriptionSearch.php:33
 msgid "WooCommerce Admin Subscription Search"
 msgstr ""
@@ -217,6 +238,10 @@ msgstr ""
 
 #: includes/classes/Feature/WooCommerceSubscriptionSearch.php:143
 msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
+msgstr ""
+
+#: includes/classes/Indexable/User/User.php:45
+msgid "User"
 msgstr ""
 
 #: includes/functions/core.php:243
