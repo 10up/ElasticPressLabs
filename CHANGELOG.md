@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Security
 -->
 
-## [2.3.1] - 2024-12-XX
+## [2.3.1] - 2024-12-11
 
 ### Added
 - ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul) via [#104](https://github.com/10up/ElasticPress/pull/104).
