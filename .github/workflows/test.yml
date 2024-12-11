@@ -3,8 +3,6 @@ name: Test
 env:
   COMPOSER_VERSION: "2"
   COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
-  NODE_VERSION: "18"
-  NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
 
 on:
   schedule:
@@ -24,29 +22,17 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Start MySQL
       run: sudo systemctl start mysql.service
-
-    - name: Configure sysctl limits
-      run: |
-        sudo swapoff -a
-        sudo sysctl -w vm.swappiness=1
-        sudo sysctl -w fs.file-max=262144
-        sudo sysctl -w vm.max_map_count=262144
-
-    - name: Setup Elasticsearch
-      uses: getong/elasticsearch-action@v1.2
-      with:
-        elasticsearch version: '7.10.1'
-
+    
     - name: Set standard 10up cache directories
       run: |
         composer config -g cache-dir "${{ env.COMPOSER_CACHE }}"
 
     - name: Prepare composer cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.COMPOSER_CACHE }}
         key: composer-${{ env.COMPOSER_VERSION }}-${{ hashFiles('**/composer.lock') }}
@@ -61,6 +47,12 @@ jobs:
 
     - name: Install dependencies
       run: composer install
+
+    - name: Spin up Elasticsearch
+      run: git clone https://github.com/10up/ElasticPress.git elasticpress-plugin && cd elasticpress-plugin && npm run es:start
+
+    - name: Check ES response
+      run: curl --connect-timeout 5 --max-time 10 --retry 5 --retry-max-time 40 --retry-all-errors http://127.0.0.1:8890
 
     - name: Setup WP Tests
       run: |

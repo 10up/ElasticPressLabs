@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 5.6
-Tested up to:      6.4
-Stable tag:        2.3.0
+Tested up to:      6.7
+Stable tag:        2.3.1
 Requires PHP:      7.0
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,20 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
+= 2.3.1 - 2024-12-11 =
+
+__Added:__
+
+* ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul).
+
+__Changed:__
+
+* Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh).
+* Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia).
+
+__Fixed:__
+
+* Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy).
 
 = 2.3.0 - 2024-03-04 =
 

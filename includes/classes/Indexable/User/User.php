@@ -41,8 +41,8 @@ class User extends Indexable {
 	 */
 	public function __construct() {
 		$this->labels = [
-			'plural'   => esc_html__( 'Users', 'elasticpress' ),
-			'singular' => esc_html__( 'User', 'elasticpress' ),
+			'plural'   => esc_html__( 'Users', 'elasticpress-labs' ),
+			'singular' => esc_html__( 'User', 'elasticpress-labs' ),
 		];
 	}
 
@@ -64,8 +64,6 @@ class User extends Indexable {
 	 * @return array
 	 */
 	public function format_args( $query_vars, $query ) {
-		global $wpdb;
-
 		/**
 		 * Handle `number` query var
 		 */
