@@ -16,14 +16,14 @@ All notable changes to this project will be documented in this file, per [the Ke
 ## [2.3.1] - 2024-12-11
 
 ### Added
-- ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul) via [#104](https://github.com/10up/ElasticPress/pull/104).
+- ElasticPress as a plugin dependency. Props [@jeffpaul](https://github.com/jeffpaul) via [#104](https://github.com/10up/ElasticPressLabs/pull/104).
 
 ### Changed
-- Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh) via [#106](https://github.com/10up/ElasticPress/pull/106).
-- Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#110](https://github.com/10up/ElasticPress/pull/110) and [#111](https://github.com/10up/ElasticPress/pull/111).
+- Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh) via [#106](https://github.com/10up/ElasticPressLabs/pull/106).
+- Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#110](https://github.com/10up/ElasticPressLabs/pull/110) and [#111](https://github.com/10up/ElasticPressLabs/pull/111).
 
 ## Fixed
-- Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy) via [#114](https://github.com/10up/ElasticPress/pull/114).
+- Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy) via [#114](https://github.com/10up/ElasticPressLabs/pull/114).
 
 ## [2.3.0] - 2024-03-04
 
