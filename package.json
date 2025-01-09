@@ -39,8 +39,12 @@
   },
   "10up-toolkit": {
     "entry": {
-      "admin": "./assets/js/admin/admin.js"
+      "admin": "./assets/js/admin/admin.js",
+      "search-templates-script": "./assets/js/search-templates/index.js"
     },
-    "wpDependencyExternals": false
+    "wpDependencyExternals": true
+  },
+  "dependencies": {
+    "@wordpress/icons": "^10.15.1"
   }
 }

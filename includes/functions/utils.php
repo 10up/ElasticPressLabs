@@ -5,6 +5,8 @@
  * @package ElasticPressLabs
  */
 
+namespace ElasticPressLabs\Utils;
+
 /**
  * List of reserved words in JavaScript
  *
@@ -216,4 +218,27 @@ function get_js_reserved_words() {
 		'onsubmit',
 		'jQuery',
 	];
+}
+
+/**
+ * Get asset info from extracted asset files
+ *
+ * @param string $slug Asset slug as defined in build/webpack configuration
+ * @param string $attribute Optional attribute to get. Can be version or dependencies
+ * @return string|array
+ */
+function get_asset_info( $slug, $attribute = null ) {
+	if ( file_exists( ELASTICPRESS_LABS_PATH . 'dist/js/' . $slug . '.asset.php' ) ) {
+		$asset = require ELASTICPRESS_LABS_PATH . 'dist/js/' . $slug . '.asset.php';
+	} elseif ( file_exists( ELASTICPRESS_LABS_PATH . 'dist/css/' . $slug . '.asset.php' ) ) {
+		$asset = require ELASTICPRESS_LABS_PATH . 'dist/css/' . $slug . '.asset.php';
+	} else {
+		return null;
+	}
+
+	if ( ! empty( $attribute ) && isset( $asset[ $attribute ] ) ) {
+		return $asset[ $attribute ];
+	}
+
+	return $asset;
 }
