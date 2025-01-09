@@ -27,7 +27,7 @@ class SearchTemplates {
 				'callback'            => [ $this, 'get_search_templates' ],
 				'methods'             => 'GET',
 				'permission_callback' => [ $this, 'check_permission' ],
-			],
+			]
 		);
 		register_rest_route(
 			'elasticpress-labs/v1',

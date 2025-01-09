@@ -193,7 +193,7 @@ class SearchTemplates extends Feature {
 				'label' => sprintf(
 					'<a href="%1$s">%2$s</a>',
 					esc_url( admin_url( 'admin.php?page=elasticpress-search-templates' ) ),
-					__( 'Manage search templates', 'elasticpress-labs' ),
+					__( 'Manage search templates', 'elasticpress-labs' )
 				),
 				'type'  => 'markup',
 			],
