@@ -135,7 +135,7 @@ class SearchTemplates extends Feature {
 		wp_enqueue_style( 'wp-edit-post' );
 
 		wp_enqueue_style(
-			'ep_synonyms_scripts',
+			'ep_search_templates_scripts',
 			ELASTICPRESS_LABS_URL . 'dist/css/search-templates-script.css',
 			[],
 			LabsUtils\get_asset_info( 'search-templates-script', 'version' ),
