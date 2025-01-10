@@ -156,11 +156,15 @@ class SearchTemplates {
 			return $response;
 		}
 
+		$status_code = wp_remote_retrieve_response_code( $response );
 		if ( 201 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new \WP_Error( 'invalid_response', wp_remote_retrieve_response_message( $response ) );
 		}
 
-		return json_decode( wp_remote_retrieve_body( $response ) );
+		$response_data = json_decode( wp_remote_retrieve_body( $response ) );
+		$rest_response = rest_ensure_response( $response_data );
+		$rest_response->set_status( $status_code );
+		return $rest_response;
 	}
 
 	/**
@@ -182,10 +186,14 @@ class SearchTemplates {
 			return $response;
 		}
 
-		if ( 204 !== wp_remote_retrieve_response_code( $response ) ) {
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
 			return new \WP_Error( 'invalid_response', wp_remote_retrieve_response_message( $response ) );
 		}
 
-		return wp_remote_retrieve_body( $response );
+		$response_data = wp_remote_retrieve_body( $response );
+		$rest_response = rest_ensure_response( $response_data );
+		$rest_response->set_status( $status_code );
+		return $rest_response;
 	}
 }
