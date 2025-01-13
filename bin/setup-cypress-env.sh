@@ -51,6 +51,7 @@ fi
 
 if [ ! -z $WP_VERSION ]; then
 	./bin/wp-env-cli tests-wordpress "wp --allow-root core update --version=${WP_VERSION} --force"
+	./bin/wp-env-cli tests-wordpress "wp --allow-root core update-db"
 fi
 
 ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress-labs"
