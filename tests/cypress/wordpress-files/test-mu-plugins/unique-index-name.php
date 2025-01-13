@@ -79,5 +79,7 @@ function ep_tests_delete_all_indices() {
 
 		\ElasticPress\Elasticsearch::factory()->delete_index( $index['index'] );
 	}
+
+	WP_CLI::success( 'Done.' );
 }
 WP_CLI::add_command( 'elasticpress-tests delete-all-indices', 'ep_tests_delete_all_indices' );
