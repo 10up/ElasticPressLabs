@@ -28,6 +28,9 @@ maybe_install() {
 		return
 	fi
 
+	check_git_installed
+	git clone --depth 1 --branch develop https://github.com/10up/ElasticPress/ $TMPDIR/elasticpress-develop
+
 	rm -r $EP_ES_DOCKER_DIR
 	mv $TMPDIR/elasticpress-develop/bin/es-docker $EP_ES_DOCKER_DIR
 	rm -r $TMPDIR/elasticpress-develop

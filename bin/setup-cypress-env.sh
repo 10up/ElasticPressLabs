@@ -1,7 +1,7 @@
 #!/bin/bash
 
 EP_HOST=""
-ES_SHIELD=""
+EP_CREDENTIALS=""
 EP_INDEX_PREFIX=""
 WP_VERSION=""
 WC_VERSION=""
@@ -13,7 +13,7 @@ for opt in "$@"; do
       EP_HOST="${opt#*=}"
       ;;
     -s=*|--es-shield=*)
-      ES_SHIELD="${opt#*=}"
+      EP_CREDENTIALS="${opt#*=}"
       ;;
     -u=*|--ep-index-prefix=*)
       EP_INDEX_PREFIX="${opt#*=}"
@@ -49,6 +49,8 @@ fi
 if [ ! -z $WP_VERSION ]; then
 	./bin/wp-env-cli tests-wordpress "wp --allow-root core update --version=${WP_VERSION} --force"
 fi
+
+./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress-labs"
 
 if [ -z $EP_HOST ]; then
 	# Determine what kind of env we're in

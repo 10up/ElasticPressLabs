@@ -7,10 +7,10 @@
   "env": {
     "tests": {
       "plugins": [
-        ".",
         "https://downloads.wordpress.org/plugin/elasticpress.zip"
       ],
       "mappings": {
+        "wp-content/plugins/elasticpress-labs": ".",
         ".htaccess": "./tests/cypress/wordpress-files/.htaccess"
       }
     }
