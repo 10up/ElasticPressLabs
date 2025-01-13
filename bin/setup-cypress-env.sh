@@ -79,4 +79,4 @@ fi
 ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress sync --setup --yes --show-errors"
 
 ./bin/wp-env-cli tests-wordpress "wp --allow-root option set posts_per_page 5"
-/bin/wp-env-cli tests-wordpress "wp --allow-root user meta update admin edit_post_per_page 5"
+./bin/wp-env-cli tests-wordpress "wp --allow-root user meta update admin edit_post_per_page 5"
