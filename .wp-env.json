@@ -14,7 +14,8 @@
       ],
       "mappings": {
         "wp-content/plugins/elasticpress-labs": ".",
-        ".htaccess": "./tests/cypress/wordpress-files/.htaccess"
+        ".htaccess": "./tests/cypress/wordpress-files/.htaccess",
+        "wp-content/mu-plugins/unique-index-name.php": "./tests/cypress/wordpress-files/test-mu-plugins/unique-index-name.php"
       }
     }
   }
