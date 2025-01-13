@@ -1,0 +1,18 @@
+{
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_DISPLAY": true,
+    "WP_DISABLE_FATAL_ERROR_HANDLER": true
+  },
+  "env": {
+    "tests": {
+      "plugins": [
+        ".",
+        "https://downloads.wordpress.org/plugin/elasticpress.zip"
+      ],
+      "mappings": {
+        ".htaccess": "./tests/cypress/wordpress-files/.htaccess"
+      }
+    }
+  }
+}
