@@ -6,6 +6,9 @@
   },
   "env": {
     "tests": {
+      "themes": [
+        "https://downloads.wordpress.org/theme/twentytwentyone.zip"
+      ],
       "plugins": [
         "https://downloads.wordpress.org/plugin/elasticpress.zip"
       ],
