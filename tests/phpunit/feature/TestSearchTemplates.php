@@ -124,7 +124,7 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 			$expected_template = $expected[ $calls ][1];
 			$this->assertStringEndsWith( "api/v1/search/posts/{$expected_index}/template?template_name={$expected_template}", $request['url'] );
 
-			$calls++;
+			++$calls;
 
 			return [
 				'response' => [
