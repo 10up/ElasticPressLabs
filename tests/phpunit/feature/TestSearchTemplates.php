@@ -90,6 +90,56 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the `delete_all_search_templates` method
+	 *
+	 * @group search-templates
+	 */
+	public function test_delete_all_search_templates() {
+		$return_http_code = function ( $response, $request ) {
+			static $calls = 0;
+
+			if ( 'GET' === $request['args']['method'] && str_ends_with( $request['url'], '/api/v1/search/posts/templates' ) ) {
+				return [
+					'response' => [
+						'code' => 200,
+					],
+					'body'     => wp_json_encode(
+						[
+							'index1' => [ 'template1', 'template2' ],
+							'index2' => [ 'template3' ],
+						]
+					),
+				];
+			}
+
+			$this->assertSame( 'DELETE', $request['args']['method'] );
+
+			$expected = [
+				[ 'index1', 'template1' ],
+				[ 'index1', 'template2' ],
+				[ 'index2', 'template3' ],
+			];
+
+			$expected_index    = $expected[ $calls ][0];
+			$expected_template = $expected[ $calls ][1];
+			$this->assertStringEndsWith( "api/v1/search/posts/{$expected_index}/template?template_name={$expected_template}", $request['url'] );
+
+			$calls++;
+
+			return [
+				'response' => [
+					'code'    => 200,
+					'message' => 'Testing message',
+				],
+			];
+		};
+		add_filter( 'ep_do_intercept_request', $return_http_code, 10, 2 );
+		add_filter( 'ep_intercept_remote_request', '__return_true' );
+
+		$this->get_feature()->delete_all_search_templates();
+	}
+
+	/**
 	 * Test the `set_settings_schema` method
 	 *
 	 * @group search-templates
