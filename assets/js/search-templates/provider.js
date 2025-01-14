@@ -45,23 +45,23 @@ export const SearchTemplatesProvider = ({ children }) => {
 	});
 
 	const loadTemplate = async (template) => {
-		const response = await apiFetch({
+		return apiFetch({
 			path: `${restApiEndpoint}/${template}`,
+		}).then((response) => {
+			dispatch({ type: 'SET_TEMPLATE', templateName: template, template: response });
+			return response;
 		});
-
-		dispatch({ type: 'SET_TEMPLATE', templateName: template, template: response });
-		return response;
 	};
 
 	const saveTemplate = async (name, template) => {
-		const response = apiFetch({
+		return apiFetch({
 			path: `${restApiEndpoint}/${name}`,
 			method: 'PUT',
 			body: template,
+		}).then((response) => {
+			dispatch({ type: 'SET_TEMPLATE', templateName: name, template: response });
+			return response;
 		});
-
-		dispatch({ type: 'SET_TEMPLATE', templateName: name, template: response });
-		return response;
 	};
 
 	const deleteTemplate = (name) => {

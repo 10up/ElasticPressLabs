@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies.
  */
 import { useSearchTemplateDispatch } from '../provider';
+import { useSettingsScreen } from '../../settings-screen';
 import TemplateField from './template-field';
 
 /**
@@ -21,11 +22,23 @@ export default () => {
 	const [template, setTemplate] = useState('');
 
 	const { saveTemplate } = useSearchTemplateDispatch();
+	const { createNotice } = useSettingsScreen();
 
 	const onAddNewTemplate = () => {
-		saveTemplate(name, template);
-		setName('');
-		setTemplate('');
+		saveTemplate(name, template)
+			.then(() => {
+				setName('');
+				setTemplate('');
+				createNotice('success', __('Template saved.', 'elasticpress-labs'));
+			})
+			.catch((error) => {
+				createNotice(
+					'error',
+					__('Could not save the template. Please try again.', 'elasticpress-labs'),
+				);
+				// eslint-disable-next-line no-console
+				console.error(__('ElasticPress Labs Error: ', 'elasticpress-labs'), error);
+			});
 	};
 
 	return (

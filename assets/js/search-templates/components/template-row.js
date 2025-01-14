@@ -90,14 +90,18 @@ export default ({ templateName }) => {
 	};
 
 	const onDeleteTemplate = () => {
-		deleteTemplate(template).catch((error) => {
-			createNotice(
-				'error',
-				__('Could not delete the template. Please try again.', 'elasticpress-labs'),
-			);
-			// eslint-disable-next-line no-console
-			console.error(__('ElasticPress Labs Error: ', 'elasticpress-labs'), error);
-		});
+		deleteTemplate(templateName)
+			.then(() => {
+				createNotice('success', __('Template deleted.', 'elasticpress-labs'));
+			})
+			.catch((error) => {
+				createNotice(
+					'error',
+					__('Could not delete the template. Please try again.', 'elasticpress-labs'),
+				);
+				// eslint-disable-next-line no-console
+				console.error(__('ElasticPress Labs Error: ', 'elasticpress-labs'), error);
+			});
 	};
 
 	return (
