@@ -1,14 +1,14 @@
 /**
  * WordPress Dependencies.
  */
-import { Button, Flex, PanelBody, PanelRow, TextControl } from '@wordpress/components';
+import { Button, Flex, Notice, PanelBody, PanelRow, TextControl } from '@wordpress/components';
 import { useState, WPElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
  */
-import { useSearchTemplateDispatch } from '../provider';
+import { useSearchTemplate, useSearchTemplateDispatch } from '../provider';
 import { useSettingsScreen } from '../../settings-screen';
 import TemplateField from './template-field';
 
@@ -20,7 +20,9 @@ import TemplateField from './template-field';
 export default () => {
 	const [name, setName] = useState('');
 	const [template, setTemplate] = useState('');
+	const [disabled, setDisabled] = useState(false);
 
+	const { templates } = useSearchTemplate();
 	const { saveTemplate } = useSearchTemplateDispatch();
 	const { createNotice } = useSettingsScreen();
 
@@ -34,17 +36,31 @@ export default () => {
 			.catch((error) => {
 				createNotice(
 					'error',
-					__('Could not save the template. Please try again.', 'elasticpress-labs'),
+					error.message ||
+						__('Could not save the template. Please try again.', 'elasticpress-labs'),
 				);
 				// eslint-disable-next-line no-console
 				console.error(__('ElasticPress Labs Error: ', 'elasticpress-labs'), error);
 			});
 	};
 
+	const onChangeName = (newName) => {
+		setName(newName);
+		setDisabled(Object.keys(templates).includes(newName));
+	};
+
 	return (
 		<PanelBody title={__('Add New Template', 'elasticpress-labs')} initialOpen>
 			<PanelRow>
 				<Flex direction="column" style={{ width: '100%' }}>
+					{name && disabled && (
+						<Notice status="error" isDismissible={false}>
+							{__(
+								'This name is already in use. You can change the existing template instead.',
+								'elasticpress-labs',
+							)}
+						</Notice>
+					)}
 					<TextControl
 						label={__('Name', 'elasticpress-labs')}
 						help={__(
@@ -52,12 +68,12 @@ export default () => {
 							'elasticpress-labs',
 						)}
 						value={name}
-						onChange={setName}
+						onChange={onChangeName}
 					/>
 					<TemplateField value={template} onChange={setTemplate} />
 					<Flex justify="flex-start">
 						<Button
-							disabled={false}
+							disabled={disabled}
 							isBusy={false}
 							onClick={onAddNewTemplate}
 							type="button"

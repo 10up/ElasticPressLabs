@@ -131,6 +131,12 @@ describe('Search Templates Feature', () => {
 			.as('NewTemplatePanel');
 		cy.get('@NewTemplatePanel').should('exist');
 
+		cy.contains('.components-panel__body-title', 'Add New Template')
+			.closest('.components-panel__body')
+			.as('addNewTemplatePanel');
+		cy.get('@addNewTemplatePanel').get('input[type="text"]').type('new-template');
+		cy.contains('.components-notice', 'This name is already in use.').should('not.exist');
+
 		cy.intercept('/wp-json/elasticpress-labs/v1/search-templates/new-template*').as(
 			'loadTemplateRequest',
 		);
@@ -153,5 +159,48 @@ describe('Search Templates Feature', () => {
 
 		cy.get('@NewTemplatePanel').contains('button', 'Delete template').click();
 		cy.contains('Template deleted.').should('exist');
+	});
+
+	it('Can see a message if above limits', () => {
+		if (!isEpIo) {
+			return;
+		}
+
+		cy.login();
+		enableFeature();
+		deleteAllTemplates();
+
+		cy.request('/wp-admin/admin-ajax.php?action=rest-nonce').then((response) => {
+			const nonce = response.body;
+			// The test account already has a template created under a different index prefix.
+			for (let index = 1; index <= 9; index++) {
+				cy.request({
+					method: 'PUT',
+					url: `/wp-json/elasticpress-labs/v1/search-templates/template-${index}`,
+					body: '{"a": "b"}',
+					headers: { 'x-wp-nonce': nonce },
+				});
+				// Give the server a small break between requests
+				// eslint-disable-next-line cypress/no-unnecessary-waiting
+				cy.wait(200);
+			}
+		});
+
+		cy.visitAdminPage('admin.php?page=elasticpress-search-templates');
+		cy.contains('.components-panel__body-title', 'Add New Template')
+			.closest('.components-panel__body')
+			.as('addNewTemplatePanel');
+		cy.get('@addNewTemplatePanel').get('input[type="text"]').type('new-template');
+		cy.get('@addNewTemplatePanel')
+			.get('textarea')
+			.type('{"a": "b"}', { parseSpecialCharSequences: false });
+
+		cy.intercept('/wp-json/elasticpress-labs/v1/search-templates/new-template*').as(
+			'loadTemplateRequest',
+		);
+		cy.get('@addNewTemplatePanel').contains('button', 'Save Template').click();
+		cy.wait('@loadTemplateRequest');
+
+		cy.contains('It seems you have reached the limit of search').should('exist');
 	});
 });

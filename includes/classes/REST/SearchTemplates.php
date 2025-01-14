@@ -156,12 +156,13 @@ class SearchTemplates {
 			return $response;
 		}
 
-		$status_code = wp_remote_retrieve_response_code( $response );
+		$status_code   = wp_remote_retrieve_response_code( $response );
+		$response_body = wp_remote_retrieve_body( $response );
 		if ( 201 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new \WP_Error( 'invalid_response', wp_remote_retrieve_response_message( $response ) );
+			return new \WP_Error( $status_code, $response_body );
 		}
 
-		$response_data = json_decode( wp_remote_retrieve_body( $response ) );
+		$response_data = json_decode( $response_body );
 		$rest_response = rest_ensure_response( $response_data );
 		$rest_response->set_status( $status_code );
 		return $rest_response;
