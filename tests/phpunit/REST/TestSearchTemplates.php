@@ -326,7 +326,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 					'code'    => 500,
 					'message' => 'Testing message',
 				],
-				'body' => 'Testing body message',
+				'body'     => 'Testing body message',
 			];
 		};
 		add_filter( 'ep_do_intercept_request', $return_http_code );
