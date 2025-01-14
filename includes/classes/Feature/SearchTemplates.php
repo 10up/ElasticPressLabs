@@ -184,6 +184,29 @@ class SearchTemplates extends Feature {
 	}
 
 	/**
+	 * Delete all search templates of the account.
+	 *
+	 * This is a highly destructive operation and is only called programmatically.
+	 *
+	 * @return void
+	 */
+	public function delete_all_search_templates() {
+		$response      = \ElasticPress\Elasticsearch::factory()->remote_request( 'api/v1/search/posts/templates' );
+		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( ! empty( $response_body ) ) {
+			foreach ( $response_body as $index_name => $templates ) {
+				foreach ( $templates as $template ) {
+					\ElasticPress\Elasticsearch::factory()->remote_request(
+						'api/v1/search/posts/' . $index_name . '/template?template_name=' . $template,
+						[ 'method' => 'DELETE' ]
+					);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Set the `settings_schema` attribute
 	 */
 	protected function set_settings_schema() {

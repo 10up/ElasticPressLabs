@@ -22,24 +22,6 @@ describe('Search Templates Feature', () => {
 		});
 	};
 
-	const deleteAllTemplates = () => {
-		cy.request('/wp-admin/admin-ajax.php?action=rest-nonce').then((response) => {
-			const nonce = response.body;
-			cy.request({
-				url: '/wp-json/elasticpress-labs/v1/search-templates',
-				headers: { 'x-wp-nonce': nonce },
-			}).then((response) => {
-				response.body.forEach((template) => {
-					cy.request({
-						method: 'DELETE',
-						url: `/wp-json/elasticpress-labs/v1/search-templates/${template}`,
-						headers: { 'x-wp-nonce': nonce },
-					});
-				});
-			});
-		});
-	};
-
 	/**
 	 * Test that the feature cannot be activated when not in ElasticPress.io.
 	 */
@@ -64,7 +46,7 @@ describe('Search Templates Feature', () => {
 		cy.login();
 		enableFeature();
 
-		deleteAllTemplates();
+		cy.wpCli('wp elasticpress-tests delete-all-search-templates');
 
 		/**
 		 * Can go to the Search Templates page through the features section
@@ -135,7 +117,7 @@ describe('Search Templates Feature', () => {
 			.closest('.components-panel__body')
 			.as('addNewTemplatePanel');
 		cy.get('@addNewTemplatePanel').get('input[type="text"]').type('new-template');
-		cy.contains('.components-notice', 'This name is already in use.').should('not.exist');
+		cy.contains('.components-notice', 'This name is already in use.').should('exist');
 
 		cy.intercept('/wp-json/elasticpress-labs/v1/search-templates/new-template*').as(
 			'loadTemplateRequest',
@@ -168,12 +150,13 @@ describe('Search Templates Feature', () => {
 
 		cy.login();
 		enableFeature();
-		deleteAllTemplates();
+
+		cy.wpCli('wp elasticpress-tests delete-all-search-templates');
 
 		cy.request('/wp-admin/admin-ajax.php?action=rest-nonce').then((response) => {
 			const nonce = response.body;
 			// The test account already has a template created under a different index prefix.
-			for (let index = 1; index <= 9; index++) {
+			for (let index = 1; index <= 10; index++) {
 				cy.request({
 					method: 'PUT',
 					url: `/wp-json/elasticpress-labs/v1/search-templates/template-${index}`,

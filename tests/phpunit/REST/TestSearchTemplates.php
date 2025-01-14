@@ -217,7 +217,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 		$this->send_invalid_http_status_code();
 
 		$error = $this->controller->update_search_template( new \WP_REST_Request() );
-		$this->assertEquals( 'invalid_response', $error->get_error_code() );
+		$this->assertEquals( 500, $error->get_error_code() );
 		$this->assertEquals( 'Testing message', $error->get_error_message() );
 	}
 
