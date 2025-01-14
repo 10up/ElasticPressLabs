@@ -9,11 +9,28 @@
 namespace ElasticPressLabs\REST;
 
 use ElasticPress\Utils;
+use ElasticPressLabs\Feature\SearchTemplates as SearchTemplatesFeature;
 
 /**
  * Search Templates API controller class.
  */
 class SearchTemplates {
+	/**
+	 * The SearchTemplatesFeature instance.
+	 *
+	 * @var SearchTemplatesFeature
+	 */
+	protected $feature;
+
+	/**
+	 * Class constructor
+	 *
+	 * @param SearchTemplatesFeature $feature The feature instance.
+	 */
+	public function __construct( SearchTemplatesFeature $feature ) {
+		$this->feature = $feature;
+	}
+
 	/**
 	 * Register routes.
 	 *
@@ -71,32 +88,12 @@ class SearchTemplates {
 	}
 
 	/**
-	 * EP.io search templates endpoint.
-	 *
-	 * @return string
-	 */
-	protected function get_search_templates_endpoint(): string {
-		return 'api/v1/search/posts/templates';
-	}
-
-	/**
-	 * EP.io (single) search template endpoint.
-	 *
-	 * @return string
-	 */
-	protected function get_search_template_endpoint(): string {
-		$index_name = \ElasticPress\Indexables::factory()->get( 'post' )->get_index_name();
-
-		return "api/v1/search/posts/{$index_name}/template";
-	}
-
-	/**
 	 * List search templates handler.
 	 *
 	 * @return array|\WP_Error
 	 */
 	public function get_search_templates() {
-		$response = \ElasticPress\Elasticsearch::factory()->remote_request( $this->get_search_templates_endpoint() );
+		$response = \ElasticPress\Elasticsearch::factory()->remote_request( $this->feature->get_search_templates_endpoint() );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -119,7 +116,7 @@ class SearchTemplates {
 	 * @return object|\WP_Error
 	 */
 	public function get_search_template( \WP_REST_Request $request ) {
-		$path     = $this->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
+		$path     = $this->feature->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
 		$response = \ElasticPress\Elasticsearch::factory()->remote_request( $path );
 
 		if ( is_wp_error( $response ) ) {
@@ -140,7 +137,7 @@ class SearchTemplates {
 	 * @return object|\WP_Error
 	 */
 	public function update_search_template( \WP_REST_Request $request ) {
-		$path     = $this->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
+		$path     = $this->feature->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
 		$response = \ElasticPress\Elasticsearch::factory()->remote_request(
 			$path,
 			[
@@ -175,7 +172,7 @@ class SearchTemplates {
 	 * @return object|\WP_Error
 	 */
 	public function delete_search_template( \WP_REST_Request $request ) {
-		$path     = $this->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
+		$path     = $this->feature->get_search_template_endpoint() . '?template_name=' . $request['template_name'];
 		$response = \ElasticPress\Elasticsearch::factory()->remote_request(
 			$path,
 			[

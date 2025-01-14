@@ -27,7 +27,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 	public function set_up() {
 		parent::set_up();
 
-		$this->controller = new SearchTemplates();
+		$this->controller = new SearchTemplates( \ElasticPress\Features::factory()->get_registered_feature( 'search_templates' ) );
 		add_filter( 'ep_intercept_remote_request', '__return_true' );
 	}
 
@@ -218,7 +218,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 
 		$error = $this->controller->update_search_template( new \WP_REST_Request() );
 		$this->assertEquals( 500, $error->get_error_code() );
-		$this->assertEquals( 'Testing message', $error->get_error_message() );
+		$this->assertEquals( 'Testing body message', $error->get_error_message() );
 	}
 
 	/**
@@ -326,6 +326,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 					'code'    => 500,
 					'message' => 'Testing message',
 				],
+				'body' => 'Testing body message',
 			];
 		};
 		add_filter( 'ep_do_intercept_request', $return_http_code );

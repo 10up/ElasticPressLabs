@@ -164,7 +164,7 @@ class SearchTemplates extends Feature {
 	 * Setup REST endpoints
 	 */
 	public function setup_endpoint() {
-		$controller = new \ElasticPressLabs\REST\SearchTemplates();
+		$controller = new \ElasticPressLabs\REST\SearchTemplates( $this );
 		$controller->register_routes();
 	}
 
@@ -191,20 +191,44 @@ class SearchTemplates extends Feature {
 	 * @return void
 	 */
 	public function delete_all_search_templates() {
-		$response      = \ElasticPress\Elasticsearch::factory()->remote_request( 'api/v1/search/posts/templates' );
+		$response      = \ElasticPress\Elasticsearch::factory()->remote_request( $this->get_search_templates_endpoint() );
 		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( ! empty( $response_body ) ) {
 			foreach ( $response_body as $index_name => $templates ) {
 				foreach ( $templates as $template ) {
 					\ElasticPress\Elasticsearch::factory()->remote_request(
-						'api/v1/search/posts/' . $index_name . '/template?template_name=' . $template,
+						$this->get_search_template_endpoint( $index_name ) . '?template_name=' . $template,
 						[ 'method' => 'DELETE' ]
 					);
 				}
 			}
 		}
 	}
+
+	/**
+	 * EP.io search templates endpoint.
+	 *
+	 * @return string
+	 */
+	public function get_search_templates_endpoint(): string {
+		return 'api/v1/search/posts/templates';
+	}
+
+	/**
+	 * EP.io (single) search template endpoint.
+	 *
+	 * @param null|string $index_name Index name.
+	 * @return string
+	 */
+	public function get_search_template_endpoint( $index_name = null ): string {
+		if ( ! $index_name ) {
+			$index_name = \ElasticPress\Indexables::factory()->get( 'post' )->get_index_name();
+		}
+
+		return "api/v1/search/posts/{$index_name}/template";
+	}
+
 
 	/**
 	 * Set the `settings_schema` attribute
