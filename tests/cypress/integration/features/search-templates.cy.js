@@ -56,7 +56,7 @@ describe('Search Templates Feature', () => {
 		cy.get('.components-form-toggle__input').should('be.disabled');
 	});
 
-	it.only('Can manage search templates', () => {
+	it('Can manage search templates', () => {
 		if (!isEpIo) {
 			return;
 		}
