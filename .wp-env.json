@@ -1,0 +1,22 @@
+{
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_DISPLAY": true,
+    "WP_DISABLE_FATAL_ERROR_HANDLER": true
+  },
+  "env": {
+    "tests": {
+      "themes": [
+        "https://downloads.wordpress.org/theme/twentytwentyone.zip"
+      ],
+      "plugins": [
+        "https://downloads.wordpress.org/plugin/elasticpress.zip"
+      ],
+      "mappings": {
+        "wp-content/plugins/elasticpress-labs": ".",
+        ".htaccess": "./tests/cypress/wordpress-files/.htaccess",
+        "wp-content/mu-plugins/unique-index-name.php": "./tests/cypress/wordpress-files/test-mu-plugins/unique-index-name.php"
+      }
+    }
+  }
+}

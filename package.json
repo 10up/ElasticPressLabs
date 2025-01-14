@@ -23,14 +23,27 @@
     "format-js": "10up-toolkit format-js assets/js",
     "lint": "npm run lint-style && npm run lint-js && npm run lint-php",
     "format": "npm run format-js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "es:start": "./bin/install-es-docker.sh start",
+    "es:stop": "./bin/install-es-docker.sh stop",
+    "env": "wp-env",
+    "env:install-tests-cli": "./bin/install-wp-cli.sh tests-wordpress",
+    "env:start": "wp-env start && npm run env:install-tests-cli && npm run es:start",
+    "env:stop": "wp-env stop && npm run es:stop",
+    "cypress:setup": "./bin/setup-cypress-env.sh",
+    "cypress:open": "cypress open --config-file tests/cypress/config.js",
+    "cypress:run": "cypress run --config-file tests/cypress/config.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/10up/ElasticPressLabs"
   },
   "devDependencies": {
+    "@10up/cypress-wp-utils": "^0.4.0",
+    "@wordpress/env": "^10.15.0",
     "10up-toolkit": "^6.3.0",
+    "cypress": "^13.17.0",
+    "eslint-plugin-cypress": "^3.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10"
   },
