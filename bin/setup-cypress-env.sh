@@ -56,6 +56,8 @@ fi
 
 ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress-labs"
 
+./bin/wp-env-cli tests-wordpress "wp --allow-root rewrite structure '/%postname%/'"
+
 if [ -z $EP_HOST ]; then
 	# Determine what kind of env we're in
 	if [ "$(uname | tr '[:upper:]' '[:lower:]')" = "darwin" ]; then
