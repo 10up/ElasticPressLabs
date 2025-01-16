@@ -1,0 +1,493 @@
+<?php
+/**
+ * Vector Embeddings
+ *
+ * This feature enables storage of vector embeddings, a numerical representation of the
+ * indexed content that can capture semantic relationships and similarities between data points.
+ * These embeddings are often used by AI models to process and understand complex information
+ * more efficiently and are used for features like natural language processing, recommendations and computer vision.
+ *
+ * @since 2.4.0
+ * @package ElasticPressLabs
+ */
+
+namespace ElasticPressLabs\Feature\VectorEmbeddings;
+
+use ElasticPress\Feature;
+use ElasticPress\Elasticsearch;
+use WP_Error;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+/**
+ * Vector Embeddings feature
+ */
+class VectorEmbeddings extends Feature {
+	/**
+	 * Elasticsearch version.
+	 *
+	 * @var string $es_version
+	 */
+	protected $es_version;
+
+	/**
+	 * Number of dimensions for the embeddings.
+	 *
+	 * @var int
+	 */
+	protected $dimensions = 512;
+
+	/**
+	 * Default settings
+	 *
+	 * @var array $default_settings.
+	 */
+	public $default_settings = [
+		'ep_openai_api_key'               => '',
+		'ep_openai_embeddings_api_url'    => 'https://api.openai.com/v1/embeddings',
+		'ep_openai_embedding_model'       => 'text-embedding-3-small',
+		'ep_vector_embeddings_meta_field' => 'vector_embeddings',
+		'ep_external_embedding'           => '0',
+	];
+
+	/**
+	 * Initialize feature setting it's config
+	 */
+	public function __construct() {
+		$this->slug = 'vector_embeddings';
+
+		$this->title = esc_html__( 'Vector Embeddings', 'elasticpress-labs' );
+
+		$this->requires_install_reindex = true;
+
+		$this->summary = __(
+			'This feature enables storage of vector embeddings, a numerical representation of the indexed content that can capture semantic relationships and similarities between data points. These embeddings are often used by AI models to process and understand complex information more efficiently and are used for features like natural language processing, recommendations and computer vision.',
+			'elasticpress-labs'
+		);
+
+		$this->es_version = Elasticsearch::factory()->get_elasticsearch_version();
+
+		parent::__construct();
+	}
+
+	/**
+	 * Connects the Module with WordPress using Hooks and/or Filters.
+	 *
+	 * @return void
+	 */
+	public function setup() {
+		$post_indexable = new Indexables\Post( $this );
+		$post_indexable->setup();
+
+		$term_indexable = new Indexables\Term( $this );
+		$term_indexable->setup();
+	}
+
+	/**
+	 * Tell user whether requirements for feature are met or not.
+	 *
+	 * @return FeatureRequirementsStatus Requirements object
+	 */
+	public function requirements_status() {
+		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
+
+		// Vector support was added in Elasticsearch 7.0.
+		if ( version_compare( $this->es_version, '7.0', '<=' ) ) {
+			$status->code    = 2;
+			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+		}
+
+		return $status;
+	}
+
+	/**
+	 * Set the `settings_schema` attribute
+	 */
+	public function set_settings_schema() {
+		$this->settings_schema = [
+			[
+				'key'   => 'ep_openai_api_key',
+				'label' => __( 'OpenAI API Key', 'elasticpress-labs' ),
+				'help'  => sprintf(
+					wp_kses(
+						/* translators: %1$s: OpenAI sign up URL */
+						__( 'Don\'t have an OpenAI account yet? <a title="Sign up for an OpenAI account" href="%1$s">Sign up for one</a> in order to get your API key.', 'elasticpress-labs' ),
+						[
+							'a' => [
+								'href'  => [],
+								'title' => [],
+							],
+						]
+					),
+					esc_url( 'https://platform.openai.com/signup' )
+				),
+				'type'  => 'text',
+			],
+			[
+				'help'  => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
+				'key'   => 'ep_openai_embeddings_api_url',
+				'label' => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
+				'type'  => 'text',
+			],
+			[
+				'help'  => __( 'OpenAI Embedding model', 'elasticpress-labs' ),
+				'key'   => 'ep_openai_embedding_model',
+				'label' => __( 'The name of the embedding model to use', 'elasticpress-labs' ),
+				'type'  => 'text',
+			],
+			[
+				'help'  => __( 'Specify the postmeta field name that will hold vector embeddings and will be added as dense vector in Elasticsearch mapping.', 'elasticpress-labs' ),
+				'key'   => 'ep_vector_embeddings_meta_field',
+				'label' => __( 'Meta field holding the vector_embeddings', 'elasticpress-labs' ),
+				'type'  => 'text',
+			],
+			[
+				'key'   => 'ep_external_embedding',
+				'help'  => __( 'Enable this if an external process is providing the vector_embeddings meta field provided above with content. This will disable ElasticPress\'s control over embedding generation', 'elasticpress-labs' ),
+				'label' => __( 'External embedding processing', 'elasticpress-labs' ),
+				'type'  => 'checkbox',
+			],
+		];
+	}
+
+	/**
+	 * Add a vector field to the Elasticsearch mapping.
+	 *
+	 * @param array    $mapping      Current mapping.
+	 * @param null|int $dimensions   Number of dimensions for the vector field.
+	 * @param bool     $quantization Whether to use quantization for the vector field. Default false.
+	 * @return array
+	 */
+	public function add_vector_mapping_field( array $mapping, $dimensions = null, bool $quantization = true ): array {
+		// Don't add the field if it already exists.
+		if ( isset( $mapping['mappings']['properties']['chunks'] ) ) {
+			return $mapping;
+		}
+
+		// This needs to match the dimensions your model uses and be between 1 and 4096.
+		if ( ! $dimensions ) {
+			$dimensions = $this->get_dimensions();
+		}
+		$calc_dimensions = max( 1, min( 4096, $dimensions ) );
+
+		// Add the default vector field mapping.
+		$mapping['mappings']['properties']['chunks'] = [
+			'type'       => 'nested',
+			'properties' => [
+				'vector' => [
+					'type' => 'dense_vector',
+					'dims' => (int) $calc_dimensions,
+				],
+			],
+		];
+
+		// Add extra vector fields for newer versions of Elasticsearch.
+		if ( version_compare( $this->es_version, '8.0', '>=' ) ) {
+			// The index (true or false, default true) and similarity (l2_norm, dot_product or cosine) fields
+			// were added in 8.0. The similarity field must be set if index is true.
+			$mapping['mappings']['properties']['chunks']['properties']['vector'] = array_merge(
+				$mapping['mappings']['properties']['chunks']['properties']['vector'],
+				[
+					'index'      => true,
+					'similarity' => 'cosine',
+				]
+			);
+
+			// The element_type field was added in 8.6. This can be either float (default) or byte.
+			if ( version_compare( $this->es_version, '8.6', '>=' ) ) {
+				$mapping['mappings']['properties']['chunks']['properties']['vector']['element_type'] = 'float';
+			}
+
+			// The int8_hnsw type was added in 8.12.
+			if ( $quantization && version_compare( $this->es_version, '8.12', '>=' ) ) {
+				// This is supposed to result in better performance but slightly less accurate results.
+				// See https://www.elastic.co/guide/en/elasticsearch/reference/8.13/knn-search.html#knn-search-quantized-example.
+				// Can test with this on and off and compare results to see what works best.
+				$mapping['mappings']['properties']['chunks']['properties']['vector']['index_options']['type'] = 'int8_hnsw';
+			}
+		}
+
+		return $mapping;
+	}
+
+	/**
+	 * Get an embedding from a given text.
+	 *
+	 * @param string $text  Text to get the embedding for.
+	 * @param bool   $cache Whether to cache the result. Default false.
+	 * @return array|WP_Error
+	 */
+	public function get_embedding( string $text, bool $cache = false ) {
+		// Check to see if we have a stored embedding.
+		if ( $cache ) {
+			$key             = 'ep_embedding_' . sanitize_title( $text );
+			$query_embedding = wp_cache_get( $key, 'ep_embeddings' );
+
+			if ( $query_embedding ) {
+				return $query_embedding;
+			}
+		}
+
+		// Generate the embedding.
+		$embedding = $this->generate_embedding( $text );
+
+		if ( is_wp_error( $embedding ) ) {
+			return $embedding;
+		}
+
+		// Store the embedding for future use if desired.
+		if ( $cache ) {
+			wp_cache_set( $key, $embedding, 'ep_embeddings', false );
+		}
+
+		return $embedding;
+	}
+
+	/**
+	 * Generate an embedding for a particular piece of text.
+	 *
+	 * @param string $text Text to generate the embedding for.
+	 * @return array|boolean|WP_Error
+	 */
+	public function generate_embedding( string $text = '' ) {
+		/**
+		 * Filter the URL for the post request.
+		 *
+		 * @hook ep_openai_embeddings_api_url
+		 * @since 2.4.0
+		 *
+		 * @param {string} $url The URL for the request.
+		 *
+		 * @return {string} The URL for the request.
+		 */
+		$url = apply_filters( 'ep_openai_embeddings_api_url', $this->get_setting( 'ep_openai_embeddings_api_url' ) );
+
+		/**
+		 * Filter the request body before sending to OpenAI.
+		 *
+		 * @hook ep_openai_embeddings_request_body
+		 * @since 2.4.0
+		 *
+		 * @param {array} $body Request body that will be sent to OpenAI.
+		 * @param {string} $text Text we are getting embeddings for.
+		 *
+		 * @return {array} Request body.
+		 */
+		$body = apply_filters(
+			'ep_openai_embeddings_request_body',
+			[
+				'model'      => $this->get_setting( 'ep_openai_embedding_model' ),
+				'input'      => $text,
+				'dimensions' => $this->get_dimensions(),
+			],
+			$text
+		);
+
+		/**
+		 * Filter the options for the post request.
+		 *
+		 * @hook ep_openai_embeddings_options
+		 * @since 2.4.0
+		 *
+		 * @param {array} $options The options for the request.
+		 * @param {string} $url The URL for the request.
+		 *
+		 * @return {array} The options for the request.
+		 */
+		$options = apply_filters(
+			'ep_openai_embeddings_options',
+			[
+				'body'    => wp_json_encode( $body ),
+				'timeout' => 60, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+			],
+			$url
+		);
+
+		$this->add_headers( $options );
+
+		// Make our API request.
+		$response = $this->get_result(
+			wp_remote_post(
+				$url,
+				$options
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( empty( $response['data'] ) ) {
+			return new WP_Error( 'no_data', esc_html__( 'No data returned from OpenAI.', 'elasticpress-labs' ) );
+		}
+
+		$return = [];
+
+		// Parse out the embeddings response.
+		foreach ( $response['data'] as $data ) {
+			if ( ! isset( $data['embedding'] ) || ! is_array( $data['embedding'] ) ) {
+				continue;
+			}
+
+			$return = $data['embedding'];
+			break;
+		}
+
+		return $return;
+	}
+
+	/**
+	 * Get results from the response.
+	 *
+	 * @param object $response The API response.
+	 * @return array|WP_Error
+	 */
+	public function get_result( $response ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$headers      = wp_remote_retrieve_headers( $response );
+		$content_type = false;
+
+		if ( ! empty( $headers ) ) {
+			$content_type = isset( $headers['content-type'] ) ? $headers['content-type'] : false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$code = wp_remote_retrieve_response_code( $response );
+
+		if ( false === $content_type || false !== strpos( $content_type, 'application/json' ) ) {
+			$json = json_decode( $body, true );
+
+			if ( json_last_error() === JSON_ERROR_NONE ) {
+				if ( empty( $json['error'] ) ) {
+					return $json;
+				} else {
+					$message = $json['error']['message'] ?? esc_html__( 'An error occured', 'elasticpresslabs' );
+					return new WP_Error( $code, $message );
+				}
+			} else {
+				return new WP_Error( 'Invalid JSON: ' . json_last_error_msg(), $body );
+			}
+		} elseif ( $content_type && false !== strpos( $content_type, 'audio/mpeg' ) ) {
+			return $response;
+		} else {
+			return new WP_Error( 'Invalid content type', $response );
+		}
+	}
+
+	/**
+	 * Normalizes content into plain text.
+	 *
+	 * @param string $content Content to normalize.
+	 * @return string
+	 */
+	public function normalize_content( string $content = '' ): string {
+		$content = apply_filters( 'the_content', $content );
+
+		// Strip shortcodes but keep internal caption text.
+		$content = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
+
+		// Strip HTML entities.
+		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
+
+		// Replace HTML linebreaks with newlines.
+		$content = preg_replace( '#<br\s?/?>#', "\n\n", $content );
+
+		// Strip all HTML tags.
+		$content = wp_strip_all_tags( $content );
+
+		return $content;
+	}
+
+	/**
+	 * Chunk content into smaller pieces with an overlap.
+	 *
+	 * @param string $content      Content to chunk.
+	 * @param int    $chunk_size   Size of each chunk, in words.
+	 * @param int    $overlap_size Overlap size for each chunk, in words.
+	 * @return array
+	 */
+	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25 ): array {
+		// Normalize our content.
+		$content = $this->normalize_content( $content );
+
+		// Remove multiple whitespaces.
+		$content = preg_replace( '/\s+/', ' ', $content );
+
+		// Split text by single whitespace.
+		$words = explode( ' ', $content );
+
+		$chunks     = [];
+		$text_count = count( $words );
+
+		// Iterate through & chunk data with an overlap.
+		for ( $i = 0; $i < $text_count; $i += $chunk_size ) {
+			// Join a set of words into a string.
+			$chunk = implode(
+				' ',
+				array_slice(
+					$words,
+					max( $i - $overlap_size, 0 ),
+					$i + $chunk_size
+				)
+			);
+
+			array_push( $chunks, $chunk );
+		}
+
+		return $chunks;
+	}
+
+	/**
+	 * Get the number of dimensions for the embeddings.
+	 *
+	 * @return int
+	 */
+	public function get_dimensions(): int {
+		/**
+		 * Filter the dimensions we want for each embedding.
+		 *
+		 * Useful if you want to increase or decrease the length
+		 * of each embedding.
+		 *
+		 * @hook ep_openai_embeddings_dimensions
+		 * @since 2.4.0
+		 *
+		 * @param {int} $dimensions The default dimensions.
+		 * @return {int} The dimensions.
+		 */
+		return apply_filters( 'ep_openai_embeddings_dimensions', $this->dimensions );
+	}
+
+	/**
+	 * Add the headers.
+	 *
+	 * @param array $options The header options, passed by reference.
+	 */
+	public function add_headers( array &$options = [] ) {
+		if ( empty( $options['headers'] ) ) {
+			$options['headers'] = [];
+		}
+
+		if ( ! isset( $options['headers']['Authorization'] ) ) {
+			$options['headers']['Authorization'] = $this->get_auth_header();
+		}
+
+		if ( ! isset( $options['headers']['Content-Type'] ) ) {
+			$options['headers']['Content-Type'] = 'application/json';
+		}
+	}
+
+	/**
+	 * Get the auth header.
+	 *
+	 * @return string
+	 */
+	public function get_auth_header() {
+		return 'Bearer ' . $this->get_setting( 'ep_openai_api_key' );
+	}
+}

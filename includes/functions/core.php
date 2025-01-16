@@ -232,6 +232,9 @@ function maybe_load_features() {
 			\ElasticPress\Features::factory()->register_feature( $subfeature );
 		}
 	}
+
+	$vector_embeddings = new \ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings();
+	\ElasticPress\Features::factory()->register_feature( $vector_embeddings );
 }
 
 /**
