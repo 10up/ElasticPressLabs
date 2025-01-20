@@ -40,6 +40,13 @@ class VectorEmbeddings extends Feature {
 	protected $dimensions = 512;
 
 	/**
+	 * Storage class instance.
+	 *
+	 * @var Storage\DbTable
+	 */
+	public $storage;
+
+	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
@@ -83,6 +90,9 @@ class VectorEmbeddings extends Feature {
 
 		$term_indexable = new Indexables\Term( $this );
 		$term_indexable->setup();
+
+		$this->storage = new Storage\DbTable( $this );
+		$this->storage->setup();
 	}
 
 	/**
@@ -215,18 +225,20 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Get an embedding from a given text.
 	 *
-	 * @param string $text  Text to get the embedding for.
-	 * @param bool   $cache Whether to cache the result. Default false.
-	 * @return array|WP_Error
+	 * @param int    $object_id   The Object ID.
+	 * @param string $object_type The Object type.
+	 * @param string $text        Text to get the embedding for.
+	 * @param string $return_type Return type ('array' or 'raw'). Default 'array'.
+	 * @param bool   $cache       Whether to cache the result. Default true.
+	 * @return array|null|WP_Error
 	 */
-	public function get_embedding( string $text, bool $cache = false ) {
+	public function get_embedding( int $object_id, string $object_type, string $text, string $return_type = 'array', bool $cache = true ) {
 		// Check to see if we have a stored embedding.
 		if ( $cache ) {
-			$key             = 'ep_embedding_' . sanitize_title( $text );
-			$query_embedding = wp_cache_get( $key, 'ep_embeddings' );
+			$cached = $this->storage->get( $text );
 
-			if ( $query_embedding ) {
-				return $query_embedding;
+			if ( $cached ) {
+				return $cached;
 			}
 		}
 
@@ -234,16 +246,17 @@ class VectorEmbeddings extends Feature {
 		$embedding = $this->generate_embedding( $text );
 
 		if ( is_wp_error( $embedding ) ) {
-			return $embedding;
+			return 'raw' === $return_type ? $embedding : null;
 		}
 
 		// Store the embedding for future use if desired.
 		if ( $cache ) {
-			wp_cache_set( $key, $embedding, 'ep_embeddings', false );
+			$this->storage->insert( $object_id, $object_type, $text, $embedding );
 		}
 
 		return $embedding;
 	}
+
 
 	/**
 	 * Generate an embedding for a particular piece of text.

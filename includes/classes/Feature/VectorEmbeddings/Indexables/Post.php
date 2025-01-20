@@ -59,65 +59,43 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function add_vector_field_to_post_sync( array $args, int $post_id ): array {
-		// No need to add vector data if no content exists.
+		if ( ! $this->should_add_vector_field_to_post( $post_id ) ) {
+			return $args;
+		}
+
+		$content_pieces = $this->get_object_content_pieces( $post_id );
+		$embeddings     = $this->get_updated_embeddings( $post_id, 'post', $content_pieces );
+
+		return $this->add_chuncks_field_value( $args, $embeddings );
+	}
+
+	/**
+	 * Whether or not we should add the vector field to the post.
+	 *
+	 * @param int $post_id The Post ID
+	 * @return boolean
+	 */
+	public function should_add_vector_field_to_post( int $post_id ): bool {
 		$post = get_post( $post_id );
-		if ( empty( $post->post_content ) ) {
-			return $args;
-		}
-		$meta_field = $this->feature->get_setting( 'ep_vector_embeddings_meta_field' );
+		return ! empty( $post );
+	}
 
-		// Try to use the stored embeddings first.
-		$embeddings = get_post_meta( $post_id, $meta_field, true );
+	/**
+	 * Return all content pieces for a given post ID.
+	 *
+	 * By default includes the title, the slug, and the post content, but could also add
+	 * meta fields and taxonomy terms, for example.
+	 *
+	 * @param int $post_id The Post ID
+	 * @return array
+	 */
+	public function get_object_content_pieces( int $post_id ): array {
+		$post = get_post( $post_id );
 
-		// If they don't exist, make API requests to generate them.
-		if ( ! $embeddings ) {
-			$embeddings = [];
-
-			$content_chunks = $this->feature->chunk_content( $post->post_content );
-
-			// Get the embeddings for each chunk.
-			if ( ! empty( $content_chunks ) ) {
-				foreach ( $content_chunks as $chunk ) {
-					$embedding = $this->feature->get_embedding( $chunk );
-
-					if ( $embedding && ! is_wp_error( $embedding ) ) {
-						$embeddings[] = array_map( 'floatval', $embedding );
-					}
-				}
-			}
-
-			// Add embeddings for title.
-			$title_embedding = $this->feature->get_embedding( $this->feature->normalize_content( $post->post_title ) );
-			if ( $title_embedding && ! is_wp_error( $title_embedding ) ) {
-				$embeddings[] = array_map( 'floatval', $title_embedding );
-			}
-
-			// Add embeddings for slug.
-			$slug_embedding = $this->feature->get_embedding( $post->post_name );
-			if ( $slug_embedding && ! is_wp_error( $slug_embedding ) ) {
-				$embeddings[] = array_map( 'floatval', $slug_embedding );
-			}
-
-			// Store the embeddings for future use.
-			if ( ! empty( $embeddings ) ) {
-				update_post_meta( $post_id, $meta_field, $embeddings );
-			}
-		}
-
-		// If we still don't have embeddings, return early.
-		if ( ! $embeddings || empty( $embeddings ) ) {
-			return $args;
-		}
-
-		// Add the embeddings data to the sync args.
-		$args['chunks'] = [];
-
-		foreach ( $embeddings as $embedding ) {
-			$args['chunks'][] = [
-				'vector' => array_map( 'floatval', $embedding ),
-			];
-		}
-
-		return $args;
+		return [
+			$post->post_content,
+			$post->post_title,
+			$post->post_name,
+		];
 	}
 }
