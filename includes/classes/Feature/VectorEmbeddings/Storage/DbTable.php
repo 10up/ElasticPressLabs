@@ -132,8 +132,8 @@ class DbTable {
 
 		$vectors = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT vectors FROM %s WHERE hash = %s',
-				$table_name,
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT vectors FROM {$table_name} WHERE hash = %s",
 				$this->hash_content( $text )
 			)
 		);
@@ -155,8 +155,8 @@ class DbTable {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT hash, vectors FROM %s WHERE object_id = %d AND object_type = %s',
-				$table_name,
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT hash, vectors FROM {$table_name} WHERE object_id = %d AND object_type = %s",
 				$object_id,
 				$object_type
 			)
