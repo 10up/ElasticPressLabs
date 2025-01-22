@@ -46,7 +46,10 @@ export default () => {
 			</p>
 			<p>
 				{createInterpolateElement(
-					sprintf(__('<strong>Endpoint URL:</strong> <code>%s</code>'), endpointExample),
+					sprintf(
+						__('<strong>Endpoint URL:</strong> <code>%s</code>', 'elasticpress-labs'),
+						endpointExample,
+					),
 					{ strong: <strong />, code: <code /> },
 				)}
 			</p>

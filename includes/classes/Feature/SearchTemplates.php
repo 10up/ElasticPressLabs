@@ -47,7 +47,7 @@ class SearchTemplates extends Feature {
 			$this->search_api_docs_url
 		) . '</p>' .
 			'<p>' . __( 'Please note that all the API fields are still available for custom search templates. Your templates do not to differ in post types, offset, pagination arguments, or even filters, as for those you can still use query parameters. The templates can be used for searching in different fields or applying different scores, for instance.', 'elasticpress-labs' ) . '</p>' .
-			'<p>' . __( 'Requires an <a href="https://www.elasticpress.io/" target="_blank">ElasticPress.io plan</a> to function.', 'elasticpress' ) . '</p>';
+			'<p>' . __( 'Requires an <a href="https://www.elasticpress.io/" target="_blank">ElasticPress.io plan</a> to function.', 'elasticpress-labs' ) . '</p>';
 
 		parent::__construct();
 	}
