@@ -63,8 +63,8 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$content_pieces = $this->get_object_content_pieces( $post_id );
-		$embeddings     = $this->get_updated_embeddings( $post_id, 'post', $content_pieces );
+		$object_representation = $this->get_object_representation( $post_id );
+		$embeddings            = $this->get_updated_embeddings( $post_id, 'post', $object_representation );
 
 		return $this->add_chuncks_field_value( $args, $embeddings );
 	}
@@ -81,21 +81,34 @@ class Post extends Indexable {
 	}
 
 	/**
-	 * Return all content pieces for a given post ID.
+	 * Return a representation of a post.
 	 *
 	 * By default includes the title, the slug, and the post content, but could also add
 	 * meta fields and taxonomy terms, for example.
 	 *
 	 * @param int $post_id The Post ID
-	 * @return array
+	 * @return string
 	 */
-	public function get_object_content_pieces( int $post_id ): array {
+	public function get_object_representation( int $post_id ): string {
 		$post = get_post( $post_id );
 
-		return [
-			$post->post_content,
-			$post->post_title,
-			$post->post_name,
-		];
+		$return = '';
+
+		$title = get_the_title( $post_id );
+		if ( $title ) {
+			$return .= "# Title\n{$title}\n\n";
+		}
+
+		if ( ! empty( $post->post_excerpt ) ) {
+			$excerpt = get_the_excerpt( $post_id );
+			$return .= "# Summary\n{$excerpt}\n\n";
+		}
+
+		$content = get_the_content( $post_id );
+		if ( $content ) {
+			$return .= "--\n{$content}\n\n";
+		}
+
+		return $return;
 	}
 }

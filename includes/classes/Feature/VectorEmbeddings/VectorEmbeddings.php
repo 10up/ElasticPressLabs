@@ -225,14 +225,14 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Get an embedding from a given text.
 	 *
-	 * @param int    $object_id   The Object ID.
-	 * @param string $object_type The Object type.
-	 * @param string $text        Text to get the embedding for.
-	 * @param string $return_type Return type ('array' or 'raw'). Default 'array'.
-	 * @param bool   $cache       Whether to cache the result. Default true.
+	 * @param int          $object_id   The Object ID.
+	 * @param string       $object_type The Object type.
+	 * @param string|array $text        Text or array of strings to get the embedding for.
+	 * @param string       $return_type Return type ('array' or 'raw'). Default 'array'.
+	 * @param bool         $cache       Whether to cache the result. Default true.
 	 * @return array|null|WP_Error
 	 */
-	public function get_embedding( int $object_id, string $object_type, string $text, string $return_type = 'array', bool $cache = true ) {
+	public function get_embedding( int $object_id, string $object_type, $text, string $return_type = 'array', bool $cache = false ) {
 		// Check to see if we have a stored embedding.
 		if ( $cache ) {
 			$cached = $this->storage->get( $text );
@@ -243,9 +243,16 @@ class VectorEmbeddings extends Feature {
 		}
 
 		// Generate the embedding.
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::line( "Generating embedding for {$object_type} ID: {$object_id}" );
+		} else {
+			error_log( '$object_id: ' . $object_id . ' -  $object_type: ' . $object_type );
+			error_log( print_r( $text, true ) );
+		}
 		$embedding = $this->generate_embedding( $text );
 
 		if ( is_wp_error( $embedding ) ) {
+			error_log( print_r( $embedding, true ) );
 			return 'raw' === $return_type ? $embedding : null;
 		}
 
@@ -257,14 +264,13 @@ class VectorEmbeddings extends Feature {
 		return $embedding;
 	}
 
-
 	/**
 	 * Generate an embedding for a particular piece of text.
 	 *
-	 * @param string $text Text to generate the embedding for.
+	 * @param string|array $text Text (or array of strings) to generate the embedding for.
 	 * @return array|boolean|WP_Error
 	 */
-	public function generate_embedding( string $text = '' ) {
+	public function generate_embedding( $text = '' ) {
 		/**
 		 * Filter the URL for the post request.
 		 *
@@ -292,7 +298,7 @@ class VectorEmbeddings extends Feature {
 			'ep_openai_embeddings_request_body',
 			[
 				'model'      => $this->get_setting( 'ep_openai_embedding_model' ),
-				'input'      => $text,
+				'input'      => (array) $text,
 				'dimensions' => $this->get_dimensions(),
 			],
 			$text
@@ -328,6 +334,8 @@ class VectorEmbeddings extends Feature {
 			)
 		);
 
+		error_log( 'generating embed' );
+
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
@@ -344,8 +352,12 @@ class VectorEmbeddings extends Feature {
 				continue;
 			}
 
-			$return = $data['embedding'];
-			break;
+			if ( is_string( $text ) ) {
+				$return = $data['embedding'];
+				break;
+			}
+
+			$return[] = $data['embedding'];
 		}
 
 		return $return;
@@ -429,7 +441,7 @@ class VectorEmbeddings extends Feature {
 		$content = $this->normalize_content( $content );
 
 		// Remove multiple whitespaces.
-		$content = preg_replace( '/\s+/', ' ', $content );
+		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );
 
 		// Split text by single whitespace.
 		$words = explode( ' ', $content );
