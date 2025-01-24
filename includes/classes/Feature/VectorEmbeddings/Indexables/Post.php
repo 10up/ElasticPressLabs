@@ -106,7 +106,7 @@ class Post extends Indexable {
 
 		$content = get_the_content( $post_id );
 		if ( $content ) {
-			$return .= "--\n{$content}\n\n";
+			$return .= "# Content\n{$content}\n\n";
 		}
 
 		return $return;

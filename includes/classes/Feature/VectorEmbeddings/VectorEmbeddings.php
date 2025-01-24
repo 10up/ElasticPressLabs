@@ -40,13 +40,6 @@ class VectorEmbeddings extends Feature {
 	protected $dimensions = 512;
 
 	/**
-	 * Storage class instance.
-	 *
-	 * @var Storage\DbTable
-	 */
-	public $storage;
-
-	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
@@ -90,9 +83,6 @@ class VectorEmbeddings extends Feature {
 
 		$term_indexable = new Indexables\Term( $this );
 		$term_indexable->setup();
-
-		$this->storage = new Storage\DbTable( $this );
-		$this->storage->setup();
 	}
 
 	/**
@@ -229,36 +219,17 @@ class VectorEmbeddings extends Feature {
 	 * @param string       $object_type The Object type.
 	 * @param string|array $text        Text or array of strings to get the embedding for.
 	 * @param string       $return_type Return type ('array' or 'raw'). Default 'array'.
-	 * @param bool         $cache       Whether to cache the result. Default true.
 	 * @return array|null|WP_Error
 	 */
-	public function get_embedding( int $object_id, string $object_type, $text, string $return_type = 'array', bool $cache = false ) {
-		// Check to see if we have a stored embedding.
-		if ( $cache ) {
-			$cached = $this->storage->get( $text );
-
-			if ( $cached ) {
-				return $cached;
-			}
-		}
-
+	public function get_embedding( int $object_id, string $object_type, $text, string $return_type = 'array' ) {
 		// Generate the embedding.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::line( "Generating embedding for {$object_type} ID: {$object_id}" );
-		} else {
-			error_log( '$object_id: ' . $object_id . ' -  $object_type: ' . $object_type );
-			error_log( print_r( $text, true ) );
 		}
 		$embedding = $this->generate_embedding( $text );
 
 		if ( is_wp_error( $embedding ) ) {
-			error_log( print_r( $embedding, true ) );
 			return 'raw' === $return_type ? $embedding : null;
-		}
-
-		// Store the embedding for future use if desired.
-		if ( $cache ) {
-			$this->storage->insert( $object_id, $object_type, $text, $embedding );
 		}
 
 		return $embedding;
@@ -443,6 +414,9 @@ class VectorEmbeddings extends Feature {
 		// Remove multiple whitespaces.
 		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );
 
+		// Remove multiple new lines.
+		$content = preg_replace( '/[\n\v]{2,}/', "\n\n", $content );
+
 		// Split text by single whitespace.
 		$words = explode( ' ', $content );
 
@@ -452,7 +426,7 @@ class VectorEmbeddings extends Feature {
 		// Iterate through & chunk data with an overlap.
 		for ( $i = 0; $i < $text_count; $i += $chunk_size ) {
 			// Join a set of words into a string.
-			$chunk = implode(
+			$chunk = 'search_document: ' . implode(
 				' ',
 				array_slice(
 					$words,
