@@ -155,22 +155,15 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Add a vector field to the Elasticsearch mapping.
 	 *
-	 * @param array    $mapping      Current mapping.
-	 * @param null|int $dimensions   Number of dimensions for the vector field.
-	 * @param bool     $quantization Whether to use quantization for the vector field. Default false.
+	 * @param array $mapping      Current mapping.
+	 * @param bool  $quantization Whether to use quantization for the vector field. Default false.
 	 * @return array
 	 */
-	public function add_vector_mapping_field( array $mapping, $dimensions = null, bool $quantization = true ): array {
+	public function add_vector_mapping_field( array $mapping, bool $quantization = true ): array {
 		// Don't add the field if it already exists.
 		if ( isset( $mapping['mappings']['properties']['chunks'] ) ) {
 			return $mapping;
 		}
-
-		// This needs to match the dimensions your model uses and be between 1 and 4096.
-		if ( ! $dimensions ) {
-			$dimensions = $this->get_dimensions();
-		}
-		$calc_dimensions = max( 1, min( 4096, $dimensions ) );
 
 		// Add the default vector field mapping.
 		$mapping['mappings']['properties']['chunks'] = [
@@ -178,7 +171,7 @@ class VectorEmbeddings extends Feature {
 			'properties' => [
 				'vector' => [
 					'type' => 'dense_vector',
-					'dims' => (int) $calc_dimensions,
+					'dims' => $this->get_dimensions(),
 				],
 			],
 		];
@@ -308,6 +301,7 @@ class VectorEmbeddings extends Feature {
 		error_log( 'generating embed' );
 
 		if ( is_wp_error( $response ) ) {
+			error_log( print_r( $response, true ) );
 			return $response;
 		}
 
@@ -447,6 +441,8 @@ class VectorEmbeddings extends Feature {
 	 * @return int
 	 */
 	public function get_dimensions(): int {
+		$calc_dimensions = max( 1, min( 4096, $this->dimensions ) );
+
 		/**
 		 * Filter the dimensions we want for each embedding.
 		 *
@@ -459,7 +455,7 @@ class VectorEmbeddings extends Feature {
 		 * @param {int} $dimensions The default dimensions.
 		 * @return {int} The dimensions.
 		 */
-		return apply_filters( 'ep_openai_embeddings_dimensions', $this->dimensions );
+		return (int) apply_filters( 'ep_openai_embeddings_dimensions', $calc_dimensions );
 	}
 
 	/**

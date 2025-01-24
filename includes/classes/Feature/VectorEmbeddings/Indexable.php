@@ -32,23 +32,6 @@ abstract class Indexable {
 	}
 
 	/**
-	 * Given an object and its content pieces, return the embeddings and clean up unused embeddings stored.
-	 *
-	 * @param int    $object_id             The object ID
-	 * @param string $object_type           The object type
-	 * @param string $object_representation A string representing the object
-	 * @return array
-	 */
-	public function get_updated_embeddings( int $object_id, string $object_type, string $object_representation ): array {
-		$embeddings     = [];
-		$content_chunks = $this->feature->chunk_content( $object_representation );
-
-		$embeddings = $this->feature->get_embedding( $object_id, $object_type, $content_chunks );
-
-		return $embeddings ?? [];
-	}
-
-	/**
 	 * Add the embedding data to the post vector sync args.
 	 *
 	 * @param array $args       The current sync args (an Elasticsearch document)
