@@ -111,14 +111,46 @@ class Post extends Indexable {
 
 		$chunks = $this->feature->chunk_content( $main_content );
 
-		$post_terms_str = $this->get_post_terms( $post );
-		if ( $post_terms_str ) {
-			$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str ) ];
+		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
+		if ( empty( $weighting[ $post->post_type ] ) ) {
+			return $chunks;
 		}
 
-		$post_meta_str = $this->get_post_meta( $post );
-		if ( $post_meta_str ) {
-			$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str ) ];
+		$post_type_weighting = $weighting[ $post->post_type ];
+
+		$taxonomies = array_reduce(
+			array_keys( $post_type_weighting ),
+			function ( $acc, $field ) use ( $post_type_weighting ) {
+				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/terms\.(.*)\.name/', $field, $matches ) ) {
+					$acc[] = $matches[1];
+				}
+				return $acc;
+			},
+			[]
+		);
+		if ( $taxonomies ) {
+			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
+			if ( $post_terms_str ) {
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str ) ];
+			}
+		}
+
+		$meta_fields = array_reduce(
+			array_keys( $post_type_weighting ),
+			function ( $acc, $field ) use ( $post_type_weighting ) {
+				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/meta\.(.*)\.value/', $field, $matches ) ) {
+					$acc[] = $matches[1];
+				}
+				return $acc;
+			},
+			[]
+		);
+		if ( $meta_fields ) {
+			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
+			if ( $post_meta_str ) {
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str ) ];
+			}
 		}
 
 		return $chunks;
@@ -127,19 +159,17 @@ class Post extends Indexable {
 	/**
 	 * Get the representation of the post terms.
 	 *
-	 * @param \WP_Post $post The post object
+	 * @param \WP_Post $post       The post object
+	 * @param array    $taxonomies Taxonomies to be added.
 	 * @return string
 	 */
-	protected function get_post_terms( $post ): string {
-		$post_terms_str       = '';
-		$post_terms           = [];
-		$indexable            = \ElasticPress\Indexables::factory()->get( 'post' );
-		$indexable_taxonomies = $indexable->get_indexable_post_taxonomies( $post );
-		$taxonomy_by_names    = wp_list_pluck( $indexable_taxonomies, 'label', 'name' );
-		foreach ( $taxonomy_by_names as $tax_name => $tax_label ) {
+	protected function get_post_terms( $post, $taxonomies ): string {
+		$post_terms_str = '';
+		$post_terms     = [];
+		foreach ( $taxonomies as $tax_name ) {
 			$terms = get_the_terms( $post, $tax_name );
 			if ( is_array( $terms ) ) {
-				$post_terms[ $tax_label ] = array_map(
+				$post_terms[ $tax_name ] = array_map(
 					function ( $term ) {
 						return $term->name;
 					},
@@ -147,7 +177,6 @@ class Post extends Indexable {
 				);
 			}
 		}
-
 		if ( ! empty( $post_terms ) ) {
 			$post_terms_str .= "# Taxonomy Terms\n";
 			foreach ( $post_terms as $tax_label => $terms ) {
@@ -162,20 +191,15 @@ class Post extends Indexable {
 	/**
 	 * Get te representation of the post meta.
 	 *
-	 * @param \WP_Post $post The post object
+	 * @param \WP_Post $post        The post object
+	 * @param array    $meta_fields List of metafields
 	 * @return string
 	 */
-	protected function get_post_meta( $post ): string {
-		$meta_str      = '';
-		$meta_to_index = [
-			'footnotes',
-			'searchwp_content_pdf_metadata',
-		];
-		$values        = [];
-		if ( ! empty( $meta_to_index ) ) {
-			foreach ( $meta_to_index as $meta_field ) {
-				$values[ $meta_field ] = get_post_meta( $post->ID, $meta_field, true );
-			}
+	protected function get_post_meta( $post, $meta_fields ): string {
+		$meta_str = '';
+		$values   = [];
+		foreach ( $meta_fields as $meta_field ) {
+			$values[ $meta_field ] = get_post_meta( $post->ID, $meta_field, true );
 		}
 		$values = array_filter( $values );
 
