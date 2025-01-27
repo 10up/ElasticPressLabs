@@ -80,9 +80,6 @@ class VectorEmbeddings extends Feature {
 	public function setup() {
 		$post_indexable = new Indexables\Post( $this );
 		$post_indexable->setup();
-
-		$term_indexable = new Indexables\Term( $this );
-		$term_indexable->setup();
 	}
 
 	/**
