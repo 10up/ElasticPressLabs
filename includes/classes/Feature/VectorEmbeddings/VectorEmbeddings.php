@@ -26,13 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class VectorEmbeddings extends Feature {
 	/**
-	 * Elasticsearch version.
-	 *
-	 * @var string $es_version
-	 */
-	protected $es_version;
-
-	/**
 	 * Number of dimensions for the embeddings.
 	 *
 	 * @var int
@@ -67,8 +60,6 @@ class VectorEmbeddings extends Feature {
 			'elasticpress-labs'
 		);
 
-		$this->es_version = Elasticsearch::factory()->get_elasticsearch_version();
-
 		parent::__construct();
 	}
 
@@ -91,7 +82,7 @@ class VectorEmbeddings extends Feature {
 		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( $this->es_version, '7.0', '<=' ) ) {
+		if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<=' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 		}
@@ -150,79 +141,20 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
-	 * Add a vector field to the Elasticsearch mapping.
-	 *
-	 * @param array $mapping      Current mapping.
-	 * @param bool  $quantization Whether to use quantization for the vector field. Default false.
-	 * @return array
-	 */
-	public function add_vector_mapping_field( array $mapping, bool $quantization = true ): array {
-		// Don't add the field if it already exists.
-		if ( isset( $mapping['mappings']['properties']['chunks'] ) ) {
-			return $mapping;
-		}
-
-		// Add the default vector field mapping.
-		$mapping['mappings']['properties']['chunks'] = [
-			'type'       => 'nested',
-			'properties' => [
-				'vector' => [
-					'type' => 'dense_vector',
-					'dims' => $this->get_dimensions(),
-				],
-			],
-		];
-
-		// Add extra vector fields for newer versions of Elasticsearch.
-		if ( version_compare( $this->es_version, '8.0', '>=' ) ) {
-			// The index (true or false, default true) and similarity (l2_norm, dot_product or cosine) fields
-			// were added in 8.0. The similarity field must be set if index is true.
-			$mapping['mappings']['properties']['chunks']['properties']['vector'] = array_merge(
-				$mapping['mappings']['properties']['chunks']['properties']['vector'],
-				[
-					'index'      => true,
-					'similarity' => 'cosine',
-				]
-			);
-
-			// The element_type field was added in 8.6. This can be either float (default) or byte.
-			if ( version_compare( $this->es_version, '8.6', '>=' ) ) {
-				$mapping['mappings']['properties']['chunks']['properties']['vector']['element_type'] = 'float';
-			}
-
-			// The int8_hnsw type was added in 8.12.
-			if ( $quantization && version_compare( $this->es_version, '8.12', '>=' ) ) {
-				// This is supposed to result in better performance but slightly less accurate results.
-				// See https://www.elastic.co/guide/en/elasticsearch/reference/8.13/knn-search.html#knn-search-quantized-example.
-				// Can test with this on and off and compare results to see what works best.
-				$mapping['mappings']['properties']['chunks']['properties']['vector']['index_options']['type'] = 'int8_hnsw';
-			}
-		}
-
-		return $mapping;
-	}
-
-	/**
-	 * Get an embedding from a given text.
+	 * Get an embedding from a given strings or array of strings.
 	 *
 	 * @param int          $object_id   The Object ID.
 	 * @param string       $object_type The Object type.
-	 * @param string|array $text        Text or array of strings to get the embedding for.
-	 * @param string       $return_type Return type ('array' or 'raw'). Default 'array'.
+	 * @param string|array $text        String or array of strings to get the embedding for.
 	 * @return array|null|WP_Error
 	 */
-	public function get_embedding( int $object_id, string $object_type, $text, string $return_type = 'array' ) {
+	public function get_embedding( int $object_id, string $object_type, $text ) {
 		// Generate the embedding.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::line( "Generating embedding for {$object_type} ID: {$object_id}" );
 		}
-		$embedding = $this->generate_embedding( $text );
 
-		if ( is_wp_error( $embedding ) ) {
-			return 'raw' === $return_type ? $embedding : null;
-		}
-
-		return $embedding;
+		return $this->generate_embedding( $text );
 	}
 
 	/**
@@ -295,10 +227,19 @@ class VectorEmbeddings extends Feature {
 			)
 		);
 
-		error_log( 'generating embed' );
+		/**
+		 * Filter the response of the request.
+		 *
+		 * @hook ep_openai_embeddings_request_response
+		 * @since 2.4.0
+		 *
+		 * @param {array|WP_Error} $response The request response.
+		 * @param {array|string}   $text     The text that was sent to be processed.
+		 * @return {array|WP_Error} The request response.
+		 */
+		$response = apply_filters( 'ep_openai_embeddings_request_response', $response, $text );
 
 		if ( is_wp_error( $response ) ) {
-			error_log( print_r( $response, true ) );
 			return $response;
 		}
 
@@ -417,7 +358,7 @@ class VectorEmbeddings extends Feature {
 		// Iterate through & chunk data with an overlap.
 		for ( $i = 0; $i < $text_count; $i += $chunk_size ) {
 			// Join a set of words into a string.
-			$chunk = 'search_document: ' . implode(
+			$chunk = implode(
 				' ',
 				array_slice(
 					$words,
@@ -425,6 +366,17 @@ class VectorEmbeddings extends Feature {
 					$i + $chunk_size
 				)
 			);
+
+			/**
+			 * Filter a chunk of text.
+			 *
+			 * @hook ep_openai_embeddings_chunk
+			 * @since 2.4.0
+			 *
+			 * @param {string} $chunk The chunk being processed.
+			 * @return {string} The modified chunk.
+			 */
+			$chunk = apply_filters( 'ep_openai_embeddings_chunk', $chunk );
 
 			array_push( $chunks, $chunk );
 		}

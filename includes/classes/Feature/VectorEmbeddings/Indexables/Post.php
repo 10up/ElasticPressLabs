@@ -37,7 +37,7 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
-		return $this->feature->add_vector_mapping_field( $mapping );
+		return $this->add_vector_mapping_field( $mapping );
 	}
 
 	/**
@@ -66,7 +66,11 @@ class Post extends Indexable {
 		$post_chunks = $this->get_post_chunks( $post_id );
 		$embeddings  = $this->feature->get_embedding( $post_id, 'post', $post_chunks );
 
-		return $this->add_chuncks_field_value( $args, $embeddings );
+		if ( ! is_array( $embeddings ) ) {
+			return $args;
+		}
+
+		return $this->add_chunks_field_value( $args, $embeddings );
 	}
 
 	/**
@@ -109,15 +113,65 @@ class Post extends Indexable {
 			$main_content .= "# Content\n{$content}\n\n";
 		}
 
+		/**
+		 * Filter the main content of a post before being split into chunks.
+		 *
+		 * @hook ep_openai_embeddings_post_main_content
+		 * @since 2.4.0
+		 *
+		 * @param {string}   $main_content Title, excerpt, and content of a post.
+		 * @param {\WP_Post} $post         The post being processed.
+		 * @return {string} The final main content representation.
+		 */
+		$main_content = apply_filters( 'ep_openai_embeddings_post_main_content', $main_content, $post );
+
 		$chunks = $this->feature->chunk_content( $main_content );
 
-		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
-		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
-		if ( empty( $weighting[ $post->post_type ] ) ) {
-			return $chunks;
+		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
+		if ( $taxonomies ) {
+			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
+			if ( $post_terms_str ) {
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str ) ];
+			}
 		}
 
-		$post_type_weighting = $weighting[ $post->post_type ];
+		$meta_fields = $this->get_embeddable_meta( $post_id, $post->post_type );
+		if ( $meta_fields ) {
+			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
+			if ( $post_meta_str ) {
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str ) ];
+			}
+		}
+
+		return $chunks;
+	}
+
+	/**
+	 * Return the list of taxonomies that should be included in the post representation.
+	 *
+	 * @param integer $post_id   The post ID.
+	 * @param string  $post_type The post type.
+	 * @return array
+	 */
+	protected function get_embeddable_taxonomies( int $post_id, string $post_type ): array {
+		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
+		if ( empty( $weighting[ $post_type ] ) ) {
+			/**
+			 * Filter the list of taxonomies which terms should be included in the post representation.
+			 *
+			 * @hook ep_openai_embeddings_post_embeddable_taxonomies
+			 * @since 2.4.0
+			 *
+			 * @param {array}  $embeddable_taxonomies Array of taxonomy names.
+			 * @param {int}    $post_id               The post ID.
+			 * @param {string} $post_type             The post type.
+			 * @return {array} The list of taxonomy names.
+			 */
+			return apply_filters( 'ep_openai_embeddings_post_embeddable_taxonomies', [], $post_id, $post_type );
+		}
+
+		$post_type_weighting = $weighting[ $post_type ];
 
 		$taxonomies = array_reduce(
 			array_keys( $post_type_weighting ),
@@ -129,31 +183,9 @@ class Post extends Indexable {
 			},
 			[]
 		);
-		if ( $taxonomies ) {
-			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
-			if ( $post_terms_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str ) ];
-			}
-		}
 
-		$meta_fields = array_reduce(
-			array_keys( $post_type_weighting ),
-			function ( $acc, $field ) use ( $post_type_weighting ) {
-				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/meta\.(.*)\.value/', $field, $matches ) ) {
-					$acc[] = $matches[1];
-				}
-				return $acc;
-			},
-			[]
-		);
-		if ( $meta_fields ) {
-			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
-			if ( $post_meta_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str ) ];
-			}
-		}
-
-		return $chunks;
+		// This filter is documented above.
+		return apply_filters( 'ep_openai_embeddings_post_embeddable_taxonomies', $taxonomies, $post_id, $post_type );
 	}
 
 	/**
@@ -185,11 +217,63 @@ class Post extends Indexable {
 			}
 		}
 
-		return $post_terms_str;
+		/**
+		 * Filter the string that represents the list of terms associated with this post.
+		 *
+		 * @hook ep_openai_embeddings_post_terms_str
+		 * @since 2.4.0
+		 *
+		 * @param {string}  $post_terms_str String with post terms.
+		 * @param {WP_Post} $post           The post.
+		 * @return {string} The string with post terms.
+		 */
+		return apply_filters( 'ep_openai_embeddings_post_terms_str', $post_terms_str, $post );
 	}
 
 	/**
-	 * Get te representation of the post meta.
+	 * Return the list of metafields that should be included in the post representation.
+	 *
+	 * @param integer $post_id   The post ID.
+	 * @param string  $post_type The post type.
+	 * @return array
+	 */
+	protected function get_embeddable_meta( int $post_id, string $post_type ): array {
+		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
+		if ( empty( $weighting[ $post_type ] ) ) {
+			/**
+			 * Filter the list of metafields which values should be included in the post representation.
+			 *
+			 * @hook ep_openai_embeddings_post_embeddable_meta
+			 * @since 2.4.0
+			 *
+			 * @param {array}  $embeddable_meta Array of meta keys.
+			 * @param {int}    $post_id         The post ID.
+			 * @param {string} $post_type       The post type.
+			 * @return {array} The list of meta keys.
+			 */
+			return apply_filters( 'ep_openai_embeddings_post_embeddable_meta', [], $post_id, $post_type );
+		}
+
+		$post_type_weighting = $weighting[ $post_type ];
+
+		$meta_fields = array_reduce(
+			array_keys( $post_type_weighting ),
+			function ( $acc, $field ) use ( $post_type_weighting ) {
+				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/meta\.(.*)\.value/', $field, $matches ) ) {
+					$acc[] = $matches[1];
+				}
+				return $acc;
+			},
+			[]
+		);
+
+		// This filter is documented above.
+		return apply_filters( 'ep_openai_embeddings_post_embeddable_meta', $meta_fields, $post_id, $post_type );
+	}
+
+	/**
+	 * Get the representation of the post meta.
 	 *
 	 * @param \WP_Post $post        The post object
 	 * @param array    $meta_fields List of metafields
@@ -210,6 +294,16 @@ class Post extends Indexable {
 			}
 		}
 
-		return $meta_str;
+		/**
+		 * Filter the string that represents the meta fields associated with this post.
+		 *
+		 * @hook ep_openai_embeddings_post_meta_str
+		 * @since 2.4.0
+		 *
+		 * @param {string}  $post_terms_str String with post terms.
+		 * @param {WP_Post} $post           The post.
+		 * @return {string} The string with post terms.
+		 */
+		return apply_filters( 'ep_openai_embeddings_post_meta_str', $meta_str, $post );
 	}
 }
