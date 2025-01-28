@@ -1,6 +1,10 @@
 /* global isEpIo */
 
 describe('Search Templates Feature', () => {
+	before(() => {
+		cy.wpCli('wp elasticpress-tests delete-all-search-templates');
+	});
+
 	const enableFeature = () => {
 		cy.visitAdminPage('admin.php?page=elasticpress');
 		cy.intercept('/wp-json/elasticpress/v1/features*').as('apiRequest');
@@ -45,8 +49,6 @@ describe('Search Templates Feature', () => {
 
 		cy.login();
 		enableFeature();
-
-		cy.wpCli('wp elasticpress-tests delete-all-search-templates');
 
 		/**
 		 * Can go to the Search Templates page through the features section
