@@ -21,11 +21,8 @@ class Post extends Indexable {
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
 
-		// Exclude designated meta field holding the vector embeddings from search
-		add_filter( 'ep_prepare_meta_excluded_public_keys', [ $this, 'exclude_vector_meta' ] );
-
 		// Only trigger embeddings when external embeddings are turned off
-		if ( ! $this->feature->get_setting( 'ep_external_embedding' ) ) {
+		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
 		}
 	}
@@ -38,17 +35,6 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
-	}
-
-	/**
-	 * Exclude our vector meta from being synced.
-	 *
-	 * @param array $excluded_keys Current excluded keys.
-	 * @return array
-	 */
-	public function exclude_vector_meta( array $excluded_keys ): array {
-		$excluded_keys[] = $this->feature->get_setting( 'ep_vector_embeddings_meta_field' );
-		return $excluded_keys;
 	}
 
 	/**
@@ -92,7 +78,7 @@ class Post extends Indexable {
 		 * @param {int}  $post_id    The post ID.
 		 * @return {bool} The new $should_add value.
 		 */
-		return apply_filters( 'ep_openai_embeddings_should_add_vector_field_to_post', ! empty( $post ), $post_id );
+		return apply_filters( 'ep_embeddings_should_add_vector_field_to_post', ! empty( $post ), $post_id );
 	}
 
 	/**
@@ -127,14 +113,14 @@ class Post extends Indexable {
 		/**
 		 * Filter the main content of a post before being split into chunks.
 		 *
-		 * @hook ep_openai_embeddings_post_main_content
+		 * @hook ep_embeddings_post_main_content
 		 * @since 2.4.0
 		 *
 		 * @param {string}   $main_content Title, excerpt, and content of a post.
 		 * @param {\WP_Post} $post         The post being processed.
 		 * @return {string} The final main content representation.
 		 */
-		$main_content = apply_filters( 'ep_openai_embeddings_post_main_content', $main_content, $post );
+		$main_content = apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
 
 		$chunks = $this->feature->chunk_content( $main_content );
 
@@ -171,7 +157,7 @@ class Post extends Indexable {
 			/**
 			 * Filter the list of taxonomies which terms should be included in the post representation.
 			 *
-			 * @hook ep_openai_embeddings_post_embeddable_taxonomies
+			 * @hook ep_embeddings_post_embeddable_taxonomies
 			 * @since 2.4.0
 			 *
 			 * @param {array}  $embeddable_taxonomies Array of taxonomy names.
@@ -179,7 +165,7 @@ class Post extends Indexable {
 			 * @param {string} $post_type             The post type.
 			 * @return {array} The list of taxonomy names.
 			 */
-			return apply_filters( 'ep_openai_embeddings_post_embeddable_taxonomies', [], $post_id, $post_type );
+			return apply_filters( 'ep_embeddings_post_embeddable_taxonomies', [], $post_id, $post_type );
 		}
 
 		$post_type_weighting = $weighting[ $post_type ];
@@ -196,7 +182,7 @@ class Post extends Indexable {
 		);
 
 		// This filter is documented above.
-		return apply_filters( 'ep_openai_embeddings_post_embeddable_taxonomies', $taxonomies, $post_id, $post_type );
+		return apply_filters( 'ep_embeddings_post_embeddable_taxonomies', $taxonomies, $post_id, $post_type );
 	}
 
 	/**
@@ -231,14 +217,14 @@ class Post extends Indexable {
 		/**
 		 * Filter the string that represents the list of terms associated with this post.
 		 *
-		 * @hook ep_openai_embeddings_post_terms_str
+		 * @hook ep_embeddings_post_terms_str
 		 * @since 2.4.0
 		 *
 		 * @param {string}  $post_terms_str String with post terms.
 		 * @param {WP_Post} $post           The post.
 		 * @return {string} The string with post terms.
 		 */
-		return apply_filters( 'ep_openai_embeddings_post_terms_str', $post_terms_str, $post );
+		return apply_filters( 'ep_embeddings_post_terms_str', $post_terms_str, $post );
 	}
 
 	/**
@@ -255,7 +241,7 @@ class Post extends Indexable {
 			/**
 			 * Filter the list of metafields which values should be included in the post representation.
 			 *
-			 * @hook ep_openai_embeddings_post_embeddable_meta
+			 * @hook ep_embeddings_post_embeddable_meta
 			 * @since 2.4.0
 			 *
 			 * @param {array}  $embeddable_meta Array of meta keys.
@@ -263,7 +249,7 @@ class Post extends Indexable {
 			 * @param {string} $post_type       The post type.
 			 * @return {array} The list of meta keys.
 			 */
-			return apply_filters( 'ep_openai_embeddings_post_embeddable_meta', [], $post_id, $post_type );
+			return apply_filters( 'ep_embeddings_post_embeddable_meta', [], $post_id, $post_type );
 		}
 
 		$post_type_weighting = $weighting[ $post_type ];
@@ -280,7 +266,7 @@ class Post extends Indexable {
 		);
 
 		// This filter is documented above.
-		return apply_filters( 'ep_openai_embeddings_post_embeddable_meta', $meta_fields, $post_id, $post_type );
+		return apply_filters( 'ep_embeddings_post_embeddable_meta', $meta_fields, $post_id, $post_type );
 	}
 
 	/**
@@ -308,13 +294,13 @@ class Post extends Indexable {
 		/**
 		 * Filter the string that represents the meta fields associated with this post.
 		 *
-		 * @hook ep_openai_embeddings_post_meta_str
+		 * @hook ep_embeddings_post_meta_str
 		 * @since 2.4.0
 		 *
 		 * @param {string}  $post_terms_str String with post terms.
 		 * @param {WP_Post} $post           The post.
 		 * @return {string} The string with post terms.
 		 */
-		return apply_filters( 'ep_openai_embeddings_post_meta_str', $meta_str, $post );
+		return apply_filters( 'ep_embeddings_post_meta_str', $meta_str, $post );
 	}
 }

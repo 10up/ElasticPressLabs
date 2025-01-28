@@ -38,11 +38,10 @@ class VectorEmbeddings extends Feature {
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'ep_openai_api_key'               => '',
-		'ep_openai_embeddings_api_url'    => 'https://api.openai.com/v1/embeddings',
-		'ep_openai_embedding_model'       => 'text-embedding-3-small',
-		'ep_vector_embeddings_meta_field' => 'vector_embeddings',
-		'ep_external_embedding'           => '0',
+		'ep_embeddings_api_key'            => '',
+		'ep_embeddings_api_url'            => 'https://api.openai.com/v1/embeddings',
+		'ep_embeddings_embedding_model'    => 'text-embedding-3-small',
+		'ep_embeddings_external_embedding' => '0',
 	];
 
 	/**
@@ -96,7 +95,7 @@ class VectorEmbeddings extends Feature {
 	public function set_settings_schema() {
 		$this->settings_schema = [
 			[
-				'key'   => 'ep_openai_api_key',
+				'key'   => 'ep_embeddings_api_key',
 				'label' => __( 'OpenAI API Key', 'elasticpress-labs' ),
 				'help'  => sprintf(
 					wp_kses(
@@ -115,24 +114,18 @@ class VectorEmbeddings extends Feature {
 			],
 			[
 				'help'  => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
-				'key'   => 'ep_openai_embeddings_api_url',
+				'key'   => 'ep_embeddings_api_url',
 				'label' => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
 				'type'  => 'text',
 			],
 			[
 				'help'  => __( 'OpenAI Embedding model', 'elasticpress-labs' ),
-				'key'   => 'ep_openai_embedding_model',
+				'key'   => 'ep_embeddings_embedding_model',
 				'label' => __( 'The name of the embedding model to use', 'elasticpress-labs' ),
 				'type'  => 'text',
 			],
 			[
-				'help'  => __( 'Specify the postmeta field name that will hold vector embeddings and will be added as dense vector in Elasticsearch mapping.', 'elasticpress-labs' ),
-				'key'   => 'ep_vector_embeddings_meta_field',
-				'label' => __( 'Meta field holding the vector_embeddings', 'elasticpress-labs' ),
-				'type'  => 'text',
-			],
-			[
-				'key'   => 'ep_external_embedding',
+				'key'   => 'ep_embeddings_external_embedding',
 				'help'  => __( 'Enable this if an external process is providing the vector_embeddings meta field provided above with content. This will disable ElasticPress\'s control over embedding generation', 'elasticpress-labs' ),
 				'label' => __( 'External embedding processing', 'elasticpress-labs' ),
 				'type'  => 'checkbox',
@@ -167,19 +160,19 @@ class VectorEmbeddings extends Feature {
 		/**
 		 * Filter the URL for the post request.
 		 *
-		 * @hook ep_openai_embeddings_api_url
+		 * @hook ep_embeddings_api_url
 		 * @since 2.4.0
 		 *
 		 * @param {string} $url The URL for the request.
 		 *
 		 * @return {string} The URL for the request.
 		 */
-		$url = apply_filters( 'ep_openai_embeddings_api_url', $this->get_setting( 'ep_openai_embeddings_api_url' ) );
+		$url = apply_filters( 'ep_embeddings_api_url', $this->get_setting( 'ep_embeddings_api_url' ) );
 
 		/**
 		 * Filter the request body before sending to OpenAI.
 		 *
-		 * @hook ep_openai_embeddings_request_body
+		 * @hook ep_embeddings_request_body
 		 * @since 2.4.0
 		 *
 		 * @param {array} $body Request body that will be sent to OpenAI.
@@ -188,9 +181,9 @@ class VectorEmbeddings extends Feature {
 		 * @return {array} Request body.
 		 */
 		$body = apply_filters(
-			'ep_openai_embeddings_request_body',
+			'ep_embeddings_request_body',
 			[
-				'model'      => $this->get_setting( 'ep_openai_embedding_model' ),
+				'model'      => $this->get_setting( 'ep_embeddings_embedding_model' ),
 				'input'      => (array) $text,
 				'dimensions' => $this->get_dimensions(),
 			],
@@ -200,7 +193,7 @@ class VectorEmbeddings extends Feature {
 		/**
 		 * Filter the options for the post request.
 		 *
-		 * @hook ep_openai_embeddings_options
+		 * @hook ep_embeddings_options
 		 * @since 2.4.0
 		 *
 		 * @param {array} $options The options for the request.
@@ -209,7 +202,7 @@ class VectorEmbeddings extends Feature {
 		 * @return {array} The options for the request.
 		 */
 		$options = apply_filters(
-			'ep_openai_embeddings_options',
+			'ep_embeddings_options',
 			[
 				'body'    => wp_json_encode( $body ),
 				'timeout' => 60, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
@@ -230,14 +223,14 @@ class VectorEmbeddings extends Feature {
 		/**
 		 * Filter the response of the request.
 		 *
-		 * @hook ep_openai_embeddings_request_response
+		 * @hook ep_embeddings_request_response
 		 * @since 2.4.0
 		 *
 		 * @param {array|WP_Error} $response The request response.
 		 * @param {array|string}   $text     The text that was sent to be processed.
 		 * @return {array|WP_Error} The request response.
 		 */
-		$response = apply_filters( 'ep_openai_embeddings_request_response', $response, $text );
+		$response = apply_filters( 'ep_embeddings_request_response', $response, $text );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -370,13 +363,13 @@ class VectorEmbeddings extends Feature {
 			/**
 			 * Filter a chunk of text.
 			 *
-			 * @hook ep_openai_embeddings_chunk
+			 * @hook ep_embeddings_chunk
 			 * @since 2.4.0
 			 *
 			 * @param {string} $chunk The chunk being processed.
 			 * @return {string} The modified chunk.
 			 */
-			$chunk = apply_filters( 'ep_openai_embeddings_chunk', $chunk );
+			$chunk = apply_filters( 'ep_embeddings_chunk', $chunk );
 
 			array_push( $chunks, $chunk );
 		}
@@ -398,13 +391,13 @@ class VectorEmbeddings extends Feature {
 		 * Useful if you want to increase or decrease the length
 		 * of each embedding.
 		 *
-		 * @hook ep_openai_embeddings_dimensions
+		 * @hook ep_embeddings_dimensions
 		 * @since 2.4.0
 		 *
 		 * @param {int} $dimensions The default dimensions.
 		 * @return {int} The dimensions.
 		 */
-		return (int) apply_filters( 'ep_openai_embeddings_dimensions', $calc_dimensions );
+		return (int) apply_filters( 'ep_embeddings_dimensions', $calc_dimensions );
 	}
 
 	/**
@@ -432,6 +425,6 @@ class VectorEmbeddings extends Feature {
 	 * @return string
 	 */
 	public function get_auth_header() {
-		return 'Bearer ' . $this->get_setting( 'ep_openai_api_key' );
+		return 'Bearer ' . $this->get_setting( 'ep_embeddings_api_key' );
 	}
 }
