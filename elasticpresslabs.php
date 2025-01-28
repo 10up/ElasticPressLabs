@@ -6,7 +6,7 @@
  * Version:           2.3.1
  * Requires Plugins:  elasticpress
  * Requires at least: 5.6
- * Requires PHP:      7.0
+ * Requires PHP:      7.4
  * Author:            10up
  * Author URI:        https://10up.com
  * License:           GPL v2 or later
