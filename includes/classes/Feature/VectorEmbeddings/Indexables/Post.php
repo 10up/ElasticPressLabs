@@ -81,7 +81,18 @@ class Post extends Indexable {
 	 */
 	public function should_add_vector_field_to_post( int $post_id ): bool {
 		$post = get_post( $post_id );
-		return ! empty( $post );
+
+		/**
+		 * Filter whether the vector field should or not be added to the post.
+		 *
+		 * @hook ep_embeddings_should_add_vector_field_to_post
+		 * @since 2.4.0
+		 *
+		 * @param {bool} $should_add Whether the vector field should or not be added to the post.
+		 * @param {int}  $post_id    The post ID.
+		 * @return {bool} The new $should_add value.
+		 */
+		return apply_filters( 'ep_openai_embeddings_should_add_vector_field_to_post', ! empty( $post ), $post_id );
 	}
 
 	/**
