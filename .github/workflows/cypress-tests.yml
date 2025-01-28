@@ -174,6 +174,12 @@ jobs:
           ${{ github.workspace }}/tests/cypress/videos/
           ${{ github.workspace }}/tests/cypress/logs/
 
+    - name: Delete Elasticsearch search template
+      if: always()
+      run: |
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress elasticpress-labs"
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress-tests delete-all-search-templates"
+
     - name: Delete Elasticsearch indices
       if: always()
       run: |

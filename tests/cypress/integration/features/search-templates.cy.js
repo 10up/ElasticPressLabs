@@ -185,8 +185,5 @@ describe('Search Templates Feature', () => {
 		cy.wait('@loadTemplateRequest');
 
 		cy.contains('It seems you have reached the limit of search').should('exist');
-
-		// clean up
-		cy.wpCli('wp elasticpress-tests delete-all-search-templates');
 	});
 });
