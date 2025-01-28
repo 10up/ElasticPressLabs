@@ -21,7 +21,7 @@ This plugin provides a simple interface to enable and disable features.
 * [Elasticsearch](https://www.elastic.co) 5.2+ **ElasticSearch max version supported: 7.10**
 * [PHP](https://php.net/) 7.4+
 * [WordPress](http://wordpress.org) 6.0+
-* [ElasticPress plugin](https://github.com/10up/ElasticPress/) 4.3.0+
+* [ElasticPress plugin](https://github.com/10up/ElasticPress/) 5.0.0+
 
 ## Screenshots
 
