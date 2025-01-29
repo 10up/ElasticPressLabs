@@ -52,8 +52,8 @@
   },
   "10up-toolkit": {
     "entry": {
-      "admin": "./assets/js/admin/admin.js"
-    },
-    "wpDependencyExternals": false
+      "admin": "./assets/js/admin/admin.js",
+      "geo-location-script": "./assets/js/geo-location/index.js"
+    }
   }
 }
