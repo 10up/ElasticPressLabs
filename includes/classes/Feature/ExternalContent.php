@@ -358,7 +358,7 @@ class ExternalContent extends Feature {
 			}
 
 			if ( 'remove_js_reserved_words' === $method ) {
-				$content = str_replace( get_js_reserved_words(), '', $content );
+				$content = str_replace( \ElasticPressLabs\Utils\get_js_reserved_words(), '', $content );
 			}
 		}
 		return $content;

@@ -44,3 +44,19 @@ Cypress.Commands.add('clearThenType', { prevSubject: true }, (subject, text, for
 	cy.wrap(subject).clear();
 	cy.wrap(subject).type(text, { force });
 });
+
+Cypress.Commands.add('wpCliEval', (command) => {
+	const fileName = (Math.random() + 1).toString(36).substring(7);
+
+	// this will be written "local" plugin directory
+	const escapedCommand = command.replace(/^<\?php /, '');
+	cy.writeFile(fileName, `<?php ${escapedCommand}`);
+
+	// which is read from it's proper location in the plugins directory
+	cy.exec(
+		`./bin/wp-env-cli tests-wordpress "wp --allow-root eval-file wp-content/plugins/elasticpress-labs/${fileName}"`,
+	).then((result) => {
+		cy.exec(`rm ${fileName}`);
+		cy.wrap(result);
+	});
+});
