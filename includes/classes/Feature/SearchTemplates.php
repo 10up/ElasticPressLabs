@@ -36,6 +36,19 @@ class SearchTemplates extends Feature {
 	public function __construct() {
 		$this->slug = 'search_templates';
 
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
+
+		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 */
+	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'Search Templates', 'elasticpress-labs' );
 
 		$this->summary = '<p>' . sprintf(
@@ -48,8 +61,6 @@ class SearchTemplates extends Feature {
 		) . '</p>' .
 			'<p>' . __( 'Please note that all the API fields are still available for custom search templates. Your templates do not to differ in post types, offset, pagination arguments, or even filters, as for those you can still use query parameters. The templates can be used for searching in different fields or applying different scores, for instance.', 'elasticpress-labs' ) . '</p>' .
 			'<p>' . __( 'Requires an <a href="https://www.elasticpress.io/" target="_blank">ElasticPress.io plan</a> to function.', 'elasticpress-labs' ) . '</p>';
-
-		parent::__construct();
 	}
 
 	/**
