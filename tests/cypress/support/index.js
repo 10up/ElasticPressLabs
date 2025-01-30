@@ -15,6 +15,7 @@
 
 import '@10up/cypress-wp-utils';
 import './commands';
+import './global-hooks';
 
 /**
  * Ignore ResizeObserver error.

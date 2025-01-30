@@ -17,6 +17,7 @@
 /.nvmrc export-ignore
 /.stylelintignore export-ignore
 /.stylelintrc export-ignore
+/.wp-env.json export-ignore
 /babel.config.js export-ignore
 /CHANGELOG.md export-ignore
 /CODE_OF_CONDUCT.md export-ignore
