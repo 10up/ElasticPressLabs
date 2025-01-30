@@ -105,7 +105,7 @@ class Post extends Indexable {
 			$main_content .= "# Summary\n{$excerpt}\n\n";
 		}
 
-		$content = get_the_content( $post_id );
+		$content = get_the_content( null, false, $post_id );
 		if ( $content ) {
 			$main_content .= "# Content\n{$content}\n\n";
 		}

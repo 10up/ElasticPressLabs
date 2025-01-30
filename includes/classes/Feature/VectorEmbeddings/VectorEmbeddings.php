@@ -33,6 +33,13 @@ class VectorEmbeddings extends Feature {
 	protected $dimensions = 512;
 
 	/**
+	 * Array of VectorEmbeddings\Indexable objects
+	 *
+	 * @var array
+	 */
+	protected $indexables = [];
+
+	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
@@ -68,8 +75,8 @@ class VectorEmbeddings extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$post_indexable = new Indexables\Post( $this );
-		$post_indexable->setup();
+		$this->indexables['post'] = new Indexables\Post( $this );
+		$this->indexables['post']->setup();
 	}
 
 	/**
@@ -398,6 +405,15 @@ class VectorEmbeddings extends Feature {
 		 * @return {int} The dimensions.
 		 */
 		return (int) apply_filters( 'ep_embeddings_dimensions', $calc_dimensions );
+	}
+
+	/**
+	 * Return the array of indexables.
+	 *
+	 * @return array
+	 */
+	public function get_indexables() {
+		return $this->indexables;
 	}
 
 	/**
