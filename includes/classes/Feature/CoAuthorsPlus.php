@@ -46,8 +46,6 @@ class CoAuthorsPlus extends Feature {
 	public function __construct() {
 		$this->slug = 'co_authors_plus';
 
-		$this->title = esc_html__( 'Co-Authors Plus', 'elasticpress-labs' );
-
 		$this->requires_install_reindex = true;
 
 		$protected_content_feature = Features::factory()->get_registered_feature( 'protected_content' );
@@ -57,6 +55,16 @@ class CoAuthorsPlus extends Feature {
 		$this->requires_feature = 'protected_content';
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Co-Authors Plus', 'elasticpress-labs' );
 	}
 
 	/**

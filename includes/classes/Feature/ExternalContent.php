@@ -33,14 +33,22 @@ class ExternalContent extends Feature {
 	public function __construct() {
 		$this->slug = 'external_content';
 
+		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'External Content', 'elasticpress-labs' );
 
 		$this->summary = __(
 			'List meta keys containing a path or a URL, and ElasticPress will index the content of those path or URL. For example, for a meta key called <code>meta_key</code> with <code>https://wordpress.org/news/wp-json/wp/v2/posts/16837</code> as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called <code>ep_external_content_meta_key</code>.',
 			'elasticpress-labs'
 		);
-
-		parent::__construct();
 	}
 
 	/**

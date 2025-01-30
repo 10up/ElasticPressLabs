@@ -34,12 +34,20 @@ class ElasticPressLabs extends \ElasticPress\Feature {
 	public function __construct() {
 		$this->slug = 'elasticpress_labs';
 
-		$this->title = esc_html__( 'ElasticPress Labs', 'elasticpress-labs' );
-
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [];
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'ElasticPress Labs', 'elasticpress-labs' );
 	}
 
 	/**

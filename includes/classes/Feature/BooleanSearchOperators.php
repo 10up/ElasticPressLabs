@@ -36,14 +36,22 @@ class BooleanSearchOperators extends Feature {
 	public function __construct() {
 		$this->slug = 'boolean_search_operators';
 
-		$this->title = esc_html__( 'Boolean Search Operators', 'elasticpress-labs' );
-
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
 			'active' => false,
 		];
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Boolean Search Operators', 'elasticpress-labs' );
 	}
 
 	/**

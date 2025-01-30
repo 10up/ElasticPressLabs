@@ -29,14 +29,22 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	public function __construct() {
 		$this->slug = 'search_algorithm';
 
-		$this->title = esc_html__( 'Search Algorithm Version', 'elasticpress-labs' );
-
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
 			'search_algorithm_version' => '3.5',
 		];
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Search Algorithm Version', 'elasticpress-labs' );
 	}
 
 	/**
