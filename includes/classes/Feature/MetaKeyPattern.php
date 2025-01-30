@@ -31,6 +31,10 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	public function __construct() {
 		$this->slug = 'meta_key_pattern';
 
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
+
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
 			'meta_key_allow_pattern' => '',
