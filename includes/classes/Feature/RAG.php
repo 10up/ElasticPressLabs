@@ -31,6 +31,13 @@ class RAG extends Feature {
 		'ep_rag_api_url'         => 'https://api.openai.com/v1/chat/completions',
 		'ep_rag_chat_model'      => 'o1-mini',
 		'ep_rag_number_of_posts' => 5,
+		'ep_rag_prompt'          => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+
+The search term is '{search_term}'.
+
+The following JSON object contains the URL and the page content. You should use it as context:
+
+{posts}",
 	];
 
 	/**
@@ -62,6 +69,9 @@ class RAG extends Feature {
 	 */
 	public function setup() {
 		add_action( 'init', [ $this, 'register_block' ] );
+
+		// Register REST routes.
+		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 	}
 
 	/**
@@ -89,6 +99,30 @@ class RAG extends Feature {
 				'render_callback' => [ $this, 'render_block' ],
 			]
 		);
+
+		wp_register_script(
+			'ep-rag-block-frontend-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/rag-block-frontend-script.js',
+			Utils\get_asset_info( 'rag-block-frontend-script', 'dependencies' ),
+			Utils\get_asset_info( 'rag-block-frontend-script', 'version' ),
+			true
+		);
+
+		wp_localize_script(
+			'ep-rag-block-frontend-script',
+			'epRag',
+			[
+				'searchQuery'     => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'restApiEndpoint' => 'elasticpress-labs/v1/rag',
+			]
+		);
+
+		wp_enqueue_style(
+			'ep-rag-block-frontend-style',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/rag-block-frontend-script.css',
+			[],
+			Utils\get_asset_info( 'rag-block-frontend-script', 'version' )
+		);
 	}
 
 	/**
@@ -98,8 +132,43 @@ class RAG extends Feature {
 	 * @return string
 	 */
 	public function render_block( $attributes ) {
-		$search_term = get_search_query();
+		if ( empty( get_search_query() ) ) {
+			return '';
+		}
 
+		// Render block
+		ob_start();
+
+		$wrapper_attributes = get_block_wrapper_attributes( $attributes );
+		?>
+		<section <?php echo wp_kses_data( $wrapper_attributes ); ?>>
+			<?php if ( ! empty( $attributes['title'] ) ) : ?>
+				<p><?php echo wp_kses_post( $attributes['title'] ); ?></p>
+			<?php endif; ?>
+			<div class="ep-rag-response"></div>
+		</section>
+		<?php
+
+		$block_content = ob_get_clean();
+
+		return $block_content;
+	}
+
+	/**
+	 * Setup REST endpoints
+	 */
+	public function setup_endpoint() {
+		$controller = new \ElasticPressLabs\REST\RAG( $this );
+		$controller->register_routes();
+	}
+
+	/**
+	 * Given the user search term/query, get related posts for context, and then get the AI response
+	 *
+	 * @param string $search_term Search term
+	 * @return string
+	 */
+	public function get_ai_response( $search_term ) {
 		if ( ! $search_term ) {
 			return '';
 		}
@@ -117,23 +186,8 @@ class RAG extends Feature {
 			];
 		}
 
-		$prompt      = $this->get_prompt( $search_term, $posts_representations );
-		$ai_response = $this->ai_api_request( $prompt );
-
-		// Render block
-		ob_start();
-
-		$wrapper_attributes = get_block_wrapper_attributes( $attributes );
-		?>
-		<section <?php echo wp_kses_data( $wrapper_attributes ); ?>>
-			TESTING RAG BLOCK: <br>
-			<?php echo wp_kses_post( apply_filters( 'the_content', $ai_response ) ); ?>
-		</section>
-		<?php
-
-		$block_content = ob_get_clean();
-
-		return $block_content;
+		$prompt = $this->get_prompt( $search_term, $posts_representations );
+		return $this->ai_api_request( $prompt );
 	}
 
 	/**
@@ -216,16 +270,9 @@ class RAG extends Feature {
 	public function get_prompt( $search_term, $posts_representations ) {
 		$posts_representations_str = wp_json_encode( $posts_representations );
 
-		return "
-		You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you
-		could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div
-		with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
-		
-		The search term is '{$search_term}'.
-		
-		The following JSON object contains the URL and the page content. You should use it as context:
-		
-		{$posts_representations_str}";
+		$prompt = $this->get_setting( 'ep_rag_prompt' );
+
+		return str_replace( [ '{search_term}', '{posts}' ], [ $search_term, $posts_representations_str ], $prompt );
 	}
 
 	/**
@@ -311,9 +358,17 @@ class RAG extends Feature {
 			],
 			[
 				'key'     => 'ep_rag_number_of_posts',
+				'label'   => __( 'Number of posts', 'elasticpress-labs' ),
 				'help'    => __( 'Number of posts to be used in the context building', 'elasticpress-labs' ),
 				'type'    => 'number',
 				'default' => $this->default_settings['ep_rag_number_of_posts'],
+			],
+			[
+				'key'     => 'ep_rag_prompt',
+				'label'   => __( 'AI Prompt', 'elasticpress-labs' ),
+				'help'    => __( 'The <code>{search_term}</code> and <code>{posts}</code> strings will be replaced.', 'elasticpress-labs' ),
+				'type'    => 'textarea',
+				'default' => $this->default_settings['ep_rag_prompt'],
 			],
 		];
 	}

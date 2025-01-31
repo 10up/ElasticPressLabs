@@ -7,6 +7,12 @@
 	"icon": "superhero-alt",
 	"description": "RAG block description.",
 	"textdomain": "elasticpress-labs",
+	"attributes": {
+		"title": {
+			"default": "Title",
+			"type": "string"
+		}
+	},
 	"supports": {
 		"align": true,
 		"color": {
@@ -27,5 +33,6 @@
 			"lineHeight": true
 		}
 	},
-	"editorScript": "ep-rag-block-script"
+	"editorScript": "ep-rag-block-script",
+	"script": "ep-rag-block-frontend-script"
 }

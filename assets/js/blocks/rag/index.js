@@ -7,8 +7,9 @@ import { registerBlockType } from '@wordpress/blocks';
  * Internal dependencies.
  */
 import { name } from './block.json';
+import Edit from './edit';
 
 registerBlockType(name, {
-	edit: () => <p>Testing</p>,
+	edit: (props) => <Edit {...props} />,
 	save: () => {},
 });
