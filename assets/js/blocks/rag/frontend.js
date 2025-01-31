@@ -24,7 +24,7 @@ const App = () => {
 			path: `${restApiEndpoint}?search_query=${searchQuery}`,
 		})
 			.then((response) => {
-				setMessage(response);
+				setMessage(response.html);
 			})
 			.finally(() => {
 				setIsLoading(false);
@@ -36,7 +36,8 @@ const App = () => {
 			<Skeleton count={5} />
 		</Placeholder>
 	) : (
-		<p>{message}</p>
+		// eslint-disable-next-line react/no-danger
+		<p dangerouslySetInnerHTML={{ __html: message }} />
 	);
 };
 

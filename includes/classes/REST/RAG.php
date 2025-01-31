@@ -62,6 +62,6 @@ class RAG {
 	 * @return object|\WP_Error
 	 */
 	public function get_rag_response( \WP_REST_Request $request ) {
-		return $this->feature->get_ai_response( $request['search_query'] );
+		return [ 'html' => $this->feature->get_ai_response( $request['search_query'] ) ];
 	}
 }
