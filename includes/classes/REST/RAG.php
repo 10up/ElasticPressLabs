@@ -41,9 +41,10 @@ class RAG {
 			'elasticpress-labs/v1',
 			'rag',
 			[
-				'callback' => [ $this, 'get_rag_response' ],
-				'methods'  => 'GET',
-				'args'     => [
+				'callback'            => [ $this, 'get_rag_response' ],
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true',
+				'args'                => [
 					'search_query' => [
 						'description'       => __( 'The search query.', 'elasticpress-labs' ),
 						'type'              => 'string',
