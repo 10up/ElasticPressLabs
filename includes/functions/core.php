@@ -235,6 +235,9 @@ function maybe_load_features() {
 
 	$vector_embeddings = new \ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings();
 	\ElasticPress\Features::factory()->register_feature( $vector_embeddings );
+
+	$knn_search = new \ElasticPressLabs\Feature\KnnSearch\KnnSearch();
+	\ElasticPress\Features::factory()->register_feature( $knn_search );
 }
 
 /**

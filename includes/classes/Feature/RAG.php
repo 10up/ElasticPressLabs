@@ -199,6 +199,8 @@ The following JSON object contains the URL and the page content. You should use 
 	protected function get_results( $search_term ) {
 		$search_term_vectors = $this->get_search_term_vectors( $search_term );
 
+		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+
 		$query = [
 			'from'    => 0,
 			'size'    => (int) $this->get_setting( 'ep_rag_number_of_posts' ),
@@ -210,14 +212,12 @@ The following JSON object contains the URL and the page content. You should use 
 					'must' => [
 						[
 							'terms' => [
-								'post_type.raw' => [ 'post', 'page', 'epio_support' ],
+								'post_type.raw' => array_values( $search_feature->get_searchable_post_types() ),
 							],
 						],
 						[
 							'terms' => [
-								'post_status' => [
-									'publish',
-								],
+								'post_status' => array_values( get_post_stati( array( 'public' => true ) ) ),
 							],
 						],
 						[
