@@ -26,13 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class VectorEmbeddings extends Feature {
 	/**
-	 * Number of dimensions for the embeddings.
-	 *
-	 * @var int
-	 */
-	protected $dimensions = 512;
-
-	/**
 	 * Array of VectorEmbeddings\Indexable objects
 	 *
 	 * @var array
@@ -48,6 +41,7 @@ class VectorEmbeddings extends Feature {
 		'ep_embeddings_api_key'            => '',
 		'ep_embeddings_api_url'            => 'https://api.openai.com/v1/embeddings',
 		'ep_embeddings_embedding_model'    => 'text-embedding-3-small',
+		'ep_embeddings_dimensions'         => 512,
 		'ep_embeddings_external_embedding' => '0',
 	];
 
@@ -120,16 +114,25 @@ class VectorEmbeddings extends Feature {
 				'type'  => 'text',
 			],
 			[
-				'help'  => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
-				'key'   => 'ep_embeddings_api_url',
-				'label' => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
-				'type'  => 'text',
+				'help'    => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
+				'key'     => 'ep_embeddings_api_url',
+				'label'   => __( 'OpenAI Embeddings API Url', 'elasticpress-labs' ),
+				'type'    => 'text',
+				'default' => $this->default_settings['ep_embeddings_api_url'],
 			],
 			[
-				'help'  => __( 'OpenAI Embedding model', 'elasticpress-labs' ),
-				'key'   => 'ep_embeddings_embedding_model',
-				'label' => __( 'The name of the embedding model to use', 'elasticpress-labs' ),
-				'type'  => 'text',
+				'help'    => __( 'OpenAI Embedding model', 'elasticpress-labs' ),
+				'key'     => 'ep_embeddings_embedding_model',
+				'label'   => __( 'The name of the embedding model to use', 'elasticpress-labs' ),
+				'type'    => 'text',
+				'default' => $this->default_settings['ep_embeddings_embedding_model'],
+			],
+			[
+				'help'    => __( 'Embedding model dimensions', 'elasticpress-labs' ),
+				'key'     => 'ep_embeddings_dimensions',
+				'label'   => __( 'The number of dimensions supported by your embedding model', 'elasticpress-labs' ),
+				'type'    => 'number',
+				'default' => $this->default_settings['ep_embeddings_dimensions'],
 			],
 			[
 				'key'   => 'ep_embeddings_external_embedding',
@@ -390,7 +393,7 @@ class VectorEmbeddings extends Feature {
 	 * @return int
 	 */
 	public function get_dimensions(): int {
-		$calc_dimensions = max( 1, min( 4096, $this->dimensions ) );
+		$calc_dimensions = max( 1, min( 4096, $this->get_setting( 'ep_embeddings_dimensions' ) ) );
 
 		/**
 		 * Filter the dimensions we want for each embedding.
