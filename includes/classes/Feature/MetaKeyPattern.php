@@ -31,7 +31,9 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 	public function __construct() {
 		$this->slug = 'meta_key_pattern';
 
-		$this->title = esc_html__( 'Meta Key Pattern', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
@@ -40,6 +42,16 @@ class MetaKeyPattern extends \ElasticPress\Feature {
 		];
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Meta Key Pattern', 'elasticpress-labs' );
 	}
 
 	/**

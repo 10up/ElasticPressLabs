@@ -53,12 +53,13 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test constrcut
+	 * Test construct
 	 *
 	 * @since  1.1.0
 	 */
 	public function testConstruct() {
 		$instance = $this->get_feature();
+		$instance->set_i18n_strings();
 
 		$this->assertEquals( 'co_authors_plus', $instance->slug );
 		$this->assertEquals( 'Co-Authors Plus', $instance->title );
