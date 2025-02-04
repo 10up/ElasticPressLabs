@@ -30,11 +30,23 @@ class WooCommerceSubscriptionSearch extends \ElasticPress\Feature {
 	public function __construct() {
 		$this->slug = 'woocommerce_subscription_search';
 
-		$this->title = esc_html__( 'WooCommerce Admin Subscription Search', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_install_reindex = true;
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'WooCommerce Admin Subscription Search', 'elasticpress-labs' );
 	}
 
 	/**
