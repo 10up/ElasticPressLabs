@@ -36,7 +36,9 @@ class BooleanSearchOperators extends Feature {
 	public function __construct() {
 		$this->slug = 'boolean_search_operators';
 
-		$this->title = esc_html__( 'Boolean Search Operators', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
@@ -44,6 +46,16 @@ class BooleanSearchOperators extends Feature {
 		];
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Boolean Search Operators', 'elasticpress-labs' );
 	}
 
 	/**

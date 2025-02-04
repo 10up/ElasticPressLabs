@@ -22,17 +22,29 @@ class Users extends Feature {
 	public function __construct() {
 		$this->slug = 'users';
 
-		$this->title = esc_html__( 'Users', 'elasticpress-labs' );
-
-		$this->summary = __( 'Improve user search relevancy and query performance.', 'elasticpress-labs' );
-
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_install_reindex = true;
 
 		Indexables::factory()->register( new \ElasticPressLabs\Indexable\User\User(), false );
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Users', 'elasticpress-labs' );
+
+		$this->summary = __( 'Improve user search relevancy and query performance.', 'elasticpress-labs' );
+
+		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users', 'elasticpress-labs' );
 	}
 
 	/**

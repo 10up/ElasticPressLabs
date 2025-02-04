@@ -47,12 +47,13 @@ class TestMetaKeyPattern extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test constrcut
+	 * Test construct
 	 *
 	 * @group MetaKeyPattern
 	 */
 	public function testConstruct() {
 		$instance = $this->get_feature();
+		$instance->set_i18n_strings();
 
 		$this->assertEquals( 'meta_key_pattern', $instance->slug );
 		$this->assertEquals( 'Meta Key Pattern', $instance->title );
