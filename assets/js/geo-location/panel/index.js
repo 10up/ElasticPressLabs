@@ -4,6 +4,7 @@
  * WordPress dependencies
  */
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
+import { PluginDocumentSettingPanel as PluginDocumentSettingPanelLegacy } from '@wordpress/edit-post';
 import { TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -49,8 +50,13 @@ export default () => {
 		}
 	};
 
+	const WrapperElement =
+		typeof PluginDocumentSettingPanel !== 'undefined'
+			? PluginDocumentSettingPanel
+			: PluginDocumentSettingPanelLegacy;
+
 	return (
-		<PluginDocumentSettingPanel
+		<WrapperElement
 			name="ep-lat-long-panel"
 			title={__('ElasticPress Geo Location', 'elasticpress-labs')}
 			className="ep-lat-long-panel"
@@ -71,6 +77,6 @@ export default () => {
 				onChange={onUpdateLongitude}
 				type="number"
 			/>
-		</PluginDocumentSettingPanel>
+		</WrapperElement>
 	);
 };
