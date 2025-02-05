@@ -323,7 +323,7 @@ class TestGeoLocation extends BaseTestCase {
 					'response' => [
 						'code' => 200,
 					],
-					'body'     => json_encode(
+					'body'     => wp_json_encode(
 						[
 							'results' => [
 								[
