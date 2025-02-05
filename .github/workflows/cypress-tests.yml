@@ -82,6 +82,8 @@ jobs:
 
     - name: Test
       run: npm run cypress:run
+      env:
+        GOOGLE_MAP_API_KEY: ${{ secrets.GOOGLE_MAP_API_KEY }}
 
     - name: Make artifacts available
       uses: actions/upload-artifact@v4
@@ -162,6 +164,8 @@ jobs:
 
     - name: Test
       run: npm run cypress:run
+      env:
+        GOOGLE_MAP_API_KEY: ${{ secrets.GOOGLE_MAP_API_KEY }}
 
     - name: Make artifacts available
       uses: actions/upload-artifact@v4
