@@ -93,7 +93,7 @@ describe('Geo Location Feature', () => {
 			.invoke('attr', 'for')
 			.then((id) => {
 				cy.get(`#${id}`).clear();
-				cy.get(`#${id}`).type(Cypress.env('GOOGLE_MAP_API_KEY'));
+				cy.get(`#${id}`).type(Cypress.env('GOOGLE_MAPS_API_KEY'));
 			});
 
 		cy.contains('button', 'Save changes').click();
