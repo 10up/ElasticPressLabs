@@ -23,6 +23,11 @@ describe('Geo Location Feature', () => {
 	it('Should add coordinates to a post', () => {
 		enableFeature();
 
+		const coordinates = {
+			latitude: '12.34',
+			longitude: '98.76',
+		};
+
 		cy.visitAdminPage('post-new.php');
 
 		cy.intercept('/wp-json/wp/v2/posts*').as('apiRequest');
@@ -37,23 +42,22 @@ describe('Geo Location Feature', () => {
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
 			.then((id) => {
-				cy.get(`#${id}`).type('12.34');
+				cy.get(`#${id}`).type(coordinates.latitude);
 			});
 
 		cy.contains('label', 'Longitude')
 			.invoke('attr', 'for')
 			.then((id) => {
-				cy.get(`#${id}`).type('98.76');
+				cy.get(`#${id}`).type(coordinates.longitude);
 			});
 
+		// Publish post
 		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
-
 		cy.get('.editor-post-publish-button').click();
-
 		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-
 		cy.wait('@apiRequest');
 
+		// Verify coordinates persist after reload
 		cy.reload();
 
 		cy.contains('button', 'ElasticPress Geo Location').then(($btn) => {
@@ -65,13 +69,13 @@ describe('Geo Location Feature', () => {
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
 			.then((id) => {
-				cy.get(`#${id}`).should('have.value', '12.34');
+				cy.get(`#${id}`).should('have.value', coordinates.latitude);
 			});
 
 		cy.contains('label', 'Longitude')
 			.invoke('attr', 'for')
 			.then((id) => {
-				cy.get(`#${id}`).should('have.value', '98.76');
+				cy.get(`#${id}`).should('have.value', coordinates.longitude);
 			});
 	});
 
@@ -81,6 +85,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'Geo Location').click();
 
+		// Add Google Maps API Key
 		cy.contains('label', 'Google Maps API Key')
 			.invoke('attr', 'for')
 			.then((id) => {
@@ -89,11 +94,9 @@ describe('Geo Location Feature', () => {
 			});
 
 		cy.contains('button', 'Save changes').click();
-
 		cy.wait('@apiRequest');
 
 		cy.visitAdminPage('post-new.php');
-
 		cy.intercept('https://maps.googleapis.com/maps/api/place/js/AutocompletionService*').as(
 			'mapApiRequest',
 		);
@@ -104,6 +107,7 @@ describe('Geo Location Feature', () => {
 			}
 		});
 
+		// Add address.
 		cy.contains('label', 'Address')
 			.invoke('attr', 'for')
 			.then((id) => {
@@ -113,6 +117,7 @@ describe('Geo Location Feature', () => {
 				cy.get(`#${id}`).type('{downarrow}{enter}');
 			});
 
+		// Check if fields are not empty
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
 			.then((id) => {
