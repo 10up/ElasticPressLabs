@@ -33,7 +33,6 @@ describe('Geo Location Feature', () => {
 		// Close Welcome Guide.
 		cy.closeWelcomeGuide();
 
-		cy.intercept('/wp-json/wp/v2/posts*').as('apiRequest');
 		cy.getBlockEditor().find('h1.editor-post-title__input, #post-title-0').type('Test Post');
 
 		cy.contains('button', 'ElasticPress Geo Location').then(($btn) => {
@@ -58,7 +57,6 @@ describe('Geo Location Feature', () => {
 		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
 		cy.get('.editor-post-publish-button').click();
 		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-		cy.wait('@apiRequest');
 
 		// Verify coordinates persist after reload
 		cy.reload();
