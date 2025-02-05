@@ -30,6 +30,9 @@ describe('Geo Location Feature', () => {
 
 		cy.visitAdminPage('post-new.php');
 
+		// Close Welcome Guide.
+		cy.closeWelcomeGuide();
+
 		cy.intercept('/wp-json/wp/v2/posts*').as('apiRequest');
 		cy.getBlockEditor().find('h1.editor-post-title__input, #post-title-0').type('Test Post');
 
