@@ -37,12 +37,13 @@ class TestBooleanSearchOperators extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test constrcut
+	 * Test construct
 	 *
 	 * @since  1.2.0
 	 */
 	public function testConstruct() {
 		$instance = $this->get_feature();
+		$instance->set_i18n_strings();
 
 		$this->assertEquals( 'boolean_search_operators', $instance->slug );
 		$this->assertEquals( 'Boolean Search Operators', $instance->title );

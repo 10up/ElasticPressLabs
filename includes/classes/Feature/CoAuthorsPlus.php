@@ -46,6 +46,10 @@ class CoAuthorsPlus extends Feature {
 	public function __construct() {
 		$this->slug = 'co_authors_plus';
 
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
+
 		$this->requires_install_reindex = true;
 
 		$protected_content_feature = Features::factory()->get_registered_feature( 'protected_content' );

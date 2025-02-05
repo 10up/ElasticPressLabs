@@ -36,6 +36,10 @@ class BooleanSearchOperators extends Feature {
 	public function __construct() {
 		$this->slug = 'boolean_search_operators';
 
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
+
 		$this->requires_install_reindex = false;
 		$this->default_settings         = [
 			'active' => false,
