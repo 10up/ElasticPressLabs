@@ -297,14 +297,30 @@ The following JSON object contains the URL and the page content. You should use 
 			],
 		];
 
-		$response = wp_remote_post(
-			$this->get_setting( 'ep_rag_api_url' ),
+		$url = $this->get_setting( 'ep_rag_api_url' );
+
+		/**
+		 * Filter the options for the post request.
+		 *
+		 * @hook ep_rag_request_options
+		 * @since 2.4.0
+		 *
+		 * @param {array} $options The options for the request.
+		 * @param {string} $url The URL for the request.
+		 *
+		 * @return {array} The options for the request.
+		 */
+		$options = apply_filters(
+			'ep_rag_request_options',
 			[
 				'headers' => $headers,
 				'body'    => wp_json_encode( $body ),
 				'timeout' => 60, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
-			]
+			],
+			$url
 		);
+
+		$response = wp_remote_post( $url, $options );
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
