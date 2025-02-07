@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GeoLocation feature.
  */
 class GeoLocation extends Feature {
+
 	/**
 	 * Initialize feature setting it's config
 	 */
@@ -50,6 +51,11 @@ class GeoLocation extends Feature {
 		add_filter( 'ep_post_mapping', [ $this, 'add_mapping' ], 20, 2 );
 		add_filter( 'ep_post_sync_args', [ $this, 'add_post_sync_args' ], 10, 2 );
 		add_filter( 'ep_formatted_args', [ $this, 'formatted_args' ], 10, 2 );
+		add_action( 'pre_get_posts', [ $this, 'change_query' ] );
+
+		add_action( 'init', [ $this, 'register_block' ] );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'parse_request', [ $this, 'maybe_change_cookie' ] );
 	}
 
 	/**
@@ -72,7 +78,8 @@ class GeoLocation extends Feature {
 			'ep_geo_location_script',
 			'epGeoLocation',
 			[
-				'has_map_key' => ! empty( $settings['google_maps_api_key'] ),
+				'has_map_key'      => ! empty( $settings['google_maps_api_key'] ),
+				'is_external_meta' => has_filter( 'ep_geo_location_pre_geo_points' ),
 			]
 		);
 
@@ -175,31 +182,47 @@ class GeoLocation extends Feature {
 	 * @return array Post sync args.
 	 */
 	public function add_post_sync_args( $post_args, $post_id ): array {
-		$geo_points = [
-			'location' => [
+		/**
+		 * Filter the geo points before they retrieved from the post meta.
+		 *
+		 * @since 2.4.0
+		 * @hook ep_geo_location_pre_geo_points
+		 * @param {array|false} $pre_geo_points Pre geo points.
+		 * @param {array} $post_args Post args.
+		 * @param {int} $post_id Post ID.
+		 */
+		$geo_points = apply_filters( 'ep_geo_location_pre_geo_points', false, $post_args, $post_id );
+
+		if ( false === $geo_points ) {
+			$geo_points = [
 				'lat' => (float) get_post_meta( $post_id, 'ep_latitude', true ),
 				'lon' => (float) get_post_meta( $post_id, 'ep_longitude', true ),
-			],
-		];
+			];
+		}
 
 		/**
-			* Filter the geo points before they are added to the post sync args.
-			*
-			* @since 2.4.0
-			* @hook ep_geo_location_geo_points
-			* @param {array} $geo_points Geo points.
-			* @param {array} $post_args Post args.
-			* @param {int} $post_id Post ID.
-			* @return {array} Geo points.
-			*/
-		$geo_points = apply_filters( 'ep_geo_location_geo_points', $geo_points, $post_args, $post_id );
+		 * Filter the geo points before they are added to the post sync args.
+		 *
+		 * @since 2.4.0
+		 * @hook ep_geo_location_geo_points
+		 * @param {array} $geo_points Geo points.
+		 * @param {array} $post_args Post args.
+		 * @param {int} $post_id Post ID.
+		 * @return {array} Geo points.
+		 */
+		$geo_points = apply_filters( 'ep_geo_location_geo_points', (array) $geo_points, $post_args, $post_id );
 
 		// bail if no latitude or longitude.
-		if ( empty( $geo_points['location']['lat'] ) || empty( $geo_points['location']['lon'] ) ) {
+		if ( empty( $geo_points['lat'] ) || empty( $geo_points['lon'] ) ) {
 			return $post_args;
 		}
 
-		$post_args['geo_point'] = $geo_points;
+		$post_args['geo_point'] = [
+			'location' => [
+				'lat' => $geo_points['lat'],
+				'lon' => $geo_points['lon'],
+			],
+		];
 
 		return $post_args;
 	}
@@ -213,7 +236,7 @@ class GeoLocation extends Feature {
 	 */
 	public function formatted_args( $formatted_args, $args ) {
 		// Add geo_distance filter if provided
-		if ( isset( $args['geo_distance'] ) ) {
+		if ( isset( $args['geo_distance'] ) && isset( $args['geo_distance']['distance'] ) ) {
 			$formatted_args['post_filter']['bool']['filter']['geo_distance'] = $args['geo_distance'];
 		}
 
@@ -223,6 +246,46 @@ class GeoLocation extends Feature {
 		}
 
 		return $formatted_args;
+	}
+
+
+	function change_query( $query ) {
+		if ( is_admin() ) {
+			return;
+		}
+
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! $query->is_search() ) {
+			return;
+		}
+
+		if ( empty( $_COOKIE['ep_coordinates'] ) ) {
+			return;
+		}
+
+		$coordinates = explode( ',', $_COOKIE['ep_coordinates'] );
+
+		$lat = $coordinates[0];
+		$lon = $coordinates[1];
+
+		if ( empty( $lat ) || empty( $lon ) ) {
+			return;
+		}
+
+		$query->set( 'orderby', 'geo_distance' );
+		$query->set( 'order', 'ASC' );
+
+		$geo_distance = [
+			'geo_point.location' => [
+				'lat' => (string) sanitize_text_field( $lat ),
+				'lon' => (string) sanitize_text_field( $lon ),
+			],
+		];
+
+		$query->set( 'geo_distance', $geo_distance );
 	}
 
 	/**
@@ -287,5 +350,134 @@ class GeoLocation extends Feature {
 			'lat' => $location->lat,
 			'lon' => $location->lng,
 		];
+	}
+
+
+	/**
+	 * Check if the cookie with the location needs to be changed.
+	 */
+	public function maybe_change_cookie() {
+		if (
+			empty( $_REQUEST['ep_geo_location_nonce'] ) ||
+			! wp_verify_nonce( $_REQUEST['ep_geo_location_nonce'], 'ep_geo_location' )
+		) {
+			return;
+		}
+
+		unset( $_REQUEST['ep_geo_location_nonce'] );
+		unset( $_REQUEST['_wp_http_referer'] );
+
+		if ( ! empty( $_REQUEST['ep_geo_location_stop'] ) ) {
+			setcookie( 'ep_coordinates', '', time() - DAY_IN_SECONDS, '/' );
+			unset( $_REQUEST['ep_geo_location_stop'] );
+		}
+
+		if ( ! empty( $_REQUEST['ep_lat'] ) && ! empty( $_REQUEST['ep_lon'] ) ) {
+			$cookie_value = array_map( 'sanitize_text_field', [ $_REQUEST['ep_lat'], $_REQUEST['ep_lon'] ] );
+			$cookie_value = implode( ',', $cookie_value );
+
+			unset( $_REQUEST['ep_lat'] );
+			unset( $_REQUEST['ep_lon'] );
+		}
+
+		$request_uri = wp_parse_url( $_SERVER['REQUEST_URI'] );
+
+		wp_safe_redirect( $request_uri['path'] . '?' . build_query( $_REQUEST ) );
+		die();
+	}
+
+
+	/**
+	 * Register the block.
+	 */
+	public function register_block() {
+		/**
+		 * Registering it here so translation works
+		 *
+		 * @see https://core.trac.wordpress.org/ticket/54797#comment:20
+		 */
+		wp_register_script(
+			'ep-near-me-block-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/near-me-block-script.js',
+			Utils\get_asset_info( 'near-me-block-script', 'dependencies' ),
+			Utils\get_asset_info( 'near-me-block-script', 'version' ),
+			true
+		);
+		wp_set_script_translations( 'ep-near-me-block-script', 'elasticpress' );
+
+		register_block_type_from_metadata(
+			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/near-me',
+			[
+				'render_callback' => [ $this, 'render_block' ],
+			]
+		);
+	}
+
+	/**
+	 * Enqueue assets for the block.
+	 */
+	public function enqueue_assets() {
+		wp_register_script(
+			'ep-near-me-block-view-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/near-me-block-view-script.js',
+			Utils\get_asset_info( 'near-me-block-view-script', 'dependencies' ),
+			Utils\get_asset_info( 'near-me-block-view-script', 'version' ),
+			true
+		);
+	}
+
+
+	/**
+	 * Render the block.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string Block output.
+	 */
+	public function render_block( $attributes ): string {
+
+		$has_user_location = ! empty( $_COOKIE['ep_coordinates'] );
+
+		$request_uri = wp_parse_url( $_SERVER['REQUEST_URI'] );
+		wp_parse_str( $request_uri['query'], $query_params );
+
+		// Add empty lat and lon to the query params.
+		$query_params = array_merge(
+			$query_params,
+			[
+				'ep_lat' => '',
+				'ep_lon' => '',
+			]
+		);
+
+		ob_start();
+		?>
+		<div
+		<?php
+		echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		?>
+					>
+
+			<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>" class="ep-near-me-block">
+				<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
+				<?php foreach ( $query_params as $name => $value ) { ?>
+					<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+				<?php } ?>
+
+				<?php if ( $has_user_location ) { ?>
+					<button type="submit" name="ep_geo_location_stop" value="1">
+						<?php esc_html_e( 'Stop Showing Near Me', 'elasticpress-labs' ); ?>
+					</button>
+				<?php } else { ?>
+					<button type="submit" name="ep_geo_location_start" value="1" class="wp-element-button ep-near-me-block__submit-button">
+						<?php esc_html_e( 'Showing Near Me', 'elasticpress-labs' ); ?>
+					</button>
+				<?php } ?>
+			</form>
+
+		</div>
+		<?php
+		$block = ob_get_clean();
+
+		return $block;
 	}
 }

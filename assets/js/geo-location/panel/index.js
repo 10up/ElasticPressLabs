@@ -9,6 +9,7 @@ import { TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { WPElement } from '@wordpress/element';
+import { ifCondition } from '@wordpress/compose';
 
 /**
  * Internal dependencies
@@ -20,7 +21,7 @@ import AutoCompleteField from './AutoCompleteField';
  *
  * @returns {WPElement} Component.
  */
-export default () => {
+const GeoLocationPanel = () => {
 	const { editPost } = useDispatch('core/editor');
 
 	const {
@@ -80,3 +81,9 @@ export default () => {
 		</WrapperElement>
 	);
 };
+
+const GeoLocationPanelWithCondition = ifCondition(() => !epGeoLocation.is_external_meta)(
+	GeoLocationPanel,
+);
+
+export default GeoLocationPanelWithCondition;
