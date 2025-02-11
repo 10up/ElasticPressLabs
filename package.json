@@ -55,8 +55,8 @@
       "admin": "./assets/js/admin/admin.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
-      "near-me-block-script": "./assets/js/blocks/near-me/index.js",
-      "near-me-block-view-script": "./assets/js/blocks/near-me/view.js"
+      "geo-location-block-script": "./assets/js/blocks/geo-location/index.js",
+      "geo-location-block-view-script": "./assets/js/blocks/geo-location/view.js"
     }
   },
   "dependencies": {

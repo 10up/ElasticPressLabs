@@ -248,8 +248,12 @@ class GeoLocation extends Feature {
 		return $formatted_args;
 	}
 
-
-	function change_query( $query ) {
+	/**
+	 * Change search query to sort by geo_distance.
+	 *
+	 * @param WP_Query $query The WP_Query object.
+	 */
+	public function change_query( $query ) {
 		if ( is_admin() ) {
 			return;
 		}
@@ -266,7 +270,7 @@ class GeoLocation extends Feature {
 			return;
 		}
 
-		$coordinates = explode( ',', $_COOKIE['ep_coordinates'] );
+		$coordinates = explode( ',', sanitize_text_field( wp_unslash( $_COOKIE['ep_coordinates'] ) ) );
 
 		$lat = $coordinates[0];
 		$lon = $coordinates[1];
@@ -352,14 +356,13 @@ class GeoLocation extends Feature {
 		];
 	}
 
-
 	/**
 	 * Check if the cookie with the location needs to be changed.
 	 */
 	public function maybe_change_cookie() {
 		if (
 			empty( $_REQUEST['ep_geo_location_nonce'] ) ||
-			! wp_verify_nonce( $_REQUEST['ep_geo_location_nonce'], 'ep_geo_location' )
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['ep_geo_location_nonce'] ) ), 'ep_geo_location' )
 		) {
 			return;
 		}
@@ -367,25 +370,27 @@ class GeoLocation extends Feature {
 		unset( $_REQUEST['ep_geo_location_nonce'] );
 		unset( $_REQUEST['_wp_http_referer'] );
 
-		if ( ! empty( $_REQUEST['ep_geo_location_stop'] ) ) {
+		if ( isset( $_REQUEST['ep_geo_location_show'] ) && '0' === $_REQUEST['ep_geo_location_show'] ) {
 			setcookie( 'ep_coordinates', '', time() - DAY_IN_SECONDS, '/' );
-			unset( $_REQUEST['ep_geo_location_stop'] );
+			unset( $_REQUEST['ep_geo_location_show'] );
 		}
 
 		if ( ! empty( $_REQUEST['ep_lat'] ) && ! empty( $_REQUEST['ep_lon'] ) ) {
-			$cookie_value = array_map( 'sanitize_text_field', [ $_REQUEST['ep_lat'], $_REQUEST['ep_lon'] ] );
+			$cookie_value = array_map( 'sanitize_text_field', [ sanitize_text_field( wp_unslash( $_REQUEST['ep_lat'] ) ), sanitize_text_field( wp_unslash( $_REQUEST['ep_lon'] ) ) ] );
 			$cookie_value = implode( ',', $cookie_value );
+
+			setcookie( 'ep_coordinates', $cookie_value, time() + YEAR_IN_SECONDS * 10, '/' );
 
 			unset( $_REQUEST['ep_lat'] );
 			unset( $_REQUEST['ep_lon'] );
 		}
 
-		$request_uri = wp_parse_url( $_SERVER['REQUEST_URI'] );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$request_uri = wp_parse_url( $request_uri );
 
 		wp_safe_redirect( $request_uri['path'] . '?' . build_query( $_REQUEST ) );
 		die();
 	}
-
 
 	/**
 	 * Register the block.
@@ -397,16 +402,16 @@ class GeoLocation extends Feature {
 		 * @see https://core.trac.wordpress.org/ticket/54797#comment:20
 		 */
 		wp_register_script(
-			'ep-near-me-block-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/near-me-block-script.js',
-			Utils\get_asset_info( 'near-me-block-script', 'dependencies' ),
-			Utils\get_asset_info( 'near-me-block-script', 'version' ),
+			'ep-geo-location-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.js',
+			Utils\get_asset_info( 'geo-location-block-script', 'dependencies' ),
+			Utils\get_asset_info( 'geo-location-block-script', 'version' ),
 			true
 		);
-		wp_set_script_translations( 'ep-near-me-block-script', 'elasticpress' );
+		wp_set_script_translations( 'ep-geo-location-script', 'elasticpress' );
 
 		register_block_type_from_metadata(
-			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/near-me',
+			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/geo-location',
 			[
 				'render_callback' => [ $this, 'render_block' ],
 			]
@@ -418,14 +423,13 @@ class GeoLocation extends Feature {
 	 */
 	public function enqueue_assets() {
 		wp_register_script(
-			'ep-near-me-block-view-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/near-me-block-view-script.js',
-			Utils\get_asset_info( 'near-me-block-view-script', 'dependencies' ),
-			Utils\get_asset_info( 'near-me-block-view-script', 'version' ),
+			'ep-geo-location-view-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-view-script.js',
+			Utils\get_asset_info( 'geo-location-block-view-script', 'dependencies' ),
+			Utils\get_asset_info( 'geo-location-block-view-script', 'version' ),
 			true
 		);
 	}
-
 
 	/**
 	 * Render the block.
@@ -434,11 +438,27 @@ class GeoLocation extends Feature {
 	 * @return string Block output.
 	 */
 	public function render_block( $attributes ): string {
+		/**
+		 * Prior to WP 6.1, if you set `viewScript` while using a `render_callback` function,
+		 * the script was not enqueued.
+		 *
+		 * @see https://core.trac.wordpress.org/changeset/54367
+		 */
+		if ( version_compare( get_bloginfo( 'version' ), '6.1', '<' ) ) {
+			wp_enqueue_script( 'ep-geo-location-view-script' );
+		}
+
+		$text_without_location = ! empty( $attributes['textWithoutLocation'] ) ? $attributes['textWithoutLocation'] : '';
+		$text_with_location    = ! empty( $attributes['textWithLocation'] ) ? $attributes['textWithLocation'] : '';
+
+		$button_text_without_location = ! empty( $attributes['buttonTextWithoutLocation'] ) ? $attributes['buttonTextWithoutLocation'] : '';
+		$button_text_with_location    = ! empty( $attributes['buttonTextWithLocation'] ) ? $attributes['buttonTextWithLocation'] : '';
 
 		$has_user_location = ! empty( $_COOKIE['ep_coordinates'] );
 
-		$request_uri = wp_parse_url( $_SERVER['REQUEST_URI'] );
-		wp_parse_str( $request_uri['query'], $query_params );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$request_uri = wp_parse_url( $request_uri );
+		wp_parse_str( $request_uri['query'] ?? '', $query_params );
 
 		// Add empty lat and lon to the query params.
 		$query_params = array_merge(
@@ -451,33 +471,31 @@ class GeoLocation extends Feature {
 
 		ob_start();
 		?>
-		<div
-		<?php
-		echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		?>
-					>
-
-			<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>" class="ep-near-me-block">
+		<div <?php echo wp_kses_data( get_block_wrapper_attributes() ); ?> >
+			<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>">
 				<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
-				<?php foreach ( $query_params as $name => $value ) { ?>
+				<?php foreach ( $query_params as $name => $value ) : ?>
 					<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
-				<?php } ?>
-
-				<?php if ( $has_user_location ) { ?>
-					<button type="submit" name="ep_geo_location_stop" value="1">
-						<?php esc_html_e( 'Stop Showing Near Me', 'elasticpress-labs' ); ?>
-					</button>
-				<?php } else { ?>
-					<button type="submit" name="ep_geo_location_start" value="1" class="wp-element-button ep-near-me-block__submit-button">
-						<?php esc_html_e( 'Showing Near Me', 'elasticpress-labs' ); ?>
-					</button>
-				<?php } ?>
+				<?php endforeach; ?>
+				<p><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
+				<button type="submit" name="ep_geo_location_show" class="wp-element-button ep-geo-location__submit-button" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
+					<?php
+					echo $has_user_location ? esc_html( $button_text_with_location )
+					: esc_html( $button_text_without_location );
+					?>
+				</button>
+				<p class="ep-geo-location__error"></p>
 			</form>
-
 		</div>
 		<?php
-		$block = ob_get_clean();
+		$block_content = ob_get_clean();
 
-		return $block;
+		$wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wp-block-elasticpress-geo-location' ] );
+
+		return sprintf(
+			'<div %1$s>%2$s</div>',
+			wp_kses_data( $wrapper_attributes ),
+			$block_content
+		);
 	}
 }
