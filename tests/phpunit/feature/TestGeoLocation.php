@@ -394,7 +394,49 @@ class TestGeoLocation extends BaseTestCase {
 		add_filter(
 			'ep_geo_location_geo_points',
 			function ( $geo_points ) {
-				$geo_points['location'] = [
+				$geo_points = [
+					'lat' => 10000,
+					'lon' => 20000,
+				];
+
+				return $geo_points;
+			}
+		);
+
+		$post_id = $this->ep_factory->post->create(
+			[
+				'meta_input' => [
+					'ep_latitude'  => 10,
+					'ep_longitude' => 20,
+				],
+			]
+		);
+
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+
+		$post = \ElasticPress\Indexables::factory()->get( 'post' )->get( $post_id );
+
+		$expected_result = [
+			'location' => [
+				'lat' => 10000,
+				'lon' => 20000,
+			],
+		];
+
+		$this->assertArrayHasKey( 'geo_point', $post );
+		$this->assertSame( $expected_result, $post['geo_point'] );
+	}
+
+	/**
+	 * Tests `ep_geo_location_pre_geo_points` filter.
+	 *
+	 * @group geo-location
+	 */
+	public function test_location_pre_geo_points() {
+		add_filter(
+			'ep_geo_location_pre_geo_points',
+			function ( $geo_points ) {
+				$geo_points = [
 					'lat' => 10000,
 					'lon' => 20000,
 				];
