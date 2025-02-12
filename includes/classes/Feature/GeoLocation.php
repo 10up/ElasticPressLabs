@@ -28,20 +28,32 @@ class GeoLocation extends Feature {
 
 		$this->requires_install_reindex = true;
 
-		$this->title = esc_html__( 'Geo Location', 'elasticpress-labs' );
-
-		$this->summary = '<p>' . __( 'Geo Location feature allows you to search for posts based on their location.', 'elasticpress-labs' ) . '</p>';
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		parent::__construct();
 	}
 
 	/**
-	 * Setup all feature hooks
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.4.0
 	 */
-	public function setup() {
-		$settings = $this->get_settings();
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Geo Location', 'elasticpress-labs' );
 
-		if ( empty( $settings['active'] ) ) {
+		$this->summary = '<p>' . __( 'Geo Location feature allows you to search for posts based on their location.', 'elasticpress-labs' ) . '</p>';
+	}
+
+	/**
+	 * Setup all feature hooks
+	 *
+	 * @return void
+	 */
+	public function setup(): void {
+		if ( empty( $this->get_setting( 'active' ) ) ) {
 			return;
 		}
 
@@ -60,6 +72,8 @@ class GeoLocation extends Feature {
 
 	/**
 	 * Enqueue admin scripts
+	 *
+	 * @return void
 	 */
 	public function admin_scripts(): void {
 		wp_enqueue_script(
@@ -72,21 +86,21 @@ class GeoLocation extends Feature {
 
 		wp_set_script_translations( 'ep_geo_location_script', 'elasticpress-labs' );
 
-		$settings = $this->get_settings();
+		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
 
 		wp_localize_script(
 			'ep_geo_location_script',
 			'epGeoLocation',
 			[
-				'has_map_key'      => ! empty( $settings['google_maps_api_key'] ),
+				'has_map_key'      => ! empty( $google_maps_api_key ),
 				'is_external_meta' => has_filter( 'ep_geo_location_pre_geo_points' ),
 			]
 		);
 
-		if ( ! empty( $settings['google_maps_api_key'] ) ) {
+		if ( ! empty( $google_maps_api_key ) ) {
 			$google_places_api_url = add_query_arg(
 				[
-					'key'       => $settings['google_maps_api_key'],
+					'key'       => $google_maps_api_key,
 					'libraries' => 'places',
 				],
 				'https://maps.googleapis.com/maps/api/js'
@@ -104,8 +118,10 @@ class GeoLocation extends Feature {
 
 	/**
 	 * Set the `settings_schema` attribute
+	 *
+	 * @return void
 	 */
-	public function set_settings_schema() {
+	public function set_settings_schema(): void {
 		$this->settings_schema = [
 			[
 				'default' => '',
@@ -119,6 +135,8 @@ class GeoLocation extends Feature {
 
 	/**
 	 * Register meta fields
+	 *
+	 * @return void
 	 */
 	public function register_meta(): void {
 		register_post_meta(
@@ -234,7 +252,7 @@ class GeoLocation extends Feature {
 	 * @param array $args           Args.
 	 * @return array Formatted args.
 	 */
-	public function formatted_args( $formatted_args, $args ) {
+	public function formatted_args( $formatted_args, $args ): array {
 		// Add geo_distance filter if provided
 		if ( isset( $args['geo_distance'] ) && isset( $args['geo_distance']['distance'] ) ) {
 			$formatted_args['post_filter']['bool']['filter']['geo_distance'] = $args['geo_distance'];
@@ -252,8 +270,9 @@ class GeoLocation extends Feature {
 	 * Change search query to sort by geo_distance.
 	 *
 	 * @param WP_Query $query The WP_Query object.
+	 * @return void
 	 */
-	public function change_query( $query ) {
+	public function change_query( $query ): void {
 		if ( is_admin() ) {
 			return;
 		}
@@ -297,9 +316,10 @@ class GeoLocation extends Feature {
 	 *
 	 * @param array $sort The sort array from formatted_args.
 	 * @param array $args The original query args.
+	 *
 	 * @return array The updated sort array.
 	 */
-	protected function process_geo_distance_sort( $sort, $args ) {
+	protected function process_geo_distance_sort( $sort, $args ): array {
 		foreach ( $sort as $key => &$sort_item ) {
 			if ( isset( $sort_item['geo_distance'] ) ) {
 				// Rename 'geo_distance' to '_geo_distance'
@@ -394,8 +414,10 @@ class GeoLocation extends Feature {
 
 	/**
 	 * Register the block.
+	 *
+	 * @return void
 	 */
-	public function register_block() {
+	public function register_block(): void {
 		/**
 		 * Registering it here so translation works
 		 *
@@ -420,14 +442,24 @@ class GeoLocation extends Feature {
 
 	/**
 	 * Enqueue assets for the block.
+	 *
+	 * @return void
 	 */
-	public function enqueue_assets() {
+	public function enqueue_assets(): void {
 		wp_register_script(
 			'ep-geo-location-view-script',
 			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-view-script.js',
 			Utils\get_asset_info( 'geo-location-block-view-script', 'dependencies' ),
 			Utils\get_asset_info( 'geo-location-block-view-script', 'version' ),
 			true
+		);
+
+		wp_register_style(
+			'ep-geo-location-view-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.css',
+			[],
+			Utils\get_asset_info( 'ep-geo-location-view-script', 'version' ),
+			'all'
 		);
 	}
 
@@ -471,22 +503,20 @@ class GeoLocation extends Feature {
 
 		ob_start();
 		?>
-		<div <?php echo wp_kses_data( get_block_wrapper_attributes() ); ?> >
-			<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>">
-				<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
-				<?php foreach ( $query_params as $name => $value ) : ?>
-					<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
-				<?php endforeach; ?>
-				<p><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
-				<button type="submit" name="ep_geo_location_show" class="wp-element-button ep-geo-location__submit-button" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
-					<?php
-					echo $has_user_location ? esc_html( $button_text_with_location )
-					: esc_html( $button_text_without_location );
-					?>
-				</button>
-				<p class="ep-geo-location__error"></p>
+		<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>">
+			<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
+			<?php foreach ( $query_params as $name => $value ) : ?>
+				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+			<?php endforeach; ?>
+			<p><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
+			<button type="submit" name="ep_geo_location_show" class="wp-element-button ep-geo-location__submit-button" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
+				<?php
+				echo $has_user_location ? esc_html( $button_text_with_location )
+				: esc_html( $button_text_without_location );
+				?>
+			</button>
+			<p class="ep-geo-location__error"><?php esc_html_e( 'Error retrieving location data. Please ensure that location services are enabled.', 'elasticpress-labs' ); ?></p>
 			</form>
-		</div>
 		<?php
 		$block_content = ob_get_clean();
 

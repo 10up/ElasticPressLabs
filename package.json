@@ -56,7 +56,8 @@
       "search-templates-script": "./assets/js/search-templates/index.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "geo-location-block-script": "./assets/js/blocks/geo-location/index.js",
-      "geo-location-block-view-script": "./assets/js/blocks/geo-location/view.js"
+      "geo-location-block-view-script": "./assets/js/blocks/geo-location/view.js",
+      "blocks-styles": "./assets/css/blocks.css"
     }
   },
   "dependencies": {

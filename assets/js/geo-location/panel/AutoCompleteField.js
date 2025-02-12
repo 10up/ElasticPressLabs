@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { TextControl } from '@wordpress/components';
@@ -10,7 +13,7 @@ export default ({ onPlaceSelected, value }) => {
 	useEffect(() => {
 		if (inputRef.current && window.google) {
 			const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-				types: ['geocode'], // You can restrict the types of predictions
+				types: ['geocode'],
 			});
 
 			autocomplete.addListener('place_changed', () => {
