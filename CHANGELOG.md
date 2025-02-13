@@ -11,7 +11,34 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Removed
 ### Fixed
 ### Security
+### Developer
 -->
+
+## [2.4.0] - 2025-XX-XX
+
+- New minimum versions (see [#122](https://github.com/10up/ElasticPressLabs/pull/122)) are:
+	||Min|Max|
+	|---|:---:|:---:|
+	|ElasticPress|5.0.0|latest|
+	|WordPress|6.0|latest|
+	|PHP|7.4|latest|
+
+### Added
+* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#118](https://github.com/10up/ElasticPressLabs/pull/118).
+
+### Changed
+* Minimum requirements to run the plugin: PHP 7.4+, WP 6.0+, and EP 5.0.0+. Props [@felipeelia](https://github.com/felipeelia) via [#122](https://github.com/10up/ElasticPressLabs/pull/122).
+
+### Deprecated
+### Removed
+### Fixed
+* PHP Notice: Function _load_textdomain_just_in_time was called incorrectly. Props [@burhandodhy](https://github.com/burhandodhy) via [#125](https://github.com/10up/ElasticPressLabs/pull/125).
+
+### Security
+### Developer
+* Fixed PR links in the changelog. Props [@felipeelia](https://github.com/felipeelia) via [#115](https://github.com/10up/ElasticPressLabs/pull/115).
+* Add e2e tests foundation. Props [@felipeelia](https://github.com/felipeelia) via [#119](https://github.com/10up/ElasticPressLabs/pull/119).
+* Fix unit tests + small tweaks in Husky and Cypress setup. Props [@felipeelia](https://github.com/felipeelia) via [#120](https://github.com/10up/ElasticPressLabs/pull/120).
 
 ## [2.3.1] - 2024-12-11
 
@@ -127,6 +154,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.4.0]: https://github.com/10up/ElasticPressLabs/compare/2.3.1...2.4.0
 [2.3.1]: https://github.com/10up/ElasticPressLabs/compare/2.3.0...2.3.1
 [2.3.0]: https://github.com/10up/ElasticPressLabs/compare/2.2.0...2.3.0
 [2.2.0]: https://github.com/10up/ElasticPressLabs/compare/2.1.1...2.2.0
