@@ -23,7 +23,11 @@ class Post extends Indexable {
 
 		// Only trigger embeddings when external embeddings are turned off
 		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
-			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
+				add_filter( 'ep_bulk_index_action_args', [ $this, 'add_chunks_to_bulk_index_action_args' ], 10, 2 );
+			} else {
+				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+			}
 		}
 	}
 
@@ -35,6 +39,25 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
+	}
+
+	/**
+	 * Add the content chunks to the index action args.
+	 *
+	 * This will be picked up by EP.io servers so it is enqueued for processing.
+	 *
+	 * @param array $args Current index action args.
+	 * @param array $post The post being indexed.
+	 * @return array
+	 */
+	public function add_chunks_to_bulk_index_action_args( array $args, array $post ) {
+		if ( ! $this->should_add_vector_field_to_post( $post['ID'] ) ) {
+			return $args;
+		}
+
+		$args['epio-content-chunks'] = $this->get_post_chunks( $post['ID'] );
+
+		return $args;
 	}
 
 	/**

@@ -15,6 +15,7 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
+use ElasticPress\Utils;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -43,6 +44,7 @@ class VectorEmbeddings extends Feature {
 		'ep_embeddings_embedding_model'    => 'text-embedding-3-small',
 		'ep_embeddings_dimensions'         => 512,
 		'ep_embeddings_external_embedding' => '0',
+		'ep_embeddings_use_epio'           => '0',
 	];
 
 	/**
@@ -141,6 +143,15 @@ class VectorEmbeddings extends Feature {
 				'type'  => 'checkbox',
 			],
 		];
+
+		if ( Utils\is_epio() ) {
+			$this->settings_schema[] = [
+				'key'   => 'ep_embeddings_use_epio',
+				'help'  => __( 'Enable this if you want to use ElasticPress.io to vectorize your content.', 'elasticpress-labs' ),
+				'label' => __( 'Use EP.io', 'elasticpress-labs' ),
+				'type'  => 'checkbox',
+			];
+		}
 	}
 
 	/**
