@@ -5,6 +5,7 @@ env:
   COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
   NODE_VERSION: "20"
   NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
+  CYPRESS_GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
 
 on:
   schedule:
@@ -82,8 +83,6 @@ jobs:
 
     - name: Test
       run: npm run cypress:run
-      env:
-        CYPRESS_GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
 
     - name: Make artifacts available
       uses: actions/upload-artifact@v4
@@ -164,8 +163,6 @@ jobs:
 
     - name: Test
       run: npm run cypress:run
-      env:
-        CYPRESS_GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
 
     - name: Make artifacts available
       uses: actions/upload-artifact@v4
