@@ -9,6 +9,8 @@
 namespace ElasticPressLabs\Feature;
 
 use ElasticPress\Feature;
+use ElasticPress\FeatureRequirementsStatus;
+use ElasticPress\Features;
 use ElasticPressLabs\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -193,6 +195,28 @@ class GeoLocation extends Feature {
 	}
 
 	/**
+	 * Returns requirements status of feature
+	 *
+	 * Requires the search feature to be activated
+	 *
+	 * @return FeatureRequirementsStatus
+	 */
+	public function requirements_status() {
+		/** Features Class @var Features $features */
+		$features = Features::factory();
+
+		/** Search Feature @var Feature\Search\Search $search */
+		$search = $features->get_registered_feature( 'search' );
+
+		if ( ! $search->is_active() ) {
+			return new FeatureRequirementsStatus( 2, esc_html__( 'This feature requires the "Post Search" feature to be enabled', 'elasticpress-labs' ) );
+		}
+
+		return new FeatureRequirementsStatus( 1 );
+	}
+
+
+	/**
 	 * Add geo_point to post sync args.
 	 *
 	 * @param array   $post_args Post arguments.
@@ -201,13 +225,14 @@ class GeoLocation extends Feature {
 	 */
 	public function add_post_sync_args( $post_args, $post_id ): array {
 		/**
-		 * Filter the geo points before they retrieved from the post meta.
+		 * Filter the geo points before they are retrieved from the post meta.
 		 *
 		 * @since 2.4.0
 		 * @hook ep_geo_location_pre_geo_points
 		 * @param {array|false} $pre_geo_points Pre geo points.
 		 * @param {array} $post_args Post args.
 		 * @param {int} $post_id Post ID.
+		 * @return {array|false} Pre geo points.
 		 */
 		$geo_points = apply_filters( 'ep_geo_location_pre_geo_points', false, $post_args, $post_id );
 
@@ -273,15 +298,7 @@ class GeoLocation extends Feature {
 	 * @return void
 	 */
 	public function change_query( $query ): void {
-		if ( is_admin() ) {
-			return;
-		}
-
-		if ( ! $query->is_main_query() ) {
-			return;
-		}
-
-		if ( ! $query->is_search() ) {
+		if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
 			return;
 		}
 
@@ -387,23 +404,28 @@ class GeoLocation extends Feature {
 			return;
 		}
 
-		unset( $_REQUEST['ep_geo_location_nonce'] );
-		unset( $_REQUEST['_wp_http_referer'] );
-
-		if ( isset( $_REQUEST['ep_geo_location_show'] ) && '0' === $_REQUEST['ep_geo_location_show'] ) {
-			setcookie( 'ep_coordinates', '', time() - DAY_IN_SECONDS, '/' );
-			unset( $_REQUEST['ep_geo_location_show'] );
+		if ( ! isset( $_REQUEST['ep_geo_location_show'] ) ) {
+			return;
 		}
 
-		if ( ! empty( $_REQUEST['ep_lat'] ) && ! empty( $_REQUEST['ep_lon'] ) ) {
+		// if the user has disabled the location, remove the cookie.
+		if ( '0' === $_REQUEST['ep_geo_location_show'] ) {
+			setcookie( 'ep_coordinates', '', time() - DAY_IN_SECONDS, '/' );
+		}
+
+		if ( '1' === $_REQUEST['ep_geo_location_show'] && ! empty( $_REQUEST['ep_lat'] ) && ! empty( $_REQUEST['ep_lon'] ) ) {
 			$cookie_value = array_map( 'sanitize_text_field', [ sanitize_text_field( wp_unslash( $_REQUEST['ep_lat'] ) ), sanitize_text_field( wp_unslash( $_REQUEST['ep_lon'] ) ) ] );
 			$cookie_value = implode( ',', $cookie_value );
 
 			setcookie( 'ep_coordinates', $cookie_value, time() + YEAR_IN_SECONDS * 10, '/' );
-
-			unset( $_REQUEST['ep_lat'] );
-			unset( $_REQUEST['ep_lon'] );
 		}
+
+		// Remove the nonce and other query params.
+		unset( $_REQUEST['ep_geo_location_nonce'] );
+		unset( $_REQUEST['_wp_http_referer'] );
+		unset( $_REQUEST['ep_lat'] );
+		unset( $_REQUEST['ep_lon'] );
+		unset( $_REQUEST['ep_geo_location_show'] );
 
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$request_uri = wp_parse_url( $request_uri );
@@ -503,20 +525,21 @@ class GeoLocation extends Feature {
 
 		ob_start();
 		?>
-		<form class="form" method="post" action="<?php echo esc_url( $request_uri['path'] ); ?>">
+		<form class="form" method="POST" action="">
 			<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
 			<?php foreach ( $query_params as $name => $value ) : ?>
 				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
 			<?php endforeach; ?>
+			<input type="hidden" name="ep_geo_location_show" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
 			<p><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
-			<button type="submit" name="ep_geo_location_show" class="wp-element-button ep-geo-location__submit-button" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
+			<button type="submit" class="wp-element-button ep-geo-location__submit-button">
 				<?php
 				echo $has_user_location ? esc_html( $button_text_with_location )
 				: esc_html( $button_text_without_location );
 				?>
 			</button>
 			<p class="ep-geo-location__error"><?php esc_html_e( 'Error retrieving location data. Please ensure that location services are enabled.', 'elasticpress-labs' ); ?></p>
-			</form>
+		</form>
 		<?php
 		$block_content = ob_get_clean();
 
