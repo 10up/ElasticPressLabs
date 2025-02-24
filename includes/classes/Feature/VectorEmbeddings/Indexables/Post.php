@@ -56,13 +56,10 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$post_chunks      = $this->get_post_chunks( $post['ID'] );
-		$post_chunks_size = mb_strlen( wp_json_encode( $post_chunks ), '8bit' );
-		if ( $post_chunks_size >= 200 * KB_IN_BYTES ) {
-			return $args;
+		$post_chunks = $this->get_post_chunks( $post['ID'] );
+		if ( 'index_action_args' === $this->get_text_chunks_sending_method( $post_chunks ) ) {
+			$args['epio-content-chunks'] = $post_chunks;
 		}
-
-		$args['epio-content-chunks'] = $post_chunks;
 
 		return $args;
 	}
@@ -79,13 +76,10 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$post_chunks      = $this->get_post_chunks( $post_id );
-		$post_chunks_size = mb_strlen( wp_json_encode( $post_chunks ), '8bit' );
-		if ( $post_chunks_size < 200 * KB_IN_BYTES ) {
-			return $args;
+		$post_chunks = $this->get_post_chunks( $post_id );
+		if ( 'es_doc_field' === $this->get_text_chunks_sending_method( $post_chunks ) ) {
+			$args['text_chunks'] = $post_chunks;
 		}
-
-		$args['text_chunks'] = $post_chunks;
 
 		return $args;
 	}

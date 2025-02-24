@@ -114,4 +114,47 @@ abstract class Indexable {
 
 		return $args;
 	}
+
+	/**
+	 * Determine the way to send the text chunks to the Elasticsearch server.
+	 *
+	 * Depending on the size of the text chunks, it can either be sent using the index action args
+	 * (the JSON object where we determine the index to be used, etc.) or as a regular field in the Elasticsearch.
+	 * To avoid overhead, we prefer to send it as an index action arg, but sometimes it is just too big for it.
+	 *
+	 * @param array $text_chunks The text chunks
+	 * @return string The method. Can be 'index_action_args' or 'es_doc_field'.
+	 */
+	protected function get_text_chunks_sending_method( $text_chunks ) {
+		$post_chunks_size = mb_strlen( wp_json_encode( $text_chunks ), '8bit' );
+
+		/**
+		 * Filter to determine the threshold size for the text chunks to be sent as an index action arg.
+		 *
+		 * @hook ep_embeddings_sending_method_limit
+		 * @since 2.4.0
+		 *
+		 * @param {int} $size The size limit in bytes. Defaults to 200kb.
+		 * @return {int} The new $size value.
+		 */
+		$size_limit = apply_filters( 'ep_embeddings_sending_method_limit', 200 * KB_IN_BYTES );
+
+		$method = $post_chunks_size < $size_limit ? 'index_action_args' : 'es_doc_field';
+
+		/**
+		 * Filter to determine the method to be used to send the text chunks.
+		 *
+		 * Unless you are implementing a custom solution, return should be either 'index_action_args' or 'es_doc_field'.
+		 *
+		 * @hook ep_embeddings_sending_method
+		 * @since 2.4.0
+		 *
+		 * @param {string} $method           The method to be used.
+		 * @param {int}    $text_chunks      The text chunks being analyzed.
+		 * @param {int}    $post_chunks_size The determined size of the text chunks.
+		 * @param {int}    $size_limit       The size limit in bytes. Defaults to 200kb.
+		 * @return {string} The new $method value.
+		 */
+		return apply_filters( 'ep_embeddings_sending_method', $method, $text_chunks, $post_chunks_size, $size_limit );
+	}
 }
