@@ -44,7 +44,7 @@ abstract class Indexable {
 		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
 
 		// Don't add the field if it already exists.
-		if ( isset( $mapping['mappings']['properties']['chunks'] ) ) {
+		if ( isset( $mapping['mappings']['properties']['chunks'], $mapping['mappings']['properties']['text_chunks'] ) ) {
 			return $mapping;
 		}
 
@@ -58,6 +58,8 @@ abstract class Indexable {
 				],
 			],
 		];
+
+		$mapping['mappings']['properties']['text_chunks']['type'] = 'text';
 
 		// Add extra vector fields for newer versions of Elasticsearch.
 		if ( version_compare( $es_version, '8.0', '>=' ) ) {

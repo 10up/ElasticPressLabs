@@ -331,7 +331,12 @@ class VectorEmbeddings extends Feature {
 		$content = apply_filters( 'the_content', $content );
 
 		// Strip shortcodes but keep internal caption text.
-		$content = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
+		// Revert it if shortcodes are not balanced and preg_replace errors out.
+		$pre_content = $content;
+		$content     = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
+		if ( null === $content ) {
+			$content = $pre_content;
+		}
 
 		// Strip HTML entities.
 		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
@@ -356,6 +361,9 @@ class VectorEmbeddings extends Feature {
 	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25 ): array {
 		// Normalize our content.
 		$content = $this->normalize_content( $content );
+		if ( ! $content ) {
+			return [];
+		}
 
 		// Remove multiple whitespaces.
 		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );

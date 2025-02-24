@@ -24,7 +24,8 @@ class Post extends Indexable {
 		// Only trigger embeddings when external embeddings are turned off
 		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
 			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
-				add_filter( 'ep_bulk_index_action_args', [ $this, 'add_chunks_to_bulk_index_action_args' ], 10, 2 );
+				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
+				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
 			} else {
 				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
 			}
@@ -50,12 +51,41 @@ class Post extends Indexable {
 	 * @param array $post The post being indexed.
 	 * @return array
 	 */
-	public function add_chunks_to_bulk_index_action_args( array $args, array $post ) {
+	public function maybe_add_chunks_to_bulk_index_action_args( array $args, array $post ) {
 		if ( ! $this->should_add_vector_field_to_post( $post['ID'] ) ) {
 			return $args;
 		}
 
-		$args['epio-content-chunks'] = $this->get_post_chunks( $post['ID'] );
+		$post_chunks      = $this->get_post_chunks( $post['ID'] );
+		$post_chunks_size = mb_strlen( wp_json_encode( $post_chunks ), '8bit' );
+		if ( $post_chunks_size >= 200 * KB_IN_BYTES ) {
+			return $args;
+		}
+
+		$args['epio-content-chunks'] = $post_chunks;
+
+		return $args;
+	}
+
+	/**
+	 * Add text chunks to their field in the post sync args.
+	 *
+	 * @param array $args Current sync args.
+	 * @param int   $post_id Post ID being synced.
+	 * @return array
+	 */
+	public function maybe_add_chunks_to_text_chunks_fields( array $args, int $post_id ) {
+		if ( ! $this->should_add_vector_field_to_post( $post_id ) ) {
+			return $args;
+		}
+
+		$post_chunks      = $this->get_post_chunks( $post_id );
+		$post_chunks_size = mb_strlen( wp_json_encode( $post_chunks ), '8bit' );
+		if ( $post_chunks_size < 200 * KB_IN_BYTES ) {
+			return $args;
+		}
+
+		$args['text_chunks'] = $post_chunks;
 
 		return $args;
 	}
