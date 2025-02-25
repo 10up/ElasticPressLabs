@@ -454,6 +454,14 @@ class GeoLocation extends Feature {
 		);
 		wp_set_script_translations( 'ep-geo-location-script', 'elasticpress' );
 
+		wp_register_style(
+			'ep-geo-location-view-style',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.css',
+			[],
+			Utils\get_asset_info( 'ep-geo-location-view-script', 'version' ),
+			'all'
+		);
+
 		register_block_type_from_metadata(
 			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/geo-location',
 			[
@@ -477,7 +485,7 @@ class GeoLocation extends Feature {
 		);
 
 		wp_register_style(
-			'ep-geo-location-view-script',
+			'ep-geo-location-view-style',
 			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.css',
 			[],
 			Utils\get_asset_info( 'ep-geo-location-view-script', 'version' ),
@@ -531,7 +539,7 @@ class GeoLocation extends Feature {
 				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
 			<?php endforeach; ?>
 			<input type="hidden" name="ep_geo_location_show" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
-			<p><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
+			<p class="ep-geo-location__label"><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
 			<button type="submit" class="wp-element-button ep-geo-location__submit-button">
 				<?php
 				echo $has_user_location ? esc_html( $button_text_with_location )

@@ -60,3 +60,43 @@ Cypress.Commands.add('wpCliEval', (command) => {
 		cy.wrap(result);
 	});
 });
+
+Cypress.Commands.add('openWidgetsPage', () => {
+	cy.login();
+	cy.visitAdminPage('widgets.php');
+	cy.get('body').then(($body) => {
+		const $button = $body.find('.edit-widgets-welcome-guide .components-modal__header button');
+		if ($button.is(':visible')) {
+			$button.click();
+		}
+	});
+});
+
+Cypress.Commands.add('openBlockInserter', () => {
+	cy.get('body').then(($body) => {
+		// If already open, skip.
+		if ($body.find('.edit-widgets-layout__inserter-panel-content').length > 0) {
+			return;
+		}
+		if ($body.hasClass('widgets-php')) {
+			cy.get('.edit-widgets-header-toolbar__inserter-toggle').click();
+		} else {
+			cy.get(
+				'.edit-post-header-toolbar__inserter-toggle,.editor-document-tools__inserter-toggle',
+			).click();
+		}
+	});
+});
+
+Cypress.Commands.add('emptyWidgets', () => {
+	cy.wpCliEval(
+		`
+		WP_CLI::runcommand('widget reset --all');
+
+		$inactive_widgets = WP_CLI::runcommand('widget list wp_inactive_widgets --format=ids', [ 'return' => true ] );
+		if ( $inactive_widgets ) {
+			WP_CLI::runcommand("widget delete {$inactive_widgets}" );
+		}
+		`,
+	);
+});

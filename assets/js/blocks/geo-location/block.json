@@ -46,5 +46,6 @@
   },
   "editorScript": "ep-geo-location-script",
   "viewScript": "ep-geo-location-view-script",
-  "style": "ep-geo-location-view-script"
+  "style": "ep-geo-location-view-style",
+  "editorStyle": "ep-geo-location-view-style"
 }
