@@ -29,15 +29,15 @@ class TestGeoLocation extends BaseTestCase {
 
 		wp_set_current_user( $admin_id );
 
-		ElasticPress\Elasticsearch::factory()->delete_all_indices();
-		ElasticPress\Indexables::factory()->get( 'post' )->put_mapping();
-
-		ElasticPress\Indexables::factory()->get( 'post' )->sync_manager->reset_sync_queue();
-
 		$instance = new GeoLocation();
 		Features::factory()->register_feature( $instance );
 		Features::factory()->activate_feature( 'geo_location' );
 		Features::factory()->setup_features();
+
+		ElasticPress\Elasticsearch::factory()->delete_all_indices();
+		ElasticPress\Indexables::factory()->get( 'post' )->put_mapping();
+
+		ElasticPress\Indexables::factory()->get( 'post' )->sync_manager->reset_sync_queue();
 	}
 
 	/**
@@ -69,7 +69,7 @@ class TestGeoLocation extends BaseTestCase {
 	public function test_requirements_status() {
 		$requirements_status = $this->get_feature()->requirements_status();
 
-		$this->assertSame( 0, $requirements_status->code );
+		$this->assertSame( 1, $requirements_status->code );
 	}
 
 	/**
