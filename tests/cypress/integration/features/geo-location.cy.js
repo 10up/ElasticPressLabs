@@ -51,7 +51,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
+				cy.wrap(button).click({ force: true });
 			}
 		});
 
@@ -77,7 +77,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
+				cy.wrap(button).click({ force: true });
 			}
 		});
 
@@ -118,7 +118,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
+				cy.wrap(button).click({ force: true });
 			}
 		});
 
@@ -159,7 +159,7 @@ describe('Geo Location Feature', () => {
 		});
 
 		cy.openBlockInserter();
-		cy.insertBlock('elasticpress/geo-location').then(() => {
+		cy.insertBlock('ElasticPress Geo Location').then(() => {
 			cy.openDocumentSettingsSidebar('Block');
 
 			cy.contains('label', 'Text when location is not set').then((label) => {
@@ -239,7 +239,13 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Stamford');
+			.type('Test Geo Location Post - Stamford', { force: true });
+
+		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
+			if (button.attr('aria-expanded') === 'false') {
+				cy.wrap(button).click({ force: true });
+			}
+		});
 
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
@@ -262,7 +268,13 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Chicago');
+			.type('Test Geo Location Post - Chicago', { force: true });
+
+		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
+			if (button.attr('aria-expanded') === 'false') {
+				cy.wrap(button).click({ force: true });
+			}
+		});
 
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
@@ -284,7 +296,13 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Jersey City');
+			.type('Test Geo Location Post - Jersey City', { force: true });
+
+		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
+			if (button.attr('aria-expanded') === 'false') {
+				cy.wrap(button).click({ force: true });
+			}
+		});
 
 		cy.contains('label', 'Latitude')
 			.invoke('attr', 'for')
@@ -306,7 +324,7 @@ describe('Geo Location Feature', () => {
 		// Open widgets page and add the Geo Location block.
 		cy.openWidgetsPage();
 		cy.openBlockInserter();
-		cy.insertBlock('elasticpress/geo-location').then(() => {
+		cy.insertBlock('ElasticPress Geo Location').then(() => {
 			cy.openDocumentSettingsSidebar('Block');
 
 			/**

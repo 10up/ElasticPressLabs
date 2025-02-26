@@ -88,6 +88,11 @@ Cypress.Commands.add('openBlockInserter', () => {
 	});
 });
 
+Cypress.Commands.add('insertBlock', (blockName) => {
+	cy.get('.block-editor-inserter__search input[type="search"').clearThenType(blockName);
+	cy.get('.block-editor-block-types-list__item').contains(blockName).click({ force: true });
+});
+
 Cypress.Commands.add('emptyWidgets', () => {
 	cy.wpCliEval(
 		`
