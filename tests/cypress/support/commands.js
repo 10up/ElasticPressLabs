@@ -79,7 +79,7 @@ Cypress.Commands.add('openBlockInserter', () => {
 			return;
 		}
 		if ($body.hasClass('widgets-php')) {
-			cy.get('.edit-widgets-header-toolbar__inserter-toggle').click();
+			cy.get('.edit-widgets-header-toolbar__inserter-toggle').click({ force: true });
 		} else {
 			cy.get(
 				'.edit-post-header-toolbar__inserter-toggle,.editor-document-tools__inserter-toggle',

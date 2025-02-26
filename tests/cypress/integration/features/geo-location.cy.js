@@ -152,9 +152,12 @@ describe('Geo Location Feature', () => {
 		 */
 		cy.openWidgetsPage();
 
+		// eslint-disable-next-line cypress/no-unnecessary-waiting -- Wait for the modal to appear.
+		cy.wait(500);
+		const modelSelector = '.edit-widgets-welcome-guide button[aria-label="Close"]';
 		cy.get('body').then(($body) => {
 			if ($body.find('.edit-widgets-welcome-guide').length > 0) {
-				cy.get('.edit-widgets-welcome-guide button[aria-label="Close"]').click();
+				cy.get(modelSelector).click();
 			}
 		});
 
