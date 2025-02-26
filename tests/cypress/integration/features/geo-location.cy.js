@@ -151,6 +151,13 @@ describe('Geo Location Feature', () => {
 		 * Add a Block.
 		 */
 		cy.openWidgetsPage();
+
+		cy.get('.edit-widgets-welcome-guide').then((el) => {
+			if (el.length > 0) {
+				cy.get('.edit-widgets-welcome-guide button[aria-label="Close"]').click();
+			}
+		});
+
 		cy.openBlockInserter();
 		cy.insertBlock('elasticpress/geo-location').then(() => {
 			cy.openDocumentSettingsSidebar('Block');
