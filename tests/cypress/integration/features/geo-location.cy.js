@@ -43,10 +43,6 @@ describe('Geo Location Feature', () => {
 		};
 
 		cy.visitAdminPage('post-new.php');
-
-		// Close Welcome Guide.
-		cy.closeWelcomeGuide();
-
 		cy.getBlockEditor().find('h1.editor-post-title__input, #post-title-0').type('Test Post');
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
@@ -151,16 +147,6 @@ describe('Geo Location Feature', () => {
 		 * Add a Block.
 		 */
 		cy.openWidgetsPage();
-
-		// eslint-disable-next-line cypress/no-unnecessary-waiting -- Wait for the modal to appear.
-		cy.wait(500);
-		const modelSelector = '.edit-widgets-welcome-guide button[aria-label="Close"]';
-		cy.get('body').then(($body) => {
-			if ($body.find('.edit-widgets-welcome-guide').length > 0) {
-				cy.get(modelSelector).click();
-			}
-		});
-
 		cy.openBlockInserter();
 		cy.insertBlock('ElasticPress Geo Location').then(() => {
 			cy.openDocumentSettingsSidebar('Block');

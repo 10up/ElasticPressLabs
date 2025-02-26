@@ -41,7 +41,6 @@ class GeoLocation extends Feature {
 	 * Sets i18n strings.
 	 *
 	 * @return void
-	 * @since 2.4.0
 	 */
 	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'Geo Location', 'elasticpress-labs' );
