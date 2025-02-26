@@ -152,8 +152,8 @@ describe('Geo Location Feature', () => {
 		 */
 		cy.openWidgetsPage();
 
-		cy.get('.edit-widgets-welcome-guide').then((el) => {
-			if (el.length > 0) {
+		cy.get('body').then(($body) => {
+			if ($body.find('.edit-widgets-welcome-guide').length > 0) {
 				cy.get('.edit-widgets-welcome-guide button[aria-label="Close"]').click();
 			}
 		});
