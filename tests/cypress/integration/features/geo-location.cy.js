@@ -51,7 +51,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
@@ -77,7 +77,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
@@ -118,7 +118,7 @@ describe('Geo Location Feature', () => {
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
@@ -242,11 +242,11 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Stamford', { force: true });
+			.type('Test Geo Location Post - Stamford');
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
@@ -271,11 +271,11 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Chicago', { force: true });
+			.type('Test Geo Location Post - Chicago');
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
@@ -299,11 +299,11 @@ describe('Geo Location Feature', () => {
 		cy.visitAdminPage('post-new.php');
 		cy.getBlockEditor()
 			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Jersey City', { force: true });
+			.type('Test Geo Location Post - Jersey City');
 
 		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
 			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click({ force: true });
+				cy.wrap(button).click();
 			}
 		});
 
