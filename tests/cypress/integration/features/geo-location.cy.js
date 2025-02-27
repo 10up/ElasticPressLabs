@@ -350,4 +350,15 @@ describe('Geo Location Feature', () => {
 		cy.get('article.post:nth-of-type(2) h2').contains('Stamford');
 		cy.get('article.post:nth-of-type(3) h2').contains('Chicago');
 	});
+
+	it('Does not display the field when coordinates are pre-set via a filter', () => {
+		// Activate plugin
+		cy.visitAdminPage('plugins.php');
+		cy.activatePlugin('set-geo-location-coordinates');
+
+		cy.visitAdminPage('post-new.php');
+		cy.contains('button', 'ElasticPress Geo Location').should('not.exist');
+
+		cy.deactivatePlugin('set-geo-location-coordinates');
+	});
 });
