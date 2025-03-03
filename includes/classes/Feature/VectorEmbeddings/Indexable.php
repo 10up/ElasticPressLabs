@@ -44,22 +44,38 @@ abstract class Indexable {
 		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
 
 		// Don't add the field if it already exists.
-		if ( isset( $mapping['mappings']['properties']['chunks'], $mapping['mappings']['properties']['text_chunks'] ) ) {
+		if ( isset( $mapping['mappings']['properties']['chunks'], $mapping['mappings']['properties']['ep_embeddings_control'] ) ) {
 			return $mapping;
 		}
 
 		// Add the default vector field mapping.
-		$mapping['mappings']['properties']['chunks'] = [
-			'type'       => 'nested',
-			'properties' => [
-				'vector' => [
-					'type' => 'dense_vector',
-					'dims' => $this->feature->get_dimensions(),
+		$mapping['mappings']['properties'] = array_merge(
+			$mapping['mappings']['properties'],
+			[
+				'ep_embeddings_control' => [
+					'properties' => [
+						'is_processing' => [
+							'type' => 'boolean',
+						],
+						'errors'        => [
+							'type' => 'text',
+						],
+						'text_chunks'   => [
+							'type' => 'text',
+						],
+					],
 				],
-			],
-		];
-
-		$mapping['mappings']['properties']['text_chunks']['type'] = 'text';
+				'chunks'                => [
+					'type'       => 'nested',
+					'properties' => [
+						'vector' => [
+							'type' => 'dense_vector',
+							'dims' => $this->feature->get_dimensions(),
+						],
+					],
+				],
+			]
+		);
 
 		// Add extra vector fields for newer versions of Elasticsearch.
 		if ( version_compare( $es_version, '8.0', '>=' ) ) {

@@ -26,6 +26,7 @@ class Post extends Indexable {
 			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
 				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
+				add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
 			} else {
 				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
 			}
@@ -76,12 +77,53 @@ class Post extends Indexable {
 			return $args;
 		}
 
+		$args['ep_embeddings_control'] = [
+			'is_processing' => true,
+			'errors'        => [],
+			'text_chunks'   => [],
+		];
+
 		$post_chunks = $this->get_post_chunks( $post_id );
 		if ( 'es_doc_field' === $this->get_text_chunks_sending_method( $post_chunks ) ) {
-			$args['text_chunks'] = $post_chunks;
+			$args['ep_embeddings_control']['text_chunks'] = $post_chunks;
 		}
 
 		return $args;
+	}
+
+	/**
+	 * Change the doc status indicator depending on the Vector Embeddings process status
+	 *
+	 * @param array $status  The status array containing status, message and explanation
+	 * @param int   $post_id The post ID being checked
+	 * @param array $es_doc  The Elasticsearch document
+	 * @return array
+	 */
+	public function maybe_set_doc_status( array $status, int $post_id, array $es_doc ): array {
+		if ( ! isset( $es_doc['ep_embeddings_control'] ) ) {
+			return $status;
+		}
+
+		if ( ! empty( $es_doc['ep_embeddings_control']['is_processing'] ) ) {
+			$status = [
+				'status'      => 'warning',
+				'message'     => esc_html__( 'Processing vector embeddings', 'elasticpress-labs' ),
+				'explanation' => esc_html__( 'Vector embeddings are still being processed.', 'elasticpress' ),
+			];
+		}
+
+		if ( ! empty( $es_doc['ep_embeddings_control']['errors'] ) ) {
+			$status = [
+				'status'      => 'error',
+				'message'     => esc_html__( 'Vector embeddings failed', 'elasticpress-labs' ),
+				'explanation' => wp_sprintf(
+					esc_html__( 'Vector embeddings failed with the following error(s): %l', 'elasticpress-labs' ),
+					$es_doc['ep_embeddings_control']['errors']
+				),
+			];
+		}
+
+		return $status;
 	}
 
 	/**
