@@ -73,6 +73,10 @@ class VectorEmbeddings extends Feature {
 	public function setup() {
 		$this->indexables['post'] = new Indexables\Post( $this );
 		$this->indexables['post']->setup();
+
+		if ( $this->get_setting( 'ep_embeddings_use_epio' ) ) {
+			add_filter( 'ep_status_report_reports', [ $this, 'add_status_report' ] );
+		}
 	}
 
 	/**
@@ -152,6 +156,18 @@ class VectorEmbeddings extends Feature {
 				'type'  => 'checkbox',
 			];
 		}
+	}
+
+	/**
+	 * Add a new status report
+	 *
+	 * @param array $reports Status reports.
+	 * @return array
+	 */
+	public function add_status_report( $reports ) {
+		$reports[] = new StatusReport();
+
+		return $reports;
 	}
 
 	/**
