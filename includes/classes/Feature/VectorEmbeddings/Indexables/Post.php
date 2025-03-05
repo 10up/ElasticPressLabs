@@ -94,12 +94,12 @@ class Post extends Indexable {
 	/**
 	 * Change the doc status indicator depending on the Vector Embeddings process status
 	 *
-	 * @param array $status  The status array containing status, message and explanation
-	 * @param int   $post_id The post ID being checked
-	 * @param array $es_doc  The Elasticsearch document
+	 * @param array       $status  The status array containing status, message and explanation
+	 * @param int         $post_id The post ID being checked
+	 * @param array|false $es_doc  The Elasticsearch document
 	 * @return array
 	 */
-	public function maybe_set_doc_status( array $status, int $post_id, array $es_doc ): array {
+	public function maybe_set_doc_status( array $status, int $post_id, $es_doc ): array {
 		if ( ! isset( $es_doc['ep_embeddings_control'] ) ) {
 			return $status;
 		}
