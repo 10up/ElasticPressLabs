@@ -16,6 +16,7 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
+use ElasticPressLabs\Utils as LabsUtils;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -62,6 +63,10 @@ class VectorEmbeddings extends Feature {
 			'elasticpress-labs'
 		);
 
+		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
+		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
+		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
+
 		parent::__construct();
 	}
 
@@ -77,6 +82,14 @@ class VectorEmbeddings extends Feature {
 		if ( $this->get_setting( 'ep_embeddings_use_epio' ) ) {
 			add_filter( 'ep_status_report_reports', [ $this, 'add_status_report' ] );
 		}
+	}
+
+	/**
+	 * Setup REST endpoints
+	 */
+	public function setup_endpoint() {
+		$controller = new \ElasticPressLabs\REST\VectorEmbeddingSettings();
+		$controller->register_routes();
 	}
 
 	/**
@@ -481,4 +494,160 @@ class VectorEmbeddings extends Feature {
 	public function get_auth_header() {
 		return 'Bearer ' . $this->get_setting( 'ep_embeddings_api_key' );
 	}
+
+	/**
+	 * Add the vector embedding submenu page.
+	 */
+	public function add_vector_embedding_submenu_page() {
+		add_submenu_page(
+			'elasticpress',
+			esc_html__( 'Vector Embeddings', 'elasticpress-labs' ),
+			esc_html__( 'Vector Embeddings', 'elasticpress-labs' ),
+			'manage_options',
+			'elasticpress-vector-embeddings',
+			[ $this, 'render_settings_page' ],
+			15
+		);
+	}
+
+	/**
+	 * Renders the settings page that controls weighting
+	 */
+	public function render_settings_page() {
+		include EP_PATH . '/includes/partials/header.php'; ?>
+		<div class="wrap">
+			<div id="ep-vector-embeddings"></div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Check if we are on the vector embeddings page.
+	 *
+	 * @return boolean
+	 */
+	public function is_vector_embeddings_page() {
+		if ( ! function_exists( '\get_current_screen' ) ) {
+			return false;
+		}
+
+		$screen = get_current_screen();
+		return ( 'elasticpress_page_elasticpress-vector-embeddings' === $screen->base );
+	}
+
+	/**
+	 * Enqueue scripts and styles for the settings page.
+	 */
+	public function scripts() {
+		if ( ! $this->is_vector_embeddings_page() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ep_vector_embeddings_scripts',
+			ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-script.js',
+			LabsUtils\get_asset_info( 'vector-embeddings-script', 'dependencies' ),
+			LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+			true
+		);
+
+		wp_set_script_translations( 'ep_vector_embeddings_scripts', 'elasticpress-labs' );
+
+		wp_enqueue_style( 'wp-edit-post' );
+
+		wp_enqueue_style(
+			'ep_vector_embeddings_scripts',
+			ELASTICPRESS_LABS_URL . 'dist/css/vector-embeddings-script.css',
+			[],
+			LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+			'all'
+		);
+
+		wp_localize_script(
+			'ep_vector_embeddings_scripts',
+			'epVectorEmbeddings',
+			[
+				'apiUrl'                 => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
+				'postTypeConfigurations' => $this->get_settings(),
+				'indexableTypes'         => array_keys( $this->get_searchable_post_types() ),
+				'chunk_size'             => 150,
+				'overlap_size'           => 25,
+			]
+		);
+	}
+
+	/**
+	 * Get the default embeddable post type configurations.
+	 *
+	 * Get a list of searchable post types, add their taxonomies, and set the inclusion to include.
+	 *
+	 * @return array
+	 */
+	public function get_settings() {
+
+		$saved = get_option( 'ep_vector_embeddings_settings', [] );
+
+		// return saved value if exists.
+		if ( ! empty( $saved['postTypeConfig'] ) ) {
+			return $saved['postTypeConfig'];
+		}
+
+		// else, generate the default settings.
+		$post_types = $this->get_searchable_post_types();
+
+		$return = [];
+
+		foreach ( $post_types as $post_type ) {
+			$post_type_object  = get_post_type_object( $post_type );
+			$object_taxonomies = get_object_taxonomies( $post_type, 'objects' );
+
+			// only use public taxonomies.
+			$public_taxonomies = array_filter(
+				$object_taxonomies,
+				function ( $taxonomy ) {
+					return $taxonomy->public && 'post_format' !== $taxonomy->name;
+				}
+			);
+
+			$public_taxonomies = array_map(
+				function ( $taxonomy ) {
+					return [
+						'name'         => $taxonomy->name,
+						'label'        => $taxonomy->label,
+						'termsInclude' => [],
+						'termsExclude' => [],
+						'enabled'      => false,
+					];
+				},
+				$public_taxonomies
+			);
+
+			// this is the shape of a post type configuration.
+			$return[] = [
+				'embeddable'            => false, // whether to allow embeddings for this post type.
+				'embeddingMode'         => 'automatic', // Whether to use auto or manual embedding.
+				'enablefieldsIndexing'  => false, // Whether to flagging content inclusion via post meta.
+				'fieldsIndexingInclude' => [ 'test1' ], // Meta fields used to flag content for inclusion.
+				'fieldsIndexingExclude' => [ 'test2' ], // Meta fields used to flag content for exclusion. A post with an exluded
+				'fieldsEmbedding'       => [ 'test3' ], // Fields to use for embedding generation.
+				'label'                 => $post_type_object->label, // Label used for settings panel.
+				'key'                   => $post_type, // post type name used for key in the settings object.
+				'taxonomies'            => $public_taxonomies, // Taxonomies to consider for vector embedding.
+			];
+		}
+
+		return $return;
+	}
+
+	/**
+	 * Get the post types that are applicable for indexing.
+	 *
+	 * @return array
+	 */
+	public function get_searchable_post_types() {
+		$search = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+
+		return $search->get_searchable_post_types();
+	}
+
 }
