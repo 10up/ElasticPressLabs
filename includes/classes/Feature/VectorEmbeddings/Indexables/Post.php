@@ -113,12 +113,16 @@ class Post extends Indexable {
 		}
 
 		if ( ! empty( $es_doc['ep_embeddings_control']['errors'] ) ) {
-			$status = [
+			$errors_list = '<ul><li>' . implode( '</li><li>', (array) $es_doc['ep_embeddings_control']['errors'] ) . '</li></ul>';
+			$status      = [
 				'status'      => 'error',
 				'message'     => esc_html__( 'Vector embeddings failed', 'elasticpress-labs' ),
-				'explanation' => wp_sprintf(
-					esc_html__( 'Vector embeddings failed with the following error(s): %l', 'elasticpress-labs' ),
-					$es_doc['ep_embeddings_control']['errors']
+				'explanation' => wp_kses_post(
+					sprintf(
+						// translators: %s is a list of errors.
+						esc_html__( 'Vector embeddings failed with the following error(s): %s', 'elasticpress-labs' ),
+						$errors_list
+					)
 				),
 			];
 		}
