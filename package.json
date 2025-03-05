@@ -53,7 +53,8 @@
   "10up-toolkit": {
     "entry": {
       "admin": "./assets/js/admin/admin.js",
-      "search-templates-script": "./assets/js/search-templates/index.js"
+      "search-templates-script": "./assets/js/search-templates/index.js",
+      "vector-embeddings-script": "./assets/js/vector-embeddings/index.js"
     },
     "wpDependencyExternals": true
   },

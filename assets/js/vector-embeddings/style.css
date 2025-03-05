@@ -1,0 +1,31 @@
+.ep-vector-embedding-settings__tabs__tab--active {
+	border-color: var(--wp-admin-theme-color) !important;
+	box-sizing: border-box;
+}
+
+/** the container for the entire tabs component */
+.ep-vector-embedding-settings__tabs {
+
+	@media screen and (max-width: 782px) {
+		flex-direction: column;
+	}
+	display: flex;
+}
+
+.ep-vector-embedding-settings__tabs .components-tab-panel__tabs button {
+	border-left: 5px solid transparent;
+}
+
+.ep-vector-embedding-settings__tabs > *:first-child {
+	padding-right: 30px;
+	width: 200px;
+}
+
+.ep-vector-embedding-settings__tabs > * {
+
+	@media screen and (max-width: 782px) {
+		width: 100%;
+	}
+	width: 800px;
+}	
+
