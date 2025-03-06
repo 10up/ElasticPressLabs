@@ -54,9 +54,9 @@ class StatusReport extends Report {
 	/**
 	 * Return the number of content items in the queue
 	 *
-	 * @return integer
+	 * @return string
 	 */
-	protected function get_content_in_queue(): int {
+	protected function get_content_in_queue(): string {
 		$query = [
 			'size'             => 0,
 			'track_total_hits' => true,
@@ -70,15 +70,17 @@ class StatusReport extends Report {
 		$post_indexable = \ElasticPress\Indexables::factory()->get( 'post' );
 		$es_response    = $post_indexable->query_es( $query, [] );
 
-		return $es_response['found_documents']['value'];
+		return $es_response && isset( $es_response['found_documents']['value'] )
+			? (string) $es_response['found_documents']['value']
+			: 'N/A';
 	}
 
 	/**
 	 * Return the number of content items with errors
 	 *
-	 * @return integer
+	 * @return string
 	 */
-	protected function get_content_with_errors(): int {
+	protected function get_content_with_errors(): string {
 		$query = [
 			'size'             => 0,
 			'track_total_hits' => true,
@@ -90,6 +92,8 @@ class StatusReport extends Report {
 		$post_indexable = \ElasticPress\Indexables::factory()->get( 'post' );
 		$es_response    = $post_indexable->query_es( $query, [] );
 
-		return $es_response['found_documents']['value'];
+		return $es_response && isset( $es_response['found_documents']['value'] )
+			? (string) $es_response['found_documents']['value']
+			: 'N/A';
 	}
 }
