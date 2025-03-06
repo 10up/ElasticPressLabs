@@ -12,17 +12,28 @@ export default ({ value, onChange, disabled, taxonomy, label, placeholder = '' }
 
 	useEffect(() => {
 		if (fetchedTerms) {
-			setTerms(fetchedTerms.map((term) => term.name));
+			setTerms(fetchedTerms);
 		}
 	}, [fetchedTerms]);
+
+	// Convert term IDs to term names for display
+	const displayedTokens = value
+		.map((termId) => terms.find((term) => term.id === termId)?.name)
+		.filter(Boolean);
+
+	// Handle selection updates
+	const handleChange = (selectedNames) => {
+		const selectedTerms = terms.filter((term) => selectedNames.includes(term.name));
+		onChange(selectedTerms.map((term) => term.id));
+	};
 
 	return (
 		<FormTokenField
 			disabled={disabled}
 			label={label}
-			value={value}
-			suggestions={terms}
-			onChange={onChange}
+			value={displayedTokens}
+			suggestions={terms.map((term) => term.name)}
+			onChange={handleChange}
 			placeholder={placeholder || __('Type to search for terms', 'elasticpress')}
 			__experimentalShowHowTo={false}
 			__nextHasNoMarginBottom
