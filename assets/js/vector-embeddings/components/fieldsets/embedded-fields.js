@@ -33,6 +33,12 @@ export default ({ postType }) => {
 
 	return (
 		<>
+			<p>{__('This setting controls which fields will be used to create embedded data.')}</p>
+			<p>
+				{__(
+					'Select from the post fields below. Additional meta keys can be added to the input below.',
+				)}
+			</p>
 			<Group>
 				{coreFields.map((field) => {
 					const { label, value } = field;
