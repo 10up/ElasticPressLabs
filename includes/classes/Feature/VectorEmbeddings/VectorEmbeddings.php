@@ -627,9 +627,9 @@ class VectorEmbeddings extends Feature {
 				'embeddable'            => false, // whether to allow embeddings for this post type.
 				'embeddingMode'         => 'automatic', // Whether to use auto or manual embedding.
 				'enablefieldsIndexing'  => false, // Whether to flagging content inclusion via post meta.
-				'fieldsIndexingInclude' => [ 'test1' ], // Meta fields used to flag content for inclusion.
-				'fieldsIndexingExclude' => [ 'test2' ], // Meta fields used to flag content for exclusion. A post with an exluded
-				'fieldsEmbedding'       => [ 'test3' ], // Fields to use for embedding generation.
+				'fieldsIndexingInclude' => [], // Meta fields used to flag content for inclusion.
+				'fieldsIndexingExclude' => [], // Meta fields used to flag content for exclusion. A post with an exluded
+				'fieldsEmbedding'       => [], // Fields to use for embedding generation.
 				'label'                 => $post_type_object->label, // Label used for settings panel.
 				'key'                   => $post_type, // post type name used for key in the settings object.
 				'taxonomies'            => $public_taxonomies, // Taxonomies to consider for vector embedding.
