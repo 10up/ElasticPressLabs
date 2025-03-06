@@ -9,6 +9,7 @@
 namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables;
 
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
+use ElasticPressLabs\Utils;
 
 /**
  * Vector Embeddings - Post Indexable class
@@ -23,6 +24,9 @@ class Post extends Indexable {
 
 		// Only trigger embeddings when external embeddings are turned off
 		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
+			add_action( 'init', [ $this, 'register_meta' ], 20 );
+			add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
+
 			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
 				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
@@ -41,6 +45,53 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
+	}
+
+	/**
+	 * Registers post meta for exclude from vector embeddings.
+	 *
+	 * @return void
+	 */
+	public function register_meta() {
+		register_post_meta(
+			'',
+			'ep_embedding_exclude',
+			[
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'boolean',
+			]
+		);
+	}
+
+	/**
+	 * Enqueue block editor assets.
+	 */
+	public function enqueue_block_editor_assets() {
+		global $post;
+
+		if ( ! $post instanceof \WP_Post ) {
+			return;
+		}
+
+		if ( ! $post->post_type || ! post_type_supports( $post->post_type, 'custom-fields' ) ) {
+			return;
+		}
+
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+		if ( ! $indexable->sync_manager->is_post_indexable( $post->ID ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ep-embeddings-editor',
+			ELASTICPRESS_LABS_URL . 'dist/js/embeddings-editor-script.js',
+			Utils\get_asset_info( 'embeddings-editor-script', 'dependencies' ),
+			Utils\get_asset_info( 'embeddings-editor-script', 'version' ),
+			true
+		);
+
+		wp_set_script_translations( 'ep-embeddings-editor', 'elasticpress-labs' );
 	}
 
 	/**
@@ -161,6 +212,8 @@ class Post extends Indexable {
 	public function should_add_vector_field_to_post( int $post_id ): bool {
 		$post = get_post( $post_id );
 
+		$should_add = ! empty( $post ) && ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
+
 		/**
 		 * Filter whether the vector field should or not be added to the post.
 		 *
@@ -171,7 +224,7 @@ class Post extends Indexable {
 		 * @param {int}  $post_id    The post ID.
 		 * @return {bool} The new $should_add value.
 		 */
-		return apply_filters( 'ep_embeddings_should_add_vector_field_to_post', ! empty( $post ), $post_id );
+		return apply_filters( 'ep_embeddings_should_add_vector_field_to_post', $should_add, $post_id );
 	}
 
 	/**
