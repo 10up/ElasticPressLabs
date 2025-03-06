@@ -27,6 +27,12 @@ class Post extends Indexable {
 			add_action( 'init', [ $this, 'register_meta' ], 20 );
 			add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
 
+			add_action( 'post_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ] );
+			add_action( 'attachment_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ], 15 );
+
+			add_action( 'edit_post', [ $this, 'save_embedding_exclude_meta' ] );
+			add_action( 'edit_attachment', [ $this, 'save_embedding_exclude_meta' ] );
+
 			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
 				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
@@ -92,6 +98,58 @@ class Post extends Indexable {
 		);
 
 		wp_set_script_translations( 'ep-embeddings-editor', 'elasticpress-labs' );
+	}
+
+	/**
+	 * Outputs the checkbox to exclude a post from embedding.
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	public function output_embedding_exclude_setting( $post ) {
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+		if ( ! $indexable->sync_manager->is_post_indexable( $post->ID ) ) {
+			return;
+		}
+
+		?>
+		<div class="misc-pub-section">
+			<input id="ep_embedding_exclude" name="ep_embedding_exclude" type="checkbox" value="1" <?php checked( get_post_meta( get_the_ID(), 'ep_embedding_exclude', true ) ); ?>>
+			<label for="ep_embedding_exclude"><?php esc_html_e( 'Exclude from vector embeddings', 'elasticpress-labs' ); ?></label>
+			<p class="howto">
+				<?php if ( 'attachment' === $post->post_type ) : ?>
+					<?php esc_html_e( 'Check this if you don\'t want this media to be vectorized.', 'elasticpress-labs' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Check this if you don\'t want this post to be vectorized.', 'elasticpress-labs' ); ?>
+				<?php endif; ?>
+			</p>
+			<?php wp_nonce_field( 'save-embedding-exclude', 'ep-embedding-exclude-nonce' ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Saves exclude from embedding meta.
+	 *
+	 * @param int $post_id The post ID.
+	 */
+	public function save_embedding_exclude_meta( $post_id ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( ! isset( $_POST['ep-embedding-exclude-nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['ep-embedding-exclude-nonce'] ), 'save-embedding-exclude' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['ep_embedding_exclude'] ) ) {
+			update_post_meta( $post_id, 'ep_embedding_exclude', true );
+		} else {
+			delete_post_meta( $post_id, 'ep_embedding_exclude' );
+		}
 	}
 
 	/**
