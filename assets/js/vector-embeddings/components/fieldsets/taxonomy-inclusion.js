@@ -40,8 +40,15 @@ export default ({ taxonomies, postType }) => {
 												'Include posts that have any of these terms',
 												'elasticpress',
 											)}
-											updateKey="termsInclude"
 											value={termsInclude}
+											onChange={(terms) =>
+												setEmbeddingForPostType(
+													key,
+													taxonomy,
+													'termsInclude',
+													terms,
+												)
+											}
 										/>
 									</Group>
 									<Group indent>
@@ -52,7 +59,14 @@ export default ({ taxonomies, postType }) => {
 												'Exclude posts that have any of these terms',
 												'elasticpress',
 											)}
-											updateKey="termsExclude"
+											onChange={(terms) =>
+												setEmbeddingForPostType(
+													key,
+													taxonomy,
+													'termsExclude',
+													terms,
+												)
+											}
 											value={termsExclude}
 										/>
 									</Group>
