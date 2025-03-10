@@ -33,6 +33,7 @@ class SettingsPage {
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
+		add_action( 'init', [ $this, 'register_post_meta' ] );
 	}
 
 	/**
@@ -315,5 +316,20 @@ class SettingsPage {
 
 			return $allowed_to_be_embedded;
 		}
+	}
+
+	/**
+	 * Register post meta for Vector Embeddings
+	 */
+	public function register_post_meta() {
+		register_post_meta(
+			'post',
+			'ep_allow_vector_embedding',
+			[
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'boolean',
+			]
+		);
 	}
 }

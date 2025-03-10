@@ -16,7 +16,6 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
-use ElasticPressLabs\Utils as LabsUtils;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -192,8 +191,10 @@ class VectorEmbeddings extends Feature {
 	 * @return array|null|WP_Error
 	 */
 	public function get_embedding( int $object_id, string $object_type, $text ) {
-		$embeddable = $this->settings_page->is_embeddable( $object_id );
-		if ( ! $embeddable ) {
+		$embeddable    = new Embeddable( $object_id );
+		$is_embeddable = $embeddable->is_embeddable( $object_id, $object_type );
+
+		if ( ! $is_embeddable ) {
 			return;
 		}
 
