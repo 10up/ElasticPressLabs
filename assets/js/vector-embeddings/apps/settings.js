@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { Button, Flex, TabPanel } from '@wordpress/components';
+import { Button, Flex, TabPanel, __experimentalSpacer as Spacer } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
@@ -51,6 +51,13 @@ export default () => {
 
 	return (
 		<form className="ep-vector-embedding-settings__post-types-list">
+			<p>
+				Use this settings page to configure which post types should be indexed with vector
+				embeddings. You can also select which content fields will be used for generating
+				vector embeddings. These settings help optimize search and retrieval by ensuring the
+				most relevant content is embedded for similarity-based queries.
+			</p>
+			<Spacer marginBottom={6} />
 			<TabPanel
 				className="ep-vector-embedding-settings__tabs"
 				activeClass="ep-vector-embedding-settings__tabs__tab--active"
