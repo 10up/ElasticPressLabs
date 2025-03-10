@@ -76,7 +76,6 @@ class GeoLocation extends Feature {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'parse_request', [ $this, 'maybe_change_cookie' ] );
 
-		add_filter( 'ep_facet_allowed_query_args', [ $this, 'allow_facet_query_args' ] );
 		add_action( 'wp_footer', [ $this, 'maybe_ask_user_coordinates' ], 19 );
 	}
 
@@ -306,7 +305,7 @@ class GeoLocation extends Feature {
 	 * @return void
 	 */
 	public function maybe_orderby_geo_distance( $query ): void {
-		if ( ! $this->should_set_geo_distance_parameters( $query ) ) {
+		if ( ! in_array( 'geo_distance', (array) $query->get( 'orderby' ), true ) ) {
 			return;
 		}
 
@@ -320,10 +319,21 @@ class GeoLocation extends Feature {
 			return;
 		}
 
-		$query->set( 'orderby', 'geo_distance' );
-
-		if ( empty( $query->get( 'order' ) ) ) {
-			$query->set( 'order', 'ASC' );
+		/**
+		 * If orderby is an indexed array, like [ 'geo_distance' => 'asc ], for example,
+		 * we don't need to change it. Otherwise, we try to make geo_distance ASC, but
+		 * keep everything else untouched (_score, for example, will likely be DESC).
+		 */
+		$orderby = (array) $query->get( 'orderby' );
+		if ( ! isset( $orderby['geo_distance'] ) ) {
+			$order = $query->get( 'order' ) ? $query->get( 'order' ) : 'asc';
+			if ( count( $orderby ) === 1 ) {
+				$query->set( 'order', $order );
+			} else {
+				$geo_distance_key = array_search( 'geo_distance', $orderby, true );
+				unset( $orderby[ $geo_distance_key ] );
+				$query->set( 'orderby', array_merge( [ 'geo_distance' => $order ], $orderby ) );
+			}
 		}
 
 		if ( empty( $query->get( 'geo_distance' ) ) ) {
@@ -564,18 +574,6 @@ class GeoLocation extends Feature {
 	}
 
 	/**
-	 * Do not remove the ep_geo_distance_sort parameter in filters URLs.
-	 *
-	 * @param array $args Allowed args
-	 * @return array
-	 */
-	public function allow_facet_query_args( $args ) {
-		$args[] = 'ep_geo_distance_sort';
-
-		return $args;
-	}
-
-	/**
 	 * If user coordinates are needed, include the JS to ask for it.
 	 *
 	 * @return void
@@ -592,24 +590,6 @@ class GeoLocation extends Feature {
 			Utils\get_asset_info( 'geo-location-front-end-script', 'version' ),
 			true
 		);
-	}
-
-	/**
-	 * Whether geo_distance parameters should be set.
-	 *
-	 * @param WP_Query $query WP_Query object.
-	 * @return boolean
-	 */
-	protected function should_set_geo_distance_parameters( $query ) {
-		if ( 'geo_distance' === $query->get( 'orderby' ) ) {
-			return true;
-		}
-
-		if ( isset( $_REQUEST['ep_geo_distance_sort'] ) && filter_var( wp_unslash( $_REQUEST['ep_geo_distance_sort'] ), FILTER_VALIDATE_BOOLEAN ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			return true;
-		}
-
-		return false;
 	}
 
 	/**
