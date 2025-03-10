@@ -76,6 +76,7 @@ class GeoLocation extends Feature {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'parse_request', [ $this, 'maybe_change_cookie' ] );
 
+		add_filter( 'ep_facet_allowed_query_args', [ $this, 'allow_facet_query_args' ] );
 		add_action( 'wp_footer', [ $this, 'maybe_ask_user_coordinates' ], 19 );
 	}
 
@@ -560,6 +561,18 @@ class GeoLocation extends Feature {
 			wp_kses_data( $wrapper_attributes ),
 			$block_content
 		);
+	}
+
+	/**
+	 * Do not remove the ep_geo_distance_sort parameter in filters URLs.
+	 *
+	 * @param array $args Allowed args
+	 * @return array
+	 */
+	public function allow_facet_query_args( $args ) {
+		$args[] = 'ep_geo_distance_sort';
+
+		return $args;
 	}
 
 	/**
