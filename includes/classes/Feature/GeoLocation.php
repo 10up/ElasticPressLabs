@@ -21,6 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GeoLocation feature.
  */
 class GeoLocation extends Feature {
+	/**
+	 * Whether it is needed to get user coordinates or not.
+	 *
+	 * @var boolean
+	 */
+	protected $user_coordinates_needed = false;
 
 	/**
 	 * Initialize feature setting it's config
@@ -64,11 +70,13 @@ class GeoLocation extends Feature {
 		add_filter( 'ep_post_mapping', [ $this, 'add_mapping' ], 20, 2 );
 		add_filter( 'ep_post_sync_args', [ $this, 'add_post_sync_args' ], 10, 2 );
 		add_filter( 'ep_formatted_args', [ $this, 'formatted_args' ], 10, 2 );
-		add_action( 'pre_get_posts', [ $this, 'change_query' ] );
+		add_action( 'pre_get_posts', [ $this, 'maybe_orderby_geo_distance' ] );
 
 		add_action( 'init', [ $this, 'register_block' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'parse_request', [ $this, 'maybe_change_cookie' ] );
+
+		add_action( 'wp_footer', [ $this, 'maybe_ask_user_coordinates' ], 19 );
 	}
 
 	/**
@@ -296,35 +304,30 @@ class GeoLocation extends Feature {
 	 * @param WP_Query $query The WP_Query object.
 	 * @return void
 	 */
-	public function change_query( $query ): void {
-		if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
+	public function maybe_orderby_geo_distance( $query ): void {
+		if ( ! $this->should_set_geo_distance_parameters( $query ) ) {
 			return;
 		}
 
-		if ( empty( $_COOKIE['ep_coordinates'] ) ) {
-			return;
-		}
+		$user_coordinates = $this->get_user_coordinates();
+		if ( ! $user_coordinates ) {
+			// Only ask user coordinates if the WP_Query does not have its own coords.
+			if ( empty( $query->get( 'geo_distance' ) ) ) {
+				$this->user_coordinates_needed = true;
+			}
 
-		$coordinates = explode( ',', sanitize_text_field( wp_unslash( $_COOKIE['ep_coordinates'] ) ) );
-
-		$lat = $coordinates[0];
-		$lon = $coordinates[1];
-
-		if ( empty( $lat ) || empty( $lon ) ) {
 			return;
 		}
 
 		$query->set( 'orderby', 'geo_distance' );
-		$query->set( 'order', 'ASC' );
 
-		$geo_distance = [
-			'geo_point.location' => [
-				'lat' => (string) sanitize_text_field( $lat ),
-				'lon' => (string) sanitize_text_field( $lon ),
-			],
-		];
+		if ( empty( $query->get( 'order' ) ) ) {
+			$query->set( 'order', 'ASC' );
+		}
 
-		$query->set( 'geo_distance', $geo_distance );
+		if ( empty( $query->get( 'geo_distance' ) ) ) {
+			$query->set( 'geo_distance', [ 'geo_point.location' => $user_coordinates ] );
+		}
 	}
 
 	/**
@@ -557,5 +560,67 @@ class GeoLocation extends Feature {
 			wp_kses_data( $wrapper_attributes ),
 			$block_content
 		);
+	}
+
+	/**
+	 * If user coordinates are needed, include the JS to ask for it.
+	 *
+	 * @return void
+	 */
+	public function maybe_ask_user_coordinates() {
+		if ( ! $this->user_coordinates_needed ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ep_geo_location_frontend_script',
+			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-front-end-script.js',
+			Utils\get_asset_info( 'geo-location-front-end-script', 'dependencies' ),
+			Utils\get_asset_info( 'geo-location-front-end-script', 'version' ),
+			true
+		);
+	}
+
+	/**
+	 * Whether geo_distance parameters should be set.
+	 *
+	 * @param WP_Query $query WP_Query object.
+	 * @return boolean
+	 */
+	protected function should_set_geo_distance_parameters( $query ) {
+		if ( 'geo_distance' === $query->get( 'orderby' ) ) {
+			return true;
+		}
+
+		if ( isset( $_REQUEST['ep_geo_distance_sort'] ) && filter_var( wp_unslash( $_REQUEST['ep_geo_distance_sort'] ), FILTER_VALIDATE_BOOLEAN ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get user coordinates from the cookie.
+	 *
+	 * @return array|null
+	 */
+	protected function get_user_coordinates() {
+		if ( empty( $_COOKIE['ep_coordinates'] ) ) {
+			return;
+		}
+
+		$coordinates = explode( ',', sanitize_text_field( wp_unslash( $_COOKIE['ep_coordinates'] ) ) );
+
+		$lat = $coordinates[0];
+		$lon = $coordinates[1];
+
+		if ( empty( $lat ) || empty( $lon ) ) {
+			return;
+		}
+
+		return [
+			'lat' => (string) sanitize_text_field( $lat ),
+			'lon' => (string) sanitize_text_field( $lon ),
+		];
 	}
 }

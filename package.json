@@ -54,6 +54,7 @@
     "entry": {
       "admin": "./assets/js/admin/admin.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
+      "geo-location-front-end-script": "./assets/js/geo-location/front-end.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "geo-location-block-script": "./assets/js/blocks/geo-location/index.js",
       "geo-location-block-view-script": "./assets/js/blocks/geo-location/view.js",
