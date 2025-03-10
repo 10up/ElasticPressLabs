@@ -88,41 +88,49 @@ class SettingsPage {
 	 * Enqueue scripts and styles for the settings page.
 	 */
 	public function scripts() {
-		if ( ! $this->is_vector_embeddings_page() ) {
-			return;
+		if ( $this->is_vector_embeddings_page() ) {
+
+			wp_enqueue_script(
+				'ep_vector_embeddings_scripts',
+				ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-script.js',
+				LabsUtils\get_asset_info( 'vector-embeddings-script', 'dependencies' ),
+				LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+				true
+			);
+
+			wp_set_script_translations( 'ep_vector_embeddings_scripts', 'elasticpress-labs' );
+
+			wp_enqueue_style( 'wp-edit-post' );
+
+			wp_enqueue_style(
+				'ep_vector_embeddings_scripts',
+				ELASTICPRESS_LABS_URL . 'dist/css/vector-embeddings-script.css',
+				[],
+				LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+				'all'
+			);
+
+			wp_localize_script(
+				'ep_vector_embeddings_scripts',
+				'epVectorEmbeddings',
+				[
+					'apiUrl'                 => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
+					'postTypeConfigurations' => $this->get_default_or_saved_settings(),
+					'indexableTypes'         => array_keys( $this->get_searchable_post_types() ),
+					'chunk_size'             => 150,
+					'overlap_size'           => 25,
+				]
+			);
 		}
-
-		wp_enqueue_script(
-			'ep_vector_embeddings_scripts',
-			ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-script.js',
-			LabsUtils\get_asset_info( 'vector-embeddings-script', 'dependencies' ),
-			LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
-			true
-		);
-
-		wp_set_script_translations( 'ep_vector_embeddings_scripts', 'elasticpress-labs' );
-
-		wp_enqueue_style( 'wp-edit-post' );
-
-		wp_enqueue_style(
-			'ep_vector_embeddings_scripts',
-			ELASTICPRESS_LABS_URL . 'dist/css/vector-embeddings-script.css',
-			[],
-			LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
-			'all'
-		);
-
-		wp_localize_script(
-			'ep_vector_embeddings_scripts',
-			'epVectorEmbeddings',
-			[
-				'apiUrl'                 => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-				'postTypeConfigurations' => $this->get_default_or_saved_settings(),
-				'indexableTypes'         => array_keys( $this->get_searchable_post_types() ),
-				'chunk_size'             => 150,
-				'overlap_size'           => 25,
-			]
-		);
+		if ( 'post.php' === $GLOBALS['pagenow'] ?? '' ) {
+			wp_enqueue_script(
+				'ep_vector_embeddings_post_script',
+				ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-editor-script.js',
+				[ 'wp-i18n', 'wp-element', 'wp-components', 'wp-api-fetch' ],
+				LabsUtils\get_asset_info( 'vector-embeddings-post-script', 'version' ),
+				true
+			);
+		}
 	}
 
 	/**
