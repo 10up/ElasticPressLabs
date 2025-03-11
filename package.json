@@ -53,11 +53,10 @@
   "10up-toolkit": {
     "entry": {
       "admin": "./assets/js/admin/admin.js",
-      "search-templates-script": "./assets/js/search-templates/index.js",
-      "geo-location-front-end-script": "./assets/js/geo-location/front-end.js",
+      "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
-      "geo-location-block-script": "./assets/js/blocks/geo-location/index.js",
-      "geo-location-block-view-script": "./assets/js/blocks/geo-location/view.js",
+      "search-templates-script": "./assets/js/search-templates/index.js",
+
       "blocks-styles": "./assets/css/blocks.css"
     }
   },

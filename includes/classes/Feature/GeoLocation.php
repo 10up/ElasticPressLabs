@@ -55,77 +55,6 @@ class GeoLocation extends Feature {
 	}
 
 	/**
-	 * Setup all feature hooks
-	 *
-	 * @return void
-	 */
-	public function setup(): void {
-		if ( empty( $this->get_setting( 'active' ) ) ) {
-			return;
-		}
-
-		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
-		add_action( 'init', [ $this, 'register_meta' ] );
-
-		add_filter( 'ep_post_mapping', [ $this, 'add_mapping' ], 20, 2 );
-		add_filter( 'ep_post_sync_args', [ $this, 'add_post_sync_args' ], 10, 2 );
-		add_filter( 'ep_formatted_args', [ $this, 'formatted_args' ], 10, 2 );
-		add_action( 'pre_get_posts', [ $this, 'maybe_orderby_geo_distance' ] );
-
-		add_action( 'init', [ $this, 'register_block' ] );
-		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
-		add_action( 'parse_request', [ $this, 'maybe_change_cookie' ] );
-
-		add_action( 'wp_footer', [ $this, 'maybe_ask_user_coordinates' ], 19 );
-	}
-
-	/**
-	 * Enqueue admin scripts
-	 *
-	 * @return void
-	 */
-	public function admin_scripts(): void {
-		wp_enqueue_script(
-			'ep_geo_location_script',
-			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-script.js',
-			Utils\get_asset_info( 'geo-location-script', 'dependencies' ),
-			Utils\get_asset_info( 'geo-location-script', 'version' ),
-			true
-		);
-
-		wp_set_script_translations( 'ep_geo_location_script', 'elasticpress-labs' );
-
-		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
-
-		wp_localize_script(
-			'ep_geo_location_script',
-			'epGeoLocation',
-			[
-				'has_map_key'      => ! empty( $google_maps_api_key ),
-				'is_external_meta' => has_filter( 'ep_geo_location_pre_geo_points' ),
-			]
-		);
-
-		if ( ! empty( $google_maps_api_key ) ) {
-			$google_places_api_url = add_query_arg(
-				[
-					'key'       => $google_maps_api_key,
-					'libraries' => 'places',
-				],
-				'https://maps.googleapis.com/maps/api/js'
-			);
-
-			wp_enqueue_script(
-				'google-places-api',
-				$google_places_api_url,
-				[],
-				ELASTICPRESS_LABS_VERSION,
-				true
-			);
-		}
-	}
-
-	/**
 	 * Set the `settings_schema` attribute
 	 *
 	 * @return void
@@ -140,65 +69,6 @@ class GeoLocation extends Feature {
 				'type'    => 'text',
 			],
 		];
-	}
-
-	/**
-	 * Register meta fields
-	 *
-	 * @return void
-	 */
-	public function register_meta(): void {
-		register_post_meta(
-			'',
-			'ep_latitude',
-			[
-				'type'         => 'number',
-				'description'  => esc_html__( 'Latitude', 'elasticpress-labs' ),
-				'single'       => true,
-				'show_in_rest' => true,
-			]
-		);
-
-		register_post_meta(
-			'',
-			'ep_longitude',
-			[
-				'type'         => 'number',
-				'description'  => esc_html__( 'Longitude', 'elasticpress-labs' ),
-				'single'       => true,
-				'show_in_rest' => true,
-			]
-		);
-
-		register_post_meta(
-			'',
-			'ep_address',
-			[
-				'type'         => 'string',
-				'description'  => esc_html__( 'Address', 'elasticpress-labs' ),
-				'single'       => true,
-				'show_in_rest' => true,
-			]
-		);
-	}
-
-	/**
-	 * Add mapping for geo_point.
-	 *
-	 * @param array $mapping Mapping.
-	 * @return array Mapping.
-	 */
-	public function add_mapping( $mapping ): array {
-		$mapping['mappings']['properties']['geo_point'] = [
-			'properties' => [
-				'location' => [
-					'type'             => 'geo_point',
-					'ignore_malformed' => true,
-				],
-			],
-		];
-
-		return $mapping;
 	}
 
 	/**
@@ -222,6 +92,50 @@ class GeoLocation extends Feature {
 		return new FeatureRequirementsStatus( 1 );
 	}
 
+	/**
+	 * Setup all feature hooks
+	 *
+	 * @return void
+	 */
+	public function setup(): void {
+		if ( empty( $this->get_setting( 'active' ) ) ) {
+			return;
+		}
+
+		// How the coordinates of the posts are stored
+		add_filter( 'ep_post_mapping', [ $this, 'add_mapping' ], 20, 2 );
+		add_filter( 'ep_post_sync_args', [ $this, 'add_post_sync_args' ], 10, 2 );
+		add_filter( 'ep_formatted_args', [ $this, 'formatted_args' ], 10, 2 );
+
+		// How we allow users to manage post coordinates
+		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
+		add_action( 'init', [ $this, 'register_meta' ] );
+
+		// How we conditionally change queries to sort (and filter) on distances
+		add_action( 'pre_get_posts', [ $this, 'maybe_orderby_geo_distance' ] );
+
+		// How we conditionally include the JS to ask for user coordinates
+		add_action( 'wp_footer', [ $this, 'maybe_ask_user_coordinates' ], 19 );
+	}
+
+	/**
+	 * Add mapping for geo_point.
+	 *
+	 * @param array $mapping Mapping.
+	 * @return array Mapping.
+	 */
+	public function add_mapping( $mapping ): array {
+		$mapping['mappings']['properties']['geo_point'] = [
+			'properties' => [
+				'location' => [
+					'type'             => 'geo_point',
+					'ignore_malformed' => true,
+				],
+			],
+		];
+
+		return $mapping;
+	}
 
 	/**
 	 * Add geo_point to post sync args.
@@ -299,6 +213,130 @@ class GeoLocation extends Feature {
 	}
 
 	/**
+	 * Enqueue admin scripts
+	 *
+	 * @return void
+	 */
+	public function admin_scripts(): void {
+		wp_enqueue_script(
+			'ep_geo_location_editor_script',
+			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-editor-script.js',
+			Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' ),
+			Utils\get_asset_info( 'geo-location-editor-script', 'version' ),
+			true
+		);
+
+		wp_set_script_translations( 'ep_geo_location_script', 'elasticpress-labs' );
+
+		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
+
+		wp_localize_script(
+			'ep_geo_location_editor_script',
+			'epGeoLocation',
+			[
+				'hasMapKey'      => ! empty( $google_maps_api_key ),
+				'isExternalMeta' => has_filter( 'ep_geo_location_pre_geo_points' ),
+			]
+		);
+
+		if ( ! empty( $google_maps_api_key ) ) {
+			$google_places_api_url = add_query_arg(
+				[
+					'key'       => $google_maps_api_key,
+					'libraries' => 'places',
+				],
+				'https://maps.googleapis.com/maps/api/js'
+			);
+
+			wp_enqueue_script(
+				'google-places-api',
+				$google_places_api_url,
+				[],
+				ELASTICPRESS_LABS_VERSION,
+				true
+			);
+		}
+	}
+
+	/**
+	 * Register meta fields
+	 *
+	 * @return void
+	 */
+	public function register_meta(): void {
+		register_post_meta(
+			'',
+			'ep_latitude',
+			[
+				'type'         => 'number',
+				'description'  => esc_html__( 'Latitude', 'elasticpress-labs' ),
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+
+		register_post_meta(
+			'',
+			'ep_longitude',
+			[
+				'type'         => 'number',
+				'description'  => esc_html__( 'Longitude', 'elasticpress-labs' ),
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+
+		register_post_meta(
+			'',
+			'ep_address',
+			[
+				'type'         => 'string',
+				'description'  => esc_html__( 'Address', 'elasticpress-labs' ),
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+	}
+
+	/**
+	 * Get coordinates for an address.
+	 *
+	 * @param string $address Address.
+	 * @return array Coordinates.
+	 */
+	public function get_coordinates( $address ): array {
+		$settings = $this->get_settings();
+		if ( empty( $settings['google_maps_api_key'] ) ) {
+			return [];
+		}
+
+		$url = add_query_arg(
+			[
+				'address' => rawurldecode( $address ),
+				'key'     => $settings['google_maps_api_key'],
+			],
+			'https://maps.googleapis.com/maps/api/geocode/json'
+		);
+
+		$response = wp_remote_get( $url );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return [];
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body );
+		if ( empty( $data->results ) ) {
+			return [];
+		}
+
+		$location = $data->results[0]->geometry->location;
+		return [
+			'lat' => $location->lat,
+			'lon' => $location->lng,
+		];
+	}
+
+	/**
 	 * Change search query to sort by geo_distance.
 	 *
 	 * @param WP_Query $query The WP_Query object.
@@ -350,7 +388,7 @@ class GeoLocation extends Feature {
 	 * @return array The updated sort array.
 	 */
 	protected function process_geo_distance_sort( $sort, $args ): array {
-		foreach ( $sort as $key => &$sort_item ) {
+		foreach ( $sort as &$sort_item ) {
 			if ( isset( $sort_item['geo_distance'] ) ) {
 				// Rename 'geo_distance' to '_geo_distance'
 				$sort_item['_geo_distance'] = $sort_item['geo_distance'];
@@ -369,225 +407,33 @@ class GeoLocation extends Feature {
 	}
 
 	/**
-	 * Get coordinates for an address.
-	 *
-	 * @param string $address Address.
-	 * @return array Coordinates.
-	 */
-	public function get_coordinates( $address ): array {
-		$settings = $this->get_settings();
-		if ( empty( $settings['google_maps_api_key'] ) ) {
-			return [];
-		}
-
-		$url = add_query_arg(
-			[
-				'address' => rawurldecode( $address ),
-				'key'     => $settings['google_maps_api_key'],
-			],
-			'https://maps.googleapis.com/maps/api/geocode/json'
-		);
-
-		$response = wp_remote_get( $url );
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return [];
-		}
-
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body );
-		if ( empty( $data->results ) ) {
-			return [];
-		}
-
-		$location = $data->results[0]->geometry->location;
-		return [
-			'lat' => $location->lat,
-			'lon' => $location->lng,
-		];
-	}
-
-	/**
-	 * Check if the cookie with the location needs to be changed.
-	 */
-	public function maybe_change_cookie() {
-		if (
-			empty( $_REQUEST['ep_geo_location_nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['ep_geo_location_nonce'] ) ), 'ep_geo_location' )
-		) {
-			return;
-		}
-
-		if ( ! isset( $_REQUEST['ep_geo_location_show'] ) ) {
-			return;
-		}
-
-		// if the user has disabled the location, remove the cookie.
-		if ( '0' === $_REQUEST['ep_geo_location_show'] ) {
-			setcookie( 'ep_coordinates', '', time() - DAY_IN_SECONDS, '/' );
-		}
-
-		if ( '1' === $_REQUEST['ep_geo_location_show'] && ! empty( $_REQUEST['ep_lat'] ) && ! empty( $_REQUEST['ep_lon'] ) ) {
-			$cookie_value = array_map( 'sanitize_text_field', [ sanitize_text_field( wp_unslash( $_REQUEST['ep_lat'] ) ), sanitize_text_field( wp_unslash( $_REQUEST['ep_lon'] ) ) ] );
-			$cookie_value = implode( ',', $cookie_value );
-
-			setcookie( 'ep_coordinates', $cookie_value, time() + YEAR_IN_SECONDS * 10, '/' );
-		}
-
-		// Remove the nonce and other query params.
-		unset( $_REQUEST['ep_geo_location_nonce'] );
-		unset( $_REQUEST['_wp_http_referer'] );
-		unset( $_REQUEST['ep_lat'] );
-		unset( $_REQUEST['ep_lon'] );
-		unset( $_REQUEST['ep_geo_location_show'] );
-
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$request_uri = wp_parse_url( $request_uri );
-
-		wp_safe_redirect( $request_uri['path'] . '?' . build_query( $_REQUEST ) );
-		die();
-	}
-
-	/**
-	 * Register the block.
-	 *
-	 * @return void
-	 */
-	public function register_block(): void {
-		/**
-		 * Registering it here so translation works
-		 *
-		 * @see https://core.trac.wordpress.org/ticket/54797#comment:20
-		 */
-		wp_register_script(
-			'ep-geo-location-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.js',
-			Utils\get_asset_info( 'geo-location-block-script', 'dependencies' ),
-			Utils\get_asset_info( 'geo-location-block-script', 'version' ),
-			true
-		);
-		wp_set_script_translations( 'ep-geo-location-script', 'elasticpress' );
-
-		wp_register_style(
-			'ep-geo-location-view-style',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.css',
-			[],
-			Utils\get_asset_info( 'ep-geo-location-view-script', 'version' ),
-			'all'
-		);
-
-		register_block_type_from_metadata(
-			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/geo-location',
-			[
-				'render_callback' => [ $this, 'render_block' ],
-			]
-		);
-	}
-
-	/**
-	 * Enqueue assets for the block.
-	 *
-	 * @return void
-	 */
-	public function enqueue_assets(): void {
-		wp_register_script(
-			'ep-geo-location-view-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-view-script.js',
-			Utils\get_asset_info( 'geo-location-block-view-script', 'dependencies' ),
-			Utils\get_asset_info( 'geo-location-block-view-script', 'version' ),
-			true
-		);
-
-		wp_register_style(
-			'ep-geo-location-view-style',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/geo-location-block-script.css',
-			[],
-			Utils\get_asset_info( 'ep-geo-location-view-script', 'version' ),
-			'all'
-		);
-	}
-
-	/**
-	 * Render the block.
-	 *
-	 * @param array $attributes Block attributes.
-	 * @return string Block output.
-	 */
-	public function render_block( $attributes ): string {
-		/**
-		 * Prior to WP 6.1, if you set `viewScript` while using a `render_callback` function,
-		 * the script was not enqueued.
-		 *
-		 * @see https://core.trac.wordpress.org/changeset/54367
-		 */
-		if ( version_compare( get_bloginfo( 'version' ), '6.1', '<' ) ) {
-			wp_enqueue_script( 'ep-geo-location-view-script' );
-		}
-
-		$text_without_location = ! empty( $attributes['textWithoutLocation'] ) ? $attributes['textWithoutLocation'] : '';
-		$text_with_location    = ! empty( $attributes['textWithLocation'] ) ? $attributes['textWithLocation'] : '';
-
-		$button_text_without_location = ! empty( $attributes['buttonTextWithoutLocation'] ) ? $attributes['buttonTextWithoutLocation'] : '';
-		$button_text_with_location    = ! empty( $attributes['buttonTextWithLocation'] ) ? $attributes['buttonTextWithLocation'] : '';
-
-		$has_user_location = ! empty( $_COOKIE['ep_coordinates'] );
-
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$request_uri = wp_parse_url( $request_uri );
-		wp_parse_str( $request_uri['query'] ?? '', $query_params );
-
-		// Add empty lat and lon to the query params.
-		$query_params = array_merge(
-			$query_params,
-			[
-				'ep_lat' => '',
-				'ep_lon' => '',
-			]
-		);
-
-		ob_start();
-		?>
-		<form class="form" method="POST" action="">
-			<?php wp_nonce_field( 'ep_geo_location', 'ep_geo_location_nonce' ); ?>
-			<?php foreach ( $query_params as $name => $value ) : ?>
-				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
-			<?php endforeach; ?>
-			<input type="hidden" name="ep_geo_location_show" value="<?php echo ! $has_user_location ? '1' : '0'; ?>">
-			<p class="ep-geo-location__label"><?php echo $has_user_location ? esc_html( $text_with_location ) : esc_html( $text_without_location ); ?></p>
-			<button type="submit" class="wp-element-button ep-geo-location__submit-button">
-				<?php
-				echo $has_user_location ? esc_html( $button_text_with_location )
-				: esc_html( $button_text_without_location );
-				?>
-			</button>
-			<p class="ep-geo-location__error"><?php esc_html_e( 'Error retrieving location data. Please ensure that location services are enabled.', 'elasticpress-labs' ); ?></p>
-		</form>
-		<?php
-		$block_content = ob_get_clean();
-
-		$wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wp-block-elasticpress-geo-location' ] );
-
-		return sprintf(
-			'<div %1$s>%2$s</div>',
-			wp_kses_data( $wrapper_attributes ),
-			$block_content
-		);
-	}
-
-	/**
 	 * If user coordinates are needed, include the JS to ask for it.
 	 *
 	 * @return void
 	 */
 	public function maybe_ask_user_coordinates() {
-		if ( ! $this->user_coordinates_needed ) {
+		/**
+		 * Filter whether a JS script to ask user coordinates should or not be included.
+		 *
+		 * This is useful if you want to include your own script to ask for user coordinates. If that is the case,
+		 * the script should set a cookie named `ep_coordinates` with `<latitude>,<longitude>` as its value.
+		 *
+		 * @since 2.4.0
+		 * @hook ep_geo_location_ask_user_coordinates
+		 * @param {bool} $should_ask_user_coordinates Whether a JS script to ask user coordinates should or not be included.
+		 * @return {bool} New $should_ask_user_coordinates value.
+		 */
+		$should_ask_user_coordinates = apply_filters( 'ep_geo_location_ask_user_coordinates', $this->user_coordinates_needed );
+
+		if ( ! $should_ask_user_coordinates ) {
 			return;
 		}
 
 		wp_enqueue_script(
-			'ep_geo_location_frontend_script',
-			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-front-end-script.js',
-			Utils\get_asset_info( 'geo-location-front-end-script', 'dependencies' ),
-			Utils\get_asset_info( 'geo-location-front-end-script', 'version' ),
+			'ep_geo_location_script',
+			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-script.js',
+			Utils\get_asset_info( 'geo-location-script', 'dependencies' ),
+			Utils\get_asset_info( 'geo-location-script', 'version' ),
 			true
 		);
 	}
@@ -598,22 +444,29 @@ class GeoLocation extends Feature {
 	 * @return array|null
 	 */
 	protected function get_user_coordinates() {
-		if ( empty( $_COOKIE['ep_coordinates'] ) ) {
-			return;
+		$user_coordinates = null;
+
+		if ( ! empty( $_COOKIE['ep_coordinates'] ) ) {
+			$coordinates = explode( ',', sanitize_text_field( wp_unslash( $_COOKIE['ep_coordinates'] ) ) );
+			$lat         = $coordinates[0] ?? '';
+			$lon         = $coordinates[1] ?? '';
+
+			if ( ! empty( $lat ) && ! empty( $lon ) ) {
+				$user_coordinates = [
+					'lat' => (string) sanitize_text_field( $lat ),
+					'lon' => (string) sanitize_text_field( $lon ),
+				];
+			}
 		}
 
-		$coordinates = explode( ',', sanitize_text_field( wp_unslash( $_COOKIE['ep_coordinates'] ) ) );
-
-		$lat = $coordinates[0];
-		$lon = $coordinates[1];
-
-		if ( empty( $lat ) || empty( $lon ) ) {
-			return;
-		}
-
-		return [
-			'lat' => (string) sanitize_text_field( $lat ),
-			'lon' => (string) sanitize_text_field( $lon ),
-		];
+		/**
+		 * Filter the user coordinates.
+		 *
+		 * @since 2.4.0
+		 * @hook ep_geo_location_user_coordinates
+		 * @param {array|null} $user_coordinates Array with 'lat' and 'lon' keys or null.
+		 * @return {array|null} New $user_coordinates value.
+		 */
+		return apply_filters( 'ep_geo_location_user_coordinates', $user_coordinates );
 	}
 }

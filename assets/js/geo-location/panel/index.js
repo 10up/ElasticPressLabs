@@ -62,7 +62,7 @@ const GeoLocationPanel = () => {
 			title={__('ElasticPress Geo Location', 'elasticpress-labs')}
 			className="ep-lat-long-panel"
 		>
-			{epGeoLocation.has_map_key && (
+			{epGeoLocation.hasMapKey && (
 				<AutoCompleteField value={ep_address} onPlaceSelected={onPlaceSelected} />
 			)}
 
@@ -82,7 +82,7 @@ const GeoLocationPanel = () => {
 	);
 };
 
-const GeoLocationPanelWithCondition = ifCondition(() => !epGeoLocation.is_external_meta)(
+const GeoLocationPanelWithCondition = ifCondition(() => !epGeoLocation.isExternalMeta)(
 	GeoLocationPanel,
 );
 

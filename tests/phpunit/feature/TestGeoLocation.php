@@ -428,7 +428,7 @@ class TestGeoLocation extends BaseTestCase {
 	}
 
 	/**
-	 * Tests `ep_geo_location_pre_geo_points` filter.
+	 * Tests the `ep_geo_location_pre_geo_points` filter.
 	 *
 	 * @group geo-location
 	 */
@@ -467,6 +467,92 @@ class TestGeoLocation extends BaseTestCase {
 
 		$this->assertArrayHasKey( 'geo_point', $post );
 		$this->assertSame( $expected_result, $post['geo_point'] );
+	}
+
+	/**
+	 * Tests the `ep_geo_location_ask_user_coordinates` filter when it should ask for user coordinates.
+	 *
+	 * @group geo-location
+	 */
+	public function test_ep_geo_location_ask_user_coordinates_filter_should_ask() {
+		$callback = function ( $should_ask_user_coordinates ) {
+			$this->assertTrue( $should_ask_user_coordinates );
+			return $should_ask_user_coordinates;
+		};
+		add_filter( 'ep_geo_location_ask_user_coordinates', $callback );
+
+		new \WP_Query(
+			[
+				'ep_integrate' => true,
+				'post_type'    => 'post',
+				'orderby'      => 'geo_distance',
+			]
+		);
+
+		$this->get_feature()->maybe_ask_user_coordinates();
+
+		$this->assertTrue( wp_script_is( 'ep_geo_location_script' ) );
+		wp_dequeue_script( 'ep_geo_location_script' );
+	}
+
+	/**
+	 * Tests the `ep_geo_location_ask_user_coordinates` filter when it should not ask for user coordinates.
+	 *
+	 * @group geo-location
+	 */
+	public function test_ep_geo_location_ask_user_coordinates_filter_should_not_ask() {
+		$callback = function ( $should_ask_user_coordinates ) {
+			$this->assertFalse( $should_ask_user_coordinates );
+			return $should_ask_user_coordinates;
+		};
+		add_filter( 'ep_geo_location_ask_user_coordinates', $callback );
+
+		new \WP_Query(
+			[
+				'ep_integrate' => true,
+				'post_type'    => 'post',
+				'orderby'      => 'geo_distance',
+				'geo_distance' => [
+					'geo_point.location' => [
+						'lat' => 40.712776,
+						'lon' => -74.005974,
+					],
+				],
+			]
+		);
+
+		$this->get_feature()->maybe_ask_user_coordinates();
+
+		$this->assertFalse( wp_script_is( 'ep_geo_location_script' ) );
+	}
+
+	/**
+	 * Tests the `ep_geo_location_user_coordinates` filter.
+	 *
+	 * @group geo-location
+	 */
+	public function test_ep_geo_location_user_coordinates_filter() {
+		$expected_result = [
+			'lat' => 10,
+			'lon' => 20,
+		];
+
+		$callback = function ( $user_coordinates ) use ( $expected_result ) {
+			$this->assertNull( $user_coordinates );
+			return $expected_result;
+		};
+		add_filter( 'ep_geo_location_user_coordinates', $callback );
+
+		$query = new \WP_Query(
+			[
+				'ep_integrate' => true,
+				'post_type'    => 'post',
+				'orderby'      => 'geo_distance',
+			]
+		);
+
+		$formatted_args = \ElasticPress\Indexables::factory()->get( 'post' )->format_args( $query->query_vars, $query );
+		$this->assertSame( $expected_result, $formatted_args['sort'][0]['_geo_distance']['geo_point.location'] );
 	}
 
 	/**
