@@ -27,15 +27,15 @@ This plugin provides a simple interface to enable and disable features.
 
 ### Boolean Search Operators
 
-Allows users to search using the boolean operators such as AND, OR, NOT and double quotes.
+Allow users to search using boolean operators such as AND, OR, NOT, and double quotes.
 
 ### Co-Authors Plus
 
-If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name.
+If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to see correct results when listing posts by author name in the Admin Post List screen.
 
 ### External Content
 
-List meta keys containing a path or a URL, and ElasticPress will index the content of those path or URL. For example, for a meta key called `meta_key` with `https://wordpress.org/news/wp-json/wp/v2/posts/16837` as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called `ep_external_content_meta_key`.
+List meta keys containing a path or a URL, and ElasticPress will index the content of that path or URL. For example, for a meta key called `meta_key` with `https://wordpress.org/news/wp-json/wp/v2/posts/16837` as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called `ep_external_content_meta_key`.
 
 ### Geo Location
 
