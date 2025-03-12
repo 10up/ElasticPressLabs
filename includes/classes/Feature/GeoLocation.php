@@ -211,6 +211,10 @@ class GeoLocation extends Feature {
 		// Process sorting by geo_distance
 		if ( ! empty( $formatted_args['sort'] ) ) {
 			$formatted_args['sort'] = $this->process_geo_distance_sort( $formatted_args['sort'], $args );
+
+			if ( empty( $formatted_args['sort'] ) ) {
+				unset( $formatted_args['sort'] );
+			}
 		}
 
 		return $formatted_args;
@@ -392,18 +396,24 @@ class GeoLocation extends Feature {
 	 * @return array The updated sort array.
 	 */
 	protected function process_geo_distance_sort( $sort, $args ): array {
-		foreach ( $sort as &$sort_item ) {
+		foreach ( $sort as $key => &$sort_item ) {
 			if ( isset( $sort_item['geo_distance'] ) ) {
-				// Rename 'geo_distance' to '_geo_distance'
-				$sort_item['_geo_distance'] = $sort_item['geo_distance'];
-
-				// Add geo_point.location if provided in args
+				// Get the geo_distance info from the args and add them into sort_item
 				if ( isset( $args['geo_distance']['geo_point.location'] ) ) {
-					$sort_item['_geo_distance']['geo_point.location'] = $args['geo_distance']['geo_point.location'];
+					$sort_item['_geo_distance'] = array_merge(
+						$sort_item['geo_distance'],
+						[
+							'geo_point.location' => $args['geo_distance']['geo_point.location'],
+						]
+					);
 				}
 
 				// Remove the old 'geo_distance' key
 				unset( $sort_item['geo_distance'] );
+
+				if ( empty( $sort_item ) ) {
+					unset( $sort[ $key ] );
+				}
 			}
 		}
 

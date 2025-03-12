@@ -1,3 +1,8 @@
+/**
+ * WordPress dependencies.
+ */
+import { doAction } from '@wordpress/hooks';
+
 const setCookie = (name, value, originalAttributes = {}) => {
 	const attributes = {
 		path: '/',
@@ -24,15 +29,37 @@ const setCookie = (name, value, originalAttributes = {}) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 	if (navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition((position) => {
-			const { latitude, longitude } = position.coords;
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const { latitude, longitude } = position.coords;
 
-			setCookie('ep_coordinates', `${latitude},${longitude}`, {
-				secure: true,
-				'max-age': 3600,
-			});
+				setCookie('ep_coordinates', `${latitude},${longitude}`, {
+					secure: true,
+					'max-age': 3600,
+				});
 
-			window.location.reload();
-		});
+				window.location.reload();
+			},
+			(error) => {
+				/**
+				 * Allow handle any errors with the geolocation API, including when the
+				 * user does not allow it.
+				 *
+				 * @action epLabs.GeoLocation.currentPositionError
+				 * @since 2.4.0
+				 *
+				 * @param {object} error Error.
+				 */
+				doAction('epLabs.GeoLocation.currentPositionError', error);
+			},
+		);
+	} else {
+		/**
+		 * Allow actions to be run when the geolocation API is not available.
+		 *
+		 * @action epLabs.GeoLocation.apiNotAvailable
+		 * @since 2.4.0
+		 */
+		doAction('epLabs.GeoLocation.apiNotAvailable');
 	}
 });

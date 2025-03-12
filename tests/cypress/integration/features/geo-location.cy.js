@@ -195,4 +195,23 @@ describe('Geo Location Feature', () => {
 
 		cy.deactivatePlugin('set-geo-location-coordinates');
 	});
+
+	it('Display an error message using the `epLabs.GeoLocation.currentPositionError` action', () => {
+		// Activate plugin
+		cy.visitAdminPage('plugins.php');
+		cy.activatePlugin('geolocation-use-js-action');
+
+		// Search ordering by distance.
+		cy.visit('/?s=test&orderby=geo_distance', {
+			onBeforeLoad(win) {
+				cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb, err) => {
+					throw err({ code: 1, message: 'User denied' });
+				});
+			},
+		});
+
+		cy.get('.ep-geo-location-error').contains('User denied');
+
+		cy.deactivatePlugin('geolocation-use-js-action');
+	});
 });
