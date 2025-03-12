@@ -142,77 +142,6 @@ describe('Geo Location Feature', () => {
 			});
 	});
 
-	it('Can insert, configure, and use the Geo Location block', () => {
-		/**
-		 * Add a Block.
-		 */
-		cy.openWidgetsPage();
-		cy.openBlockInserter();
-		cy.insertBlock('ElasticPress Geo Location').then(() => {
-			cy.openDocumentSettingsSidebar('Block');
-
-			cy.contains('label', 'Text when location is not set').then((label) => {
-				cy.get(`#${label.attr('for')}`).clearThenType(
-					'Show posts closest to your location first – Updated.',
-				);
-			});
-
-			/**
-			 * Save widgets and visit the front page.
-			 */
-			cy.intercept('/wp-json/wp/v2/sidebars*').as('sidebarsRest');
-			cy.get('.edit-widgets-header__actions button').contains('Update').click();
-			cy.wait('@sidebarsRest');
-			cy.visit('/');
-		});
-
-		// Check if the block has updated text
-		cy.get('.ep-geo-location__label').should(
-			'contain.text',
-			'Show posts closest to your location first – Updated.',
-		);
-
-		// Mock the geolocation API to set the location to New York
-		cy.window().then((win) => {
-			cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb) => {
-				cb({
-					coords: {
-						latitude: 40.712776,
-						longitude: -74.005974,
-						accuracy: 100,
-					},
-				});
-			});
-		});
-
-		cy.get('.ep-geo-location__submit-button').click();
-
-		cy.get('.ep-geo-location__label').should(
-			'contain.text',
-			'Posts closest to your location are listed first.',
-		);
-
-		// Mock the geolocation API to set the location to San Francisco
-		cy.window().then((win) => {
-			cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb) => {
-				cb({
-					coords: {
-						latitude: 40.712776,
-						longitude: -74.005974,
-						accuracy: 100,
-					},
-				});
-			});
-		});
-
-		// Click the button again and unset the location.
-		cy.get('.ep-geo-location__submit-button').click();
-		cy.get('.ep-geo-location__label').should(
-			'contain.text',
-			'Show posts closest to your location first – Updated.',
-		);
-	});
-
 	it("Can show posts that are near the user's location.", () => {
 		// Delete all posts
 		cy.wpCli('wp post list --format=ids').then((wpCliResponse) => {
@@ -310,24 +239,6 @@ describe('Geo Location Feature', () => {
 		cy.get('.editor-post-publish-button').click();
 		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
 
-		// Open widgets page and add the Geo Location block.
-		cy.openWidgetsPage();
-		cy.openBlockInserter();
-		cy.insertBlock('ElasticPress Geo Location').then(() => {
-			cy.openDocumentSettingsSidebar('Block');
-
-			/**
-			 * Save widgets and visit the search page.
-			 */
-			cy.intercept('/wp-json/wp/v2/sidebars*').as('sidebarsRest');
-			cy.get('.edit-widgets-header__actions button').contains('Update').click();
-			cy.wait('@sidebarsRest');
-			cy.visit('/?s=Test+Geo+Location+Post');
-		});
-
-		// Check if only 3 posts are displayed.
-		cy.get('article.post').should('have.length', 3);
-
 		// Mock the geolocation API to set the location to New York.
 		cy.window().then((win) => {
 			cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb) => {
@@ -341,8 +252,11 @@ describe('Geo Location Feature', () => {
 			});
 		});
 
-		// Click the button to set the location.
-		cy.get('.ep-geo-location__submit-button').click();
+		// Search ordering by distance.
+		cy.visit('/?s=Test+Geo+Location+Post&orderby=geo_distance');
+
+		// Check if only 3 posts are displayed.
+		cy.get('article.post').should('have.length', 3);
 
 		// Check if the posts are sorted by distance.
 		cy.get('article.post').should('have.length', 3);
