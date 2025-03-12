@@ -89,6 +89,10 @@ class GeoLocation extends Feature {
 			return new FeatureRequirementsStatus( 2, esc_html__( 'This feature requires the "Post Search" feature to be enabled', 'elasticpress-labs' ) );
 		}
 
+		if ( version_compare( (string) \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<' ) ) {
+			return new FeatureRequirementsStatus( 2, esc_html__( 'This feature requires Elasticsearch 7.0 or higher', 'elasticpress-labs' ) );
+		}
+
 		return new FeatureRequirementsStatus( 1 );
 	}
 
