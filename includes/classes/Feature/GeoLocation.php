@@ -36,6 +36,8 @@ class GeoLocation extends Feature {
 
 		$this->requires_install_reindex = true;
 
+		$this->docs_url = 'https://www.elasticpress.io/documentation/article/geo-location-sorting-and-filtering-content-based-on-coordinates/';
+
 		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
 			$this->set_i18n_strings();
 		}
@@ -51,7 +53,12 @@ class GeoLocation extends Feature {
 	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'Geo Location', 'elasticpress-labs' );
 
-		$this->summary = '<p>' . __( 'Allow users to search for posts based on their location.', 'elasticpress-labs' ) . '</p>';
+		$this->summary = sprintf(
+			/* translators: %1$s and %2$s are the opening and closing <a> tags, respectively */
+			__( 'Allow users to search for posts based on their location. %1$sLearn more about it.%2$s', 'elasticpress-labs' ),
+			'<a href="' . esc_url( $this->docs_url ) . '">',
+			'</a>',
+		);
 	}
 
 	/**
