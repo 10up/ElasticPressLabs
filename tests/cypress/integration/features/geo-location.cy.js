@@ -1,11 +1,4 @@
 describe('Geo Location Feature', () => {
-	/**
-	 * Delete all widgets and ensure Classic Widgets is deactivated.
-	 */
-	beforeEach(() => {
-		cy.emptyWidgets();
-	});
-
 	it('Can activate the feature and sync automatically', () => {
 		// Can see the warning if using custom proxy
 		cy.visitAdminPage('admin.php?page=elasticpress');
@@ -34,60 +27,6 @@ describe('Geo Location Feature', () => {
 
 			cy.wpCli('elasticpress list-features').its('stdout').should('contain', 'geo_location');
 		});
-	});
-
-	it('Should add coordinates to a post', () => {
-		const coordinates = {
-			latitude: '12.34',
-			longitude: '98.76',
-		};
-
-		cy.visitAdminPage('post-new.php');
-		cy.getBlockEditor().find('h1.editor-post-title__input, #post-title-0').type('Test Post');
-
-		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
-			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
-			}
-		});
-
-		cy.contains('label', 'Latitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).type(coordinates.latitude);
-			});
-
-		cy.contains('label', 'Longitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).type(coordinates.longitude);
-			});
-
-		// Publish post
-		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
-		cy.get('.editor-post-publish-button').click();
-		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-
-		// Verify coordinates persist after reload
-		cy.reload();
-
-		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
-			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
-			}
-		});
-
-		cy.contains('label', 'Latitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).should('have.value', coordinates.latitude);
-			});
-
-		cy.contains('label', 'Longitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).should('have.value', coordinates.longitude);
-			});
 	});
 
 	it('Shows the address field when the Google Maps API exists', () => {
@@ -153,107 +92,88 @@ describe('Geo Location Feature', () => {
 		// Sync posts
 		cy.wpCli('wp elasticpress sync --setup --yes');
 
-		// Create a post.
-		cy.visitAdminPage('post-new.php');
-		cy.getBlockEditor()
-			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Stamford');
+		const posts = [
+			{
+				title: 'Test Geo Location Post - Stamford',
+				latitude: 41.05343,
+				longitude: -73.538734,
+			},
+			{
+				title: 'Test Geo Location Post - Chicago',
+				latitude: 41.878113,
+				longitude: -87.629799,
+			},
+			{
+				title: 'Test Geo Location Post - Jersey City',
+				latitude: 40.717754,
+				longitude: -74,
+			},
+		];
 
-		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
-			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
-			}
-		});
+		posts.forEach((post) => {
+			// Create a post.
+			cy.visitAdminPage('post-new.php');
+			cy.getBlockEditor().find('h1.editor-post-title__input, #post-title-0').type(post.title);
 
-		cy.contains('label', 'Latitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(41.05343);
+			cy.contains('button', 'ElasticPress Geo Location').then((button) => {
+				if (button.attr('aria-expanded') === 'false') {
+					cy.wrap(button).click();
+				}
 			});
 
-		cy.contains('label', 'Longitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(-73.538734);
-			});
-
-		// Publish post
-		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
-		cy.get('.editor-post-publish-button').click();
-		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-
-		// Create a post.
-		cy.visitAdminPage('post-new.php');
-		cy.getBlockEditor()
-			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Chicago');
-
-		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
-			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
-			}
-		});
-
-		cy.contains('label', 'Latitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(41.878113);
-			});
-
-		cy.contains('label', 'Longitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(-87.629799);
-			});
-
-		// Publish post
-		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
-		cy.get('.editor-post-publish-button').click();
-		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-
-		cy.visitAdminPage('post-new.php');
-		cy.getBlockEditor()
-			.find('h1.editor-post-title__input, #post-title-0')
-			.type('Test Geo Location Post - Jersey City');
-
-		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
-			if (button.attr('aria-expanded') === 'false') {
-				cy.wrap(button).click();
-			}
-		});
-
-		cy.contains('label', 'Latitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(40.717754);
-			});
-
-		cy.contains('label', 'Longitude')
-			.invoke('attr', 'for')
-			.then((id) => {
-				cy.get(`#${id}`).clearThenType(-74.043143);
-			});
-
-		// Publish post
-		cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
-		cy.get('.editor-post-publish-button').click();
-		cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
-
-		// Mock the geolocation API to set the location to New York.
-		cy.window().then((win) => {
-			cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb) => {
-				cb({
-					coords: {
-						latitude: 40.712776,
-						longitude: -74.005974,
-						accuracy: 100,
-					},
+			cy.contains('label', 'Latitude')
+				.invoke('attr', 'for')
+				.then((id) => {
+					cy.get(`#${id}`).clearThenType(post.latitude);
 				});
-			});
+
+			cy.contains('label', 'Longitude')
+				.invoke('attr', 'for')
+				.then((id) => {
+					cy.get(`#${id}`).clearThenType(post.longitude);
+				});
+
+			// Publish post
+			cy.get('.editor-post-publish-panel__toggle').should('be.enabled').click();
+			cy.get('.editor-post-publish-button').click();
+			cy.get('.components-snackbar, .components-notice.is-success').should('be.visible');
 		});
+
+		// Verify coordinates persist after reload
+		cy.reload();
+
+		cy.contains('button', 'ElasticPress Geo Location').then((button) => {
+			if (button.attr('aria-expanded') === 'false') {
+				cy.wrap(button).click();
+			}
+		});
+
+		cy.contains('label', 'Latitude')
+			.invoke('attr', 'for')
+			.then((id) => {
+				cy.get(`#${id}`).should('have.value', 40.717754);
+			});
+
+		cy.contains('label', 'Longitude')
+			.invoke('attr', 'for')
+			.then((id) => {
+				cy.get(`#${id}`).should('have.value', -74);
+			});
 
 		// Search ordering by distance.
-		cy.visit('/?s=Test+Geo+Location+Post&orderby=geo_distance');
+		cy.visit('/?s=Test+Geo+Location+Post&orderby=geo_distance', {
+			onBeforeLoad(win) {
+				cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake((cb) => {
+					return cb({
+						coords: {
+							latitude: 40.712776,
+							longitude: -74.005974,
+							accuracy: 100,
+						},
+					});
+				});
+			},
+		});
 
 		// Check if only 3 posts are displayed.
 		cy.get('article.post').should('have.length', 3);

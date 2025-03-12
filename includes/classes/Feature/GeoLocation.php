@@ -51,7 +51,7 @@ class GeoLocation extends Feature {
 	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'Geo Location', 'elasticpress-labs' );
 
-		$this->summary = '<p>' . __( 'Geo Location feature allows you to search for posts based on their location.', 'elasticpress-labs' ) . '</p>';
+		$this->summary = '<p>' . __( 'Allow users to search for posts based on their location.', 'elasticpress-labs' ) . '</p>';
 	}
 
 	/**
