@@ -19,13 +19,13 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 if ( ! $_tests_dir ) {
-	$_tests_dir = '/tmp/wordpress-tests-lib';
+	$_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
 }
 
 require_once $_tests_dir . '/includes/functions.php';
 
 /**
- * Make sure we only test on 1 shard because any more will lead to inconsitent results
+ * Make sure we only test on 1 shard because any more will lead to inconsistent results
  *
  * @since 2.1.0
  */
@@ -113,4 +113,5 @@ tests_add_filter( 'translations_api', __NAMESPACE__ . '\skip_translations_api' )
 require_once $_tests_dir . '/includes/functions.php';
 require_once $_tests_dir . '/includes/bootstrap.php';
 require_once __DIR__ . '/phpunit/BaseTestCase.php';
+require_once __DIR__ . '/phpunit/factory/PostFactory.php';
 require_once __DIR__ . '/phpunit/factory/UserFactory.php';
