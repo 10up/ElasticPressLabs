@@ -92,9 +92,9 @@ class SettingsPage {
 
 			wp_enqueue_script(
 				'ep_vector_embeddings_scripts',
-				ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-script.js',
-				LabsUtils\get_asset_info( 'vector-embeddings-script', 'dependencies' ),
-				LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+				ELASTICPRESS_LABS_URL . 'dist/js/embeddings-script.js',
+				LabsUtils\get_asset_info( 'embeddings-script', 'dependencies' ),
+				LabsUtils\get_asset_info( 'embeddings-script', 'version' ),
 				true
 			);
 
@@ -104,9 +104,9 @@ class SettingsPage {
 
 			wp_enqueue_style(
 				'ep_vector_embeddings_scripts',
-				ELASTICPRESS_LABS_URL . 'dist/css/vector-embeddings-script.css',
+				ELASTICPRESS_LABS_URL . 'dist/css/embeddings-script.css',
 				[],
-				LabsUtils\get_asset_info( 'vector-embeddings-script', 'version' ),
+				LabsUtils\get_asset_info( 'embeddings-script', 'version' ),
 				'all'
 			);
 
