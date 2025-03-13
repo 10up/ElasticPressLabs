@@ -122,15 +122,6 @@ class SettingsPage {
 				]
 			);
 		}
-		if ( 'post.php' === $GLOBALS['pagenow'] ?? '' ) {
-			wp_enqueue_script(
-				'ep_vector_embeddings_post_script',
-				ELASTICPRESS_LABS_URL . 'dist/js/vector-embeddings-editor-script.js',
-				[ 'wp-i18n', 'wp-element', 'wp-components', 'wp-api-fetch' ],
-				LabsUtils\get_asset_info( 'vector-embeddings-post-script', 'version' ),
-				true
-			);
-		}
 	}
 
 	/**

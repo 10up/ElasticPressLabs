@@ -54,8 +54,8 @@
     "entry": {
       "admin": "./assets/js/admin/admin.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
-      "vector-embeddings-script": "./assets/js/vector-embeddings/index.js",
-      "vector-embeddings-editor-script": "./assets/js/vector-embeddings/editor/index.js"
+      "embeddings-editor-script": "./assets/js/embeddings-editor/index.js",
+      "embeddings-script": "./assets/js/embeddings/index.js"
     },
     "wpDependencyExternals": true
   },
