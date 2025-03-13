@@ -54,12 +54,15 @@ class StatusReport extends Report {
 	/**
 	 * Return the number of content items in the queue
 	 *
-	 * @return integer
+	 * @return string
 	 */
-	protected function get_content_in_queue(): int {
-		$query = [
-			'size'             => 0,
+	protected function get_content_in_queue(): string {
+		$es_query = [
+			'size'             => 10,
 			'track_total_hits' => true,
+			'_source'          => [
+				'includes' => [ 'post_id' ],
+			],
 			'query'            => [
 				'term' => [
 					'ep_embeddings_control.is_processing' => true,
@@ -67,29 +70,69 @@ class StatusReport extends Report {
 			],
 		];
 
-		$post_indexable = \ElasticPress\Indexables::factory()->get( 'post' );
-		$es_response    = $post_indexable->query_es( $query, [] );
-
-		return $es_response['found_documents']['value'];
+		return $this->display_count_and_list( $es_query );
 	}
 
 	/**
 	 * Return the number of content items with errors
 	 *
-	 * @return integer
+	 * @return string
 	 */
-	protected function get_content_with_errors(): int {
-		$query = [
+	protected function get_content_with_errors(): string {
+		$es_query = [
 			'size'             => 0,
 			'track_total_hits' => true,
+			'_source'          => [
+				'includes' => [ 'post_id' ],
+			],
 			'query'            => [
 				'exists' => [ 'field' => 'ep_embeddings_control.errors' ],
 			],
 		];
 
-		$post_indexable = \ElasticPress\Indexables::factory()->get( 'post' );
-		$es_response    = $post_indexable->query_es( $query, [] );
+		return $this->display_count_and_list( $es_query );
+	}
 
-		return $es_response['found_documents']['value'];
+	/**
+	 * Given an Elasticsearch query, display the total results count and a partial list of post links
+	 *
+	 * @param array $es_query The Elasticsearch query
+	 * @return string
+	 */
+	protected function display_count_and_list( $es_query ): string {
+		$post_indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+		$es_response    = $post_indexable->query_es( $es_query, [] );
+
+		if ( ! $es_response || ! isset( $es_response['found_documents']['value'] ) ) {
+			return 'N/A';
+		}
+
+		$total_count = $es_response['found_documents']['value'];
+		if ( ! $total_count ) {
+			return (string) $total_count;
+		}
+
+		$post_links = array_map(
+			function ( $post_id ) {
+				return '<a href="' . get_edit_post_link( $post_id ) . '">' . $post_id . '</a>';
+			},
+			wp_list_pluck( $es_response['documents'], 'post_id' )
+		);
+
+		if ( count( $post_links ) === $total_count ) {
+			return wp_sprintf(
+				// translators: 1: total count, 2: list of post links
+				__( '%1$d (%2$l)', 'elasticpress-labs' ),
+				$total_count,
+				$post_links
+			);
+		}
+
+		return sprintf(
+			// translators: 1: total count, 2: list of post links
+			__( '%1$d (%2$s, and more)', 'elasticpress-labs' ),
+			$total_count,
+			implode( ', ', $post_links )
+		);
 	}
 }
