@@ -513,9 +513,9 @@ class TestGeoLocation extends BaseTestCase {
 				'post_type'    => 'post',
 				'orderby'      => 'geo_distance',
 				'geo_distance' => [
-					'geo_point.location' => [
-						'lat' => 40.712776,
-						'lon' => -74.005974,
+					'geo_point.location' => [ // Doc Emmett Brown's House
+						'lat' => 34.151617,
+						'lon' => -118.1609043,
 					],
 				],
 			]
