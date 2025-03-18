@@ -28,6 +28,27 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
+= 2.4.0 - 2025-XX-XX =
+
+__Added:__
+
+* Geo Location Feature. Props [@burhandodhy](https://github.com/burhandodhy) and [@felipeelia](https://github.com/felipeelia).
+* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+
+__Changed:__
+
+* Minimum requirements to run the plugin: PHP 7.4+, WP 6.0+, and EP 5.2.0+. Props [@felipeelia](https://github.com/felipeelia).
+
+__Fixed:__
+
+* PHP Notice: Function _load_textdomain_just_in_time was called incorrectly. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Developer:__
+
+* Fixed PR links in the changelog. Props [@felipeelia](https://github.com/felipeelia).
+* Add e2e tests foundation. Props [@felipeelia](https://github.com/felipeelia).
+* Fix unit tests + small tweaks in Husky and Cypress setup. Props [@felipeelia](https://github.com/felipeelia).
+
 = 2.3.1 - 2024-12-11 =
 
 __Added:__
