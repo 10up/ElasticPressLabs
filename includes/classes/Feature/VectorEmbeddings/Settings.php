@@ -110,11 +110,14 @@ class Settings {
 				'ep_vector_embeddings_scripts',
 				'epVectorEmbeddings',
 				[
-					'apiUrl'                 => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-					'postTypeConfigurations' => get_option( self::SETTINGS_KEY, $this->get_default_config() ),
-					'indexableTypes'         => array_keys( $this->get_searchable_post_types() ),
-					'chunk_size'             => 150, // todo replace with a setting.
-					'overlap_size'           => 25, // todo replace with a setting.
+					'apiUrl'         => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
+					'settings'       => get_option(
+						self::SETTINGS_KEY,
+						[
+							'postTypeConfig' => $this->get_default_post_type_config(),
+						]
+					),
+					'indexableTypes' => array_keys( $this->get_searchable_post_types() ),
 				]
 			);
 		}
@@ -127,7 +130,7 @@ class Settings {
 	 *
 	 * @return array
 	 */
-	public function get_default_config() {
+	public function get_default_post_type_config() {
 
 		// else, generate the default settings.
 		$post_types = $this->get_searchable_post_types();

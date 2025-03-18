@@ -14,16 +14,17 @@ import PostType from '../components/pages/post-type';
 import Indexing from '../components/pages/indexing';
 
 export default () => {
-	const { currentVectorEmbeddingsConfiguration, save } = useVectorEmebeddingSettings();
-	const { postTypeConfig: postTypes } = currentVectorEmbeddingsConfiguration;
+	const { currentSettings, save } = useVectorEmebeddingSettings();
+	const { postTypeConfig: postTypes } = currentSettings;
 	const { createNotice } = useSettingsScreen();
 	const [currentTab, setCurrentTab] = useState(0); // eslint-disable-line
 	const is2columns = window.innerWidth > 782;
 
 	const tabs = postTypes.map((postType) => ({
-		title: `Type: ${postType.label}`,
+		title: postType.label,
 		name: postType.key,
 		postType,
+		Component: PostType,
 	}));
 
 	tabs.push({
@@ -52,10 +53,10 @@ export default () => {
 	return (
 		<form className="ep-vector-embedding-settings__post-types-list">
 			<p>
-				Use this settings page to configure which post types should be indexed with vector
-				embeddings. You can also select which content fields will be used for generating
-				vector embeddings. These settings help optimize search and retrieval by ensuring the
-				most relevant content is embedded for similarity-based queries.
+				{__(
+					'Configure the settings for the vector embeddings for each post type. You can also configure the indexing settings.',
+					'elasticpress',
+				)}
 			</p>
 			<Spacer marginBottom={6} />
 			<TabPanel
@@ -67,11 +68,7 @@ export default () => {
 				tabs={tabs}
 			>
 				{({ postType, Component }) => {
-					if (Component) {
-						return <Component />;
-					}
-
-					return <PostType key={postType.key} postType={postType} />;
+					return <Component key={postType.key} postType={postType} />;
 				}}
 			</TabPanel>
 
@@ -81,7 +78,7 @@ export default () => {
 					variant="primary"
 					onClick={onSubmit}
 				>
-					Save
+					{__('Save settings', 'elasticpress')}
 				</Button>
 			</Flex>
 		</form>

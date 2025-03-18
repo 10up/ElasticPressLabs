@@ -10,7 +10,7 @@ import { __ } from '@wordpress/i18n';
 import { SettingsScreenProvider } from '../settings-screen';
 import { VectorEmbeddingsProvider } from './provider';
 import PostTypesList from './apps/settings';
-import { apiUrl, postTypeConfigurations } from './config';
+import { apiUrl, postTypeConfig } from './config';
 
 /**
  * Styles.
@@ -25,10 +25,7 @@ import './style.css';
 const App = () => {
 	return (
 		<SettingsScreenProvider title={__('Manage Vector Embeddings', 'elasticpress')}>
-			<VectorEmbeddingsProvider
-				apiUrl={apiUrl}
-				postTypeConfigurations={postTypeConfigurations}
-			>
+			<VectorEmbeddingsProvider {...{ apiUrl, postTypeConfig }}>
 				<PostTypesList />
 			</VectorEmbeddingsProvider>
 		</SettingsScreenProvider>

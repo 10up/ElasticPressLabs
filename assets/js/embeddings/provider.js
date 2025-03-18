@@ -15,21 +15,24 @@ const Context = createContext();
  * @param {object} props Component props.
  * @param {string} props.apiUrl Settings Update API URL.
  * @param {Function} props.children Component children.
- * @param {object} props.postTypeConfigurations Post Type Configurations.
+ * @param {object} props.postTypeConfig Post Type Configurations.
+ * @param {object} props.indexablePostTypes Indexable Post Types.
  *
  * @returns {WPElement} Element.
  */
-export const VectorEmbeddingsProvider = ({ apiUrl, children, postTypeConfigurations }) => {
+export const VectorEmbeddingsProvider = ({
+	apiUrl,
+	children,
+	postTypeConfig,
+	indexablePostTypes,
+}) => {
 	const [isBusy, setIsBusy] = useState(false);
-	const [currentVectorEmbeddingsConfiguration, setCurrentVectorEmbeddingsConfiguration] =
-		useState({
-			chunking: {},
-			mode: 'automatic',
-			postTypeConfig: postTypeConfigurations,
-		});
+	const [currentSettings, setCurrentSettings] = useState({
+		...{ postTypeConfig, indexablePostTypes },
+	});
 
 	const setEmbeddingForPostType = (postType, taxonomy, key, value) => {
-		setCurrentVectorEmbeddingsConfiguration((prevConfig) => {
+		setCurrentSettings((prevConfig) => {
 			const postTypeConfig = prevConfig.postTypeConfig.find(
 				(config) => config.key === postType,
 			);
@@ -80,7 +83,7 @@ export const VectorEmbeddingsProvider = ({ apiUrl, children, postTypeConfigurati
 
 		try {
 			await apiFetch({
-				body: JSON.stringify(currentVectorEmbeddingsConfiguration),
+				body: JSON.stringify(currentSettings),
 				headers: {
 					'Content-Type': 'application/json',
 				},
@@ -97,7 +100,7 @@ export const VectorEmbeddingsProvider = ({ apiUrl, children, postTypeConfigurati
 
 	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue = {
-		currentVectorEmbeddingsConfiguration,
+		currentSettings,
 		isBusy,
 		save,
 		setEmbeddingForPostType,

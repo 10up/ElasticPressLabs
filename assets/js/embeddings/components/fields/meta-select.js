@@ -2,6 +2,7 @@
  * External dependencies
  */
 import { FormTokenField } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
@@ -17,7 +18,7 @@ export default (props) => {
 			value={value}
 			label={label}
 			onChange={(tokens) => setEmbeddingForPostType(postType, null, updateKey, tokens)}
-			placeholder="Enter meta keys"
+			placeholder={__('Add meta field...', 'elasticpress')}
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
 		/>
