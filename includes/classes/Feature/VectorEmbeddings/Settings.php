@@ -2,10 +2,7 @@
 /**
  * Vector Embeddings
  *
- * This feature enables storage of vector embeddings, a numerical representation of the
- * indexed content that can capture semantic relationships and similarities between data points.
- * These embeddings are often used by AI models to process and understand complex information
- * more efficiently and are used for features like natural language processing, recommendations and computer vision.
+ * This feature configures storage of vector embeddings.
  *
  * @since 2.4.0
  * @package ElasticPressLabs
@@ -22,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vector Embeddings feature
  */
-class SettingsPage {
+class Settings {
 
 	const SETTINGS_KEY = 'ep_vector_embeddings_settings';
 
@@ -33,7 +30,6 @@ class SettingsPage {
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
-		add_action( 'init', [ $this, 'register_post_meta' ] );
 	}
 
 	/**
@@ -115,10 +111,10 @@ class SettingsPage {
 				'epVectorEmbeddings',
 				[
 					'apiUrl'                 => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-					'postTypeConfigurations' => $this->get_default_or_saved_settings(),
+					'postTypeConfigurations' => get_option( self::SETTINGS_KEY, $this->get_default_config() ),
 					'indexableTypes'         => array_keys( $this->get_searchable_post_types() ),
-					'chunk_size'             => 150,
-					'overlap_size'           => 25,
+					'chunk_size'             => 150, // todo replace with a setting.
+					'overlap_size'           => 25, // todo replace with a setting.
 				]
 			);
 		}
@@ -131,14 +127,7 @@ class SettingsPage {
 	 *
 	 * @return array
 	 */
-	public function get_default_or_saved_settings() {
-
-		$saved = get_option( self::SETTINGS_KEY, [] );
-
-		// return saved value if exists.
-		if ( ! empty( $saved['postTypeConfig'] ) ) {
-			return $saved['postTypeConfig'];
-		}
+	public function get_default_config() {
 
 		// else, generate the default settings.
 		$post_types = $this->get_searchable_post_types();
@@ -196,139 +185,5 @@ class SettingsPage {
 		$search = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
 
 		return $search->get_searchable_post_types();
-	}
-
-	/**
-	 * Determine whether a post can be indexed with Vector Embeddings
-	 *
-	 * @param int $post_id The ID of the post to check.
-	 * @return boolean
-	 */
-	public function is_embeddable( $post_id ) {
-		$allowed_to_be_embedded = false;
-
-		$post_type = get_post_type( $post_id );
-		$settings  = get_option( self::SETTINGS_KEY, [] );
-
-		$post_type_config = array_filter(
-			$settings['postTypeConfig'],
-			function ( $config ) use ( $post_type ) {
-				return $config['key'] === $post_type;
-			}
-		);
-
-		$post_type_config = reset( $post_type_config ); // array_map returns an array of arrays.
-
-		if ( empty( $post_type_config ) ) {
-			return false;
-		}
-
-		$embeddable     = $post_type_config['embeddable'];
-		$taxonomies     = $post_type_config['taxonomies'];
-		$fields_include = $post_type_config['fieldsIndexingInclude'];
-		$fields_exclude = $post_type_config['fieldsIndexingExclude'];
-		$enable_fields  = $post_type_config['enablefieldsIndexing'];
-
-		if ( ! $embeddable ) {
-			return false;
-		}
-
-		// taxonomy inclusion
-		foreach ( $taxonomies as $taxonomy ) {
-			if ( $taxonomy['enabled'] ) {
-				$terms_include = $taxonomy['termsInclude'];
-				$terms_exclude = $taxonomy['termsExclude'];
-
-				$assigned_terms = wp_get_post_terms( $post_id, $taxonomy['name'] );
-
-				$term_ids = wp_list_pluck( $assigned_terms, 'term_id' );
-
-				// check if any of the terms are in the exclude list. If so, bail.
-				if ( ! empty( $terms_exclude ) ) {
-					$has_term = array_filter(
-						$terms_exclude,
-						function ( $term ) use ( $term_ids ) {
-							return in_array( $term, $term_ids, true );
-						}
-					);
-
-					if ( ! empty( $has_term ) ) {
-						if ( defined( 'WP_CLI' ) && WP_CLI ) {
-							\WP_CLI::line( "Post ID: {$post_id} has a term that is excluded." );
-						}
-						return false;
-					}
-				}
-
-				// check if any of the terms are in the include list.
-				if ( ! empty( $terms_include ) ) {
-					$has_term = array_filter(
-						$terms_include,
-						function ( $term ) use ( $term_ids ) {
-							return in_array( $term, $term_ids, true );
-						}
-					);
-
-					$allowed_to_be_embedded = ! empty( $has_term );
-				}
-			}
-		}
-
-		// post meta inclusion
-		if ( $enable_fields ) {
-			// does the post have any of the fields that are used to flag content for exclusion? Bail if condition is met.
-			if ( ! empty( $fields_exclude ) ) {
-				$meta = get_post_meta( $post_id );
-
-				$has_field = array_filter(
-					$fields_exclude,
-					function ( $field ) use ( $meta ) {
-						return ! empty( $meta[ $field ] );
-					}
-				);
-
-				if ( ! empty( $has_field ) ) {
-					if ( defined( 'WP_CLI' ) && WP_CLI ) {
-						\WP_CLI::line( "Post ID: {$post_id} has a field that is excluded." );
-					}
-					return false;
-				}
-			}
-
-			// Does the post have any of the fields that are used to flag content for inclusion ?
-			if ( ! empty( $fields_include ) ) {
-				$meta = get_post_meta( $post_id );
-
-				$has_field = array_filter(
-					$fields_include,
-					function ( $field ) use ( $meta ) {
-						return ! empty( $meta[ $field ] );
-					}
-				);
-
-				if ( empty( $has_field ) ) {
-					if ( defined( 'WP_CLI' ) && WP_CLI ) {
-						\WP_CLI::line( "Post ID: {$post_id} does not have a field that is included." );
-					}
-				}
-			}
-
-			return $allowed_to_be_embedded;
-		}
-	}
-
-	/**
-	 * Register post meta for Vector Embeddings
-	 */
-	public function register_post_meta() {
-		register_post_meta(
-			'post',
-			'ep_allow_vector_embedding',
-			[
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'boolean',
-			]
-		);
 	}
 }

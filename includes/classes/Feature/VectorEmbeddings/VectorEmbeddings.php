@@ -71,7 +71,7 @@ class VectorEmbeddings extends Feature {
 
 		// Set up settings page sub-module
 		if ( $this->is_active() ) {
-			$this->settings_page = new SettingsPage();
+			$this->settings_page = new Settings();
 			$this->settings_page->setup();
 		}
 		parent::__construct();
