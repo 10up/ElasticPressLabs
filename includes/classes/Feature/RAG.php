@@ -27,11 +27,12 @@ class RAG extends Feature {
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'ep_rag_api_key'         => '',
-		'ep_rag_api_url'         => 'https://api.openai.com/v1/chat/completions',
-		'ep_rag_chat_model'      => 'o1-mini',
-		'ep_rag_number_of_posts' => 5,
-		'ep_rag_prompt'          => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+		'ep_rag_search_term_embed_method' => 'client-side',
+		'ep_rag_api_key'                  => '',
+		'ep_rag_api_url'                  => 'https://api.openai.com/v1/chat/completions',
+		'ep_rag_chat_model'               => 'o1-mini',
+		'ep_rag_number_of_posts'          => 5,
+		'ep_rag_prompt'                   => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
 The search term is '{search_term}'.
 
@@ -112,8 +113,9 @@ The following JSON object contains the URL and the page content. You should use 
 			'ep-rag-block-frontend-script',
 			'epRag',
 			[
-				'searchQuery'     => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'restApiEndpoint' => 'elasticpress-labs/v1/rag',
+				'searchQuery'               => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'restApiEndpoint'           => 'elasticpress-labs/v1/rag',
+				'searchTermEmbeddingMethod' => $this->get_setting( 'ep_rag_search_term_embed_method' ),
 			]
 		);
 
@@ -165,10 +167,11 @@ The following JSON object contains the URL and the page content. You should use 
 	/**
 	 * Given the user search term/query, get related posts for context, and then get the AI response
 	 *
-	 * @param string $search_term Search term
+	 * @param string     $search_term    Search term
+	 * @param null|array $search_vectors Search term vectors
 	 * @return string
 	 */
-	public function get_ai_response( $search_term ) {
+	public function get_ai_response( $search_term, $search_vectors = null ) {
 		if ( ! $search_term ) {
 			return '';
 		}
@@ -176,7 +179,7 @@ The following JSON object contains the URL and the page content. You should use 
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$post_vectors      = $vector_embeddings->get_indexables()['post'];
 
-		$results = $this->get_results( $search_term );
+		$results = $this->get_results( $search_term, $search_vectors );
 
 		$posts_representations = [];
 		foreach ( $results as $post_id ) {
@@ -193,11 +196,12 @@ The following JSON object contains the URL and the page content. You should use 
 	/**
 	 * Get the posts to be used as context
 	 *
-	 * @param string $search_term The search term
+	 * @param string     $search_term    Search term
+	 * @param null|array $search_vectors Search term vectors
 	 * @return array
 	 */
-	protected function get_results( $search_term ) {
-		$search_term_vectors = $this->get_search_term_vectors( $search_term );
+	protected function get_results( $search_term, $search_vectors = null ) {
+		$search_term_vectors = ( $search_vectors ) ? $search_vectors : $this->get_search_term_vectors( $search_term );
 
 		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
 
@@ -244,8 +248,7 @@ The following JSON object contains the URL and the page content. You should use 
 		];
 
 		$query_es = \ElasticPress\Indexables::factory()->get( 'post' )->query_es( $query, [] );
-
-		return wp_list_pluck( $query_es['documents'], 'post_id' );
+		return isset( $query_es['documents'] ) ? wp_list_pluck( $query_es['documents'], 'post_id' ) : [];
 	}
 
 	/**
@@ -339,6 +342,22 @@ The following JSON object contains the URL and the page content. You should use 
 	 */
 	public function set_settings_schema() {
 		$this->settings_schema = [
+			[
+				'key'     => 'ep_rag_search_term_embed_method',
+				'label'   => __( 'Search Term Embedding Method', 'elasticpress-labs' ),
+				'help'    => __( 'The method to use to vectorize the search term. The model used here should match the one used to vectorize your content.', 'elasticpress-labs' ),
+				'options' => [
+					[
+						'label' => __( 'Client side', 'elasticpress-labs' ),
+						'value' => 'client-side',
+					],
+					[
+						'label' => __( 'Server side', 'elasticpress-labs' ),
+						'value' => 'server-side',
+					],
+				],
+				'type'    => 'radio',
+			],
 			[
 				'key'     => 'ep_rag_api_key',
 				'label'   => __( 'OpenAI API Key', 'elasticpress-labs' ),

@@ -1,3 +1,5 @@
+import { pipeline } from '@huggingface/transformers';
+
 /**
  * WordPress dependencies.
  */
@@ -8,7 +10,7 @@ import { createRoot, render, useEffect, useState, WPElement } from '@wordpress/e
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
-const { searchQuery, restApiEndpoint } = window.epRag;
+const { searchQuery, searchTermEmbeddingMethod, restApiEndpoint } = window.epRag;
 
 /**
  * App component
@@ -20,15 +22,36 @@ const App = () => {
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		apiFetch({
-			path: `${restApiEndpoint}?search_query=${searchQuery}`,
-		})
-			.then((response) => {
-				setMessage(response.html);
-			})
-			.finally(() => {
-				setIsLoading(false);
+		if (searchTermEmbeddingMethod === 'client-side') {
+			pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2').then((pipe) => {
+				pipe(searchQuery, { pooling: 'mean', normalize: true }).then((features) => {
+					apiFetch({
+						path: restApiEndpoint,
+						method: 'POST',
+						data: {
+							search_query: searchQuery,
+							search_vectors: features.data,
+						},
+					})
+						.then((response) => {
+							setMessage(response.html);
+						})
+						.finally(() => {
+							setIsLoading(false);
+						});
+				});
 			});
+		} else {
+			apiFetch({
+				path: `${restApiEndpoint}?search_query=${searchQuery}`,
+			})
+				.then((response) => {
+					setMessage(response.html);
+				})
+				.finally(() => {
+					setIsLoading(false);
+				});
+		}
 	}, []);
 
 	return isLoading ? (
