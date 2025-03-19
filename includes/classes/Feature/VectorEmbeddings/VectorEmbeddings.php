@@ -83,7 +83,7 @@ class VectorEmbeddings extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$this->indexables['post'] = new Indexables\Post( $this );
+		$this->indexables['post'] = new Indexables\Post\Post( $this );
 		$this->indexables['post']->setup();
 
 		if ( $this->get_setting( 'ep_embeddings_use_epio' ) ) {
