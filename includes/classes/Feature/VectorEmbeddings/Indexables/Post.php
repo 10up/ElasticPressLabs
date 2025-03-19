@@ -9,6 +9,7 @@
 namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables;
 
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
+use ElasticPressLabs\Utils;
 
 /**
  * Vector Embeddings - Post Indexable class
@@ -23,7 +24,22 @@ class Post extends Indexable {
 
 		// Only trigger embeddings when external embeddings are turned off
 		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
-			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+			add_action( 'init', [ $this, 'register_meta' ], 20 );
+			add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
+
+			add_action( 'post_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ] );
+			add_action( 'attachment_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ], 15 );
+
+			add_action( 'edit_post', [ $this, 'save_embedding_exclude_meta' ] );
+			add_action( 'edit_attachment', [ $this, 'save_embedding_exclude_meta' ] );
+
+			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
+				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
+				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
+				add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
+			} else {
+				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+			}
 		}
 	}
 
@@ -35,6 +51,192 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
+	}
+
+	/**
+	 * Registers post meta for exclude from vector embeddings.
+	 *
+	 * @return void
+	 */
+	public function register_meta() {
+		register_post_meta(
+			'',
+			'ep_embedding_exclude',
+			[
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'boolean',
+			]
+		);
+	}
+
+	/**
+	 * Enqueue block editor assets.
+	 */
+	public function enqueue_block_editor_assets() {
+		global $post;
+
+		if ( ! $post instanceof \WP_Post ) {
+			return;
+		}
+
+		if ( ! $post->post_type || ! post_type_supports( $post->post_type, 'custom-fields' ) ) {
+			return;
+		}
+
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+		if ( ! $indexable->sync_manager->is_post_indexable( $post->ID ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ep-embeddings-editor',
+			ELASTICPRESS_LABS_URL . 'dist/js/embeddings-editor-script.js',
+			Utils\get_asset_info( 'embeddings-editor-script', 'dependencies' ),
+			Utils\get_asset_info( 'embeddings-editor-script', 'version' ),
+			true
+		);
+
+		wp_set_script_translations( 'ep-embeddings-editor', 'elasticpress-labs' );
+	}
+
+	/**
+	 * Outputs the checkbox to exclude a post from embedding.
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	public function output_embedding_exclude_setting( $post ) {
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+		if ( ! $indexable->sync_manager->is_post_indexable( $post->ID ) ) {
+			return;
+		}
+
+		?>
+		<div class="misc-pub-section">
+			<input id="ep_embedding_exclude" name="ep_embedding_exclude" type="checkbox" value="1" <?php checked( get_post_meta( get_the_ID(), 'ep_embedding_exclude', true ) ); ?>>
+			<label for="ep_embedding_exclude"><?php esc_html_e( 'Exclude from vector embeddings', 'elasticpress-labs' ); ?></label>
+			<p class="howto">
+				<?php if ( 'attachment' === $post->post_type ) : ?>
+					<?php esc_html_e( 'Check this if you don\'t want this media to be vectorized.', 'elasticpress-labs' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Check this if you don\'t want this post to be vectorized.', 'elasticpress-labs' ); ?>
+				<?php endif; ?>
+			</p>
+			<?php wp_nonce_field( 'save-embedding-exclude', 'ep-embedding-exclude-nonce' ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Saves exclude from embedding meta.
+	 *
+	 * @param int $post_id The post ID.
+	 */
+	public function save_embedding_exclude_meta( $post_id ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( ! isset( $_POST['ep-embedding-exclude-nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['ep-embedding-exclude-nonce'] ), 'save-embedding-exclude' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['ep_embedding_exclude'] ) ) {
+			update_post_meta( $post_id, 'ep_embedding_exclude', true );
+		} else {
+			delete_post_meta( $post_id, 'ep_embedding_exclude' );
+		}
+	}
+
+	/**
+	 * Add the content chunks to the index action args.
+	 *
+	 * This will be picked up by EP.io servers so it is enqueued for processing.
+	 *
+	 * @param array $args Current index action args.
+	 * @param array $post The post being indexed.
+	 * @return array
+	 */
+	public function maybe_add_chunks_to_bulk_index_action_args( array $args, array $post ) {
+		if ( ! $this->should_add_vector_field_to_post( $post['ID'] ) ) {
+			return $args;
+		}
+
+		$post_chunks = $this->get_post_chunks( $post['ID'] );
+		if ( 'index_action_args' === $this->get_text_chunks_sending_method( $post_chunks ) ) {
+			$args['epio-content-chunks'] = $post_chunks;
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Add text chunks to their field in the post sync args.
+	 *
+	 * @param array $args Current sync args.
+	 * @param int   $post_id Post ID being synced.
+	 * @return array
+	 */
+	public function maybe_add_chunks_to_text_chunks_fields( array $args, int $post_id ) {
+		if ( ! $this->should_add_vector_field_to_post( $post_id ) ) {
+			return $args;
+		}
+
+		$args['ep_embeddings_control'] = [
+			'is_processing' => true,
+			'errors'        => [],
+			'text_chunks'   => [],
+		];
+
+		$post_chunks = $this->get_post_chunks( $post_id );
+		if ( 'es_doc_field' === $this->get_text_chunks_sending_method( $post_chunks ) ) {
+			$args['ep_embeddings_control']['text_chunks'] = $post_chunks;
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Change the doc status indicator depending on the Vector Embeddings process status
+	 *
+	 * @param array       $status  The status array containing status, message and explanation
+	 * @param int         $post_id The post ID being checked
+	 * @param array|false $es_doc  The Elasticsearch document
+	 * @return array
+	 */
+	public function maybe_set_doc_status( array $status, int $post_id, $es_doc ): array {
+		if ( ! isset( $es_doc['ep_embeddings_control'] ) ) {
+			return $status;
+		}
+
+		if ( ! empty( $es_doc['ep_embeddings_control']['is_processing'] ) ) {
+			$status = [
+				'status'      => 'warning',
+				'message'     => esc_html__( 'Processing vector embeddings', 'elasticpress-labs' ),
+				'explanation' => esc_html__( 'Vector embeddings are still being processed.', 'elasticpress' ),
+			];
+		}
+
+		if ( ! empty( $es_doc['ep_embeddings_control']['errors'] ) ) {
+			$errors_list = '<ul><li>' . implode( '</li><li>', (array) $es_doc['ep_embeddings_control']['errors'] ) . '</li></ul>';
+			$status      = [
+				'status'      => 'error',
+				'message'     => esc_html__( 'Vector embeddings failed', 'elasticpress-labs' ),
+				'explanation' => wp_kses_post(
+					sprintf(
+						// translators: %s is a list of errors.
+						esc_html__( 'Vector embeddings failed with the following error(s): %s', 'elasticpress-labs' ),
+						$errors_list
+					)
+				),
+			];
+		}
+
+		return $status;
 	}
 
 	/**
@@ -68,6 +270,8 @@ class Post extends Indexable {
 	public function should_add_vector_field_to_post( int $post_id ): bool {
 		$post = get_post( $post_id );
 
+		$should_add = ! empty( $post ) && ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
+
 		/**
 		 * Filter whether the vector field should or not be added to the post.
 		 *
@@ -78,7 +282,7 @@ class Post extends Indexable {
 		 * @param {int}  $post_id    The post ID.
 		 * @return {bool} The new $should_add value.
 		 */
-		return apply_filters( 'ep_embeddings_should_add_vector_field_to_post', ! empty( $post ), $post_id );
+		return apply_filters( 'ep_embeddings_should_add_vector_field_to_post', $should_add, $post_id );
 	}
 
 	/**

@@ -15,6 +15,7 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
+use ElasticPress\Utils;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -43,6 +44,7 @@ class VectorEmbeddings extends Feature {
 		'ep_embeddings_embedding_model'    => 'text-embedding-3-small',
 		'ep_embeddings_dimensions'         => 512,
 		'ep_embeddings_external_embedding' => '0',
+		'ep_embeddings_use_epio'           => '0',
 	];
 
 	/**
@@ -71,6 +73,10 @@ class VectorEmbeddings extends Feature {
 	public function setup() {
 		$this->indexables['post'] = new Indexables\Post( $this );
 		$this->indexables['post']->setup();
+
+		if ( $this->get_setting( 'ep_embeddings_use_epio' ) ) {
+			add_filter( 'ep_status_report_reports', [ $this, 'add_status_report' ] );
+		}
 	}
 
 	/**
@@ -141,6 +147,27 @@ class VectorEmbeddings extends Feature {
 				'type'  => 'checkbox',
 			],
 		];
+
+		if ( Utils\is_epio() ) {
+			$this->settings_schema[] = [
+				'key'   => 'ep_embeddings_use_epio',
+				'help'  => __( 'Enable this if you want to use ElasticPress.io to vectorize your content.', 'elasticpress-labs' ),
+				'label' => __( 'Use EP.io', 'elasticpress-labs' ),
+				'type'  => 'checkbox',
+			];
+		}
+	}
+
+	/**
+	 * Add a new status report
+	 *
+	 * @param array $reports Status reports.
+	 * @return array
+	 */
+	public function add_status_report( $reports ) {
+		$reports[] = new StatusReport();
+
+		return $reports;
 	}
 
 	/**
@@ -320,7 +347,12 @@ class VectorEmbeddings extends Feature {
 		$content = apply_filters( 'the_content', $content );
 
 		// Strip shortcodes but keep internal caption text.
-		$content = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
+		// Revert it if shortcodes are not balanced and preg_replace errors out.
+		$pre_content = $content;
+		$content     = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
+		if ( null === $content ) {
+			$content = $pre_content;
+		}
 
 		// Strip HTML entities.
 		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
@@ -345,6 +377,9 @@ class VectorEmbeddings extends Feature {
 	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25 ): array {
 		// Normalize our content.
 		$content = $this->normalize_content( $content );
+		if ( ! $content ) {
+			return [];
+		}
 
 		// Remove multiple whitespaces.
 		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );
