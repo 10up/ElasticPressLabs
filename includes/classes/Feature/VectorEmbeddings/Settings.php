@@ -199,4 +199,197 @@ class Settings {
 
 		return $search->get_searchable_post_types();
 	}
+
+	/**
+	 * Get the current settings.
+	 *
+	 * @return array
+	 */
+	public function get_settings() {
+		return $this->current_settings;
+	}
+
+	/**
+	 * Get the post type configuration for a given post type.
+	 *
+	 * @param string $post_type The post type to get the configuration for.
+	 * @return array The post type configuration.
+	 */
+	public function get_post_type_config( $post_type ) {
+		$post_type_config = array_filter(
+			$this->current_settings['postTypeConfig'],
+			function ( $config ) use ( $post_type ) {
+				return $config['key'] === $post_type;
+			}
+		);
+
+		if ( empty( $post_type_config ) ) {
+			return [];
+		}
+
+		// get the first element of the array
+		return reset( $post_type_config );
+	}
+
+	/**
+	 * Check if a post is embeddable based on taxonomy and post meta conditions.
+	 *
+	 * @param int $post_id The ID of the post to check.
+	 * @return bool True if the post is embeddable, false otherwise.
+	 */
+	public function is_embeddable( $post_id ) {
+		$post_type = get_post_type( $post_id );
+		$config    = $this->get_post_type_config( $post_type );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		[
+			'embeddable'            => $embeddable,
+			'fieldsEmbedding'       => $fields_embedding,
+			'fieldsIndexingInclude' => $fields_indexing_include,
+			'fieldsIndexingExclude' => $fields_indexing_exclude,
+			'taxonomies'            => $taxonomies,
+			'embeddingMode'         => $embedding_mode,
+		] = $config;
+
+		if ( 'manual' === $embedding_mode ) {
+			return get_post_meta( $post_id, 'ep_embeddings_include', true );
+		}
+
+		if ( ! $embeddable ) {
+			return false;
+		}
+
+		if ( $this->is_excluded_by_taxonomy( $post_id ) || $this->is_excluded_by_meta( $post_id ) ) {
+			return false;
+		}
+
+		if ( $this->is_included_by_taxonomy( $post_id ) || $this->is_included_by_meta( $post_id ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a post is excluded by taxonomy conditions.
+	 *
+	 * @param int $post_id The ID of the post to check.
+	 * @return bool True if the post is excluded, false otherwise.
+	 */
+	public function is_excluded_by_taxonomy( $post_id ) {
+		$post_type = get_post_type( $post_id );
+		$config    = $this->get_post_type_config( $post_type );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		$taxonomies = $config['taxonomies'] ?? [];
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$terms = get_the_terms( $post_id, $taxonomy['name'] );
+
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				continue;
+			}
+
+			foreach ( $terms as $term ) {
+				if ( in_array( $term->term_id, $taxonomy['termsExclude'], true ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a post is included by taxonomy conditions.
+	 *
+	 * @param int $post_id The ID of the post to check.
+	 * @return bool True if the post is included, false otherwise.
+	 */
+	public function is_included_by_taxonomy( $post_id ) {
+		$post_type = get_post_type( $post_id );
+		$config    = $this->get_post_type_config( $post_type );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		$taxonomies = $config['taxonomies'] ?? [];
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$terms = get_the_terms( $post_id, $taxonomy['name'] );
+
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				continue;
+			}
+
+			foreach ( $terms as $term ) {
+				if ( in_array( $term->term_id, $taxonomy['termsInclude'], true ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a post is excluded by meta conditions.
+	 *
+	 * @param int $post_id The ID of the post to check.
+	 * @return bool True if the post is excluded, false otherwise.
+	 */
+	public function is_excluded_by_meta( $post_id ) {
+		$post_type = get_post_type( $post_id );
+		$config    = $this->get_post_type_config( $post_type );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		$fields_indexing_exclude = $config['fieldsIndexingExclude'] ?? [];
+
+		foreach ( $fields_indexing_exclude as $field ) {
+			$value = get_post_meta( $post_id, $field, true );
+
+			if ( $value ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a post is included by meta conditions.
+	 *
+	 * @param int $post_id The ID of the post to check.
+	 * @return bool True if the post is included, false otherwise.
+	 */
+	public function is_included_by_meta( $post_id ) {
+		$post_type = get_post_type( $post_id );
+		$config    = $this->get_post_type_config( $post_type );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		$fields_indexing_include = $config['fieldsIndexingInclude'] ?? [];
+
+		foreach ( $fields_indexing_include as $field ) {
+			$value = get_post_meta( $post_id, $field, true );
+
+			if ( $value ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
