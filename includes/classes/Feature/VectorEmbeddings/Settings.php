@@ -212,10 +212,12 @@ class Settings {
 	/**
 	 * Get the post type configuration for a given post type.
 	 *
-	 * @param string $post_type The post type to get the configuration for.
+	 * @param int $post_id The ID of the post to get the configuration for.
 	 * @return array The post type configuration.
 	 */
-	public function get_post_type_config( $post_type ) {
+	public function get_post_type_config( $post_id ) {
+		$post_type = get_post_type( $post_id );
+
 		$post_type_config = array_filter(
 			$this->current_settings['postTypeConfig'],
 			function ( $config ) use ( $post_type ) {
@@ -238,8 +240,7 @@ class Settings {
 	 * @return bool True if the post is embeddable, false otherwise.
 	 */
 	public function is_embeddable( $post_id ) {
-		$post_type = get_post_type( $post_id );
-		$config    = $this->get_post_type_config( $post_type );
+		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -280,8 +281,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_taxonomy( $post_id ) {
-		$post_type = get_post_type( $post_id );
-		$config    = $this->get_post_type_config( $post_type );
+		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -313,8 +313,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_taxonomy( $post_id ) {
-		$post_type = get_post_type( $post_id );
-		$config    = $this->get_post_type_config( $post_type );
+		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -346,8 +345,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_meta( $post_id ) {
-		$post_type = get_post_type( $post_id );
-		$config    = $this->get_post_type_config( $post_type );
+		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -373,8 +371,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_meta( $post_id ) {
-		$post_type = get_post_type( $post_id );
-		$config    = $this->get_post_type_config( $post_type );
+		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {
 			return false;
