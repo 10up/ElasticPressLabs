@@ -26,7 +26,7 @@ class VectorEmbeddingSettings {
 			'elasticpress-labs/v1',
 			'vector-embeddings',
 			[
-				'callback'            => [ $this, 'update_vector_embeddings' ],
+				'callback'            => [ $this, 'update_settings' ],
 				'methods'             => 'POST',
 				'permission_callback' => '__return_true',
 				'args'                => $this->get_endpoint_args_for_item_schema( true ),
@@ -104,7 +104,7 @@ class VectorEmbeddingSettings {
 	 * @param \WP_REST_Request $request The REST request.
 	 * @return \WP_REST_Response
 	 */
-	public function update_vector_embeddings( \WP_REST_Request $request ) {
+	public function update_settings( \WP_REST_Request $request ) {
 		$settings = $request->get_params();
 
 		// unset locale
