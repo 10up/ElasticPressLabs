@@ -282,6 +282,7 @@ class Post extends Indexable {
 
 		$should_add = ! empty( $post ) && ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
 
+		$should_add = $this->settings_page->is_embeddable( $post_id );
 		/**
 		 * Filter whether the vector field should or not be added to the post.
 		 *
