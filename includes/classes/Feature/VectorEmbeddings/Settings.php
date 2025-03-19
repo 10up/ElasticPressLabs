@@ -24,9 +24,24 @@ class Settings {
 	const SETTINGS_KEY = 'ep_vector_embeddings_settings';
 
 	/**
+	 * Holds the value of the current settings, whether default or saved.
+	 * Used by various methods to determine the current state of the settings, as well as
+	 * localize to the settings app.
+	 *
+	 * @var array
+	 */
+	public $current_settings = [];
+
+	/**
 	 * WordPress Hooks
 	 */
 	public function setup() {
+		$this->current_settings = get_option(
+			self::SETTINGS_KEY,
+			[
+				'postTypeConfig' => $this->get_default_post_type_config(),
+			]
+		);
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
@@ -111,12 +126,7 @@ class Settings {
 				'epVectorEmbeddings',
 				[
 					'apiUrl'         => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-					'settings'       => get_option(
-						self::SETTINGS_KEY,
-						[
-							'postTypeConfig' => $this->get_default_post_type_config(),
-						]
-					),
+					'settings'       => $this->current_settings,
 					'indexableTypes' => array_keys( $this->get_searchable_post_types() ),
 				]
 			);

@@ -6,19 +6,29 @@
  * @package ElasticPressLabs
  */
 
-namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables;
+namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables\Post;
 
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
 use ElasticPressLabs\Utils;
+use ElasticPressLabs\Feature\VectorEmbeddings\Settings;
 
 /**
  * Vector Embeddings - Post Indexable class
  */
 class Post extends Indexable {
 	/**
+	 * Settings page instance.
+	 *
+	 * @var Settings
+	 */
+	public $settings_page = null;
+	/**
 	 * Setup hooks
 	 */
 	public function setup() {
+		$this->settings_page = new Settings();
+		$this->settings_page->setup();
+
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
 
