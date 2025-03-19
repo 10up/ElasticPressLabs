@@ -191,13 +191,6 @@ class VectorEmbeddings extends Feature {
 	 * @return array|null|WP_Error
 	 */
 	public function get_embedding( int $object_id, string $object_type, $text ) {
-		$embeddable    = new Embeddable( $object_id );
-		$is_embeddable = $embeddable->is_embeddable( $object_id, $object_type );
-
-		if ( ! $is_embeddable ) {
-			return;
-		}
-
 		// Generate the embedding.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::line( "Generating embedding for {$object_type} ID: {$object_id}" );
