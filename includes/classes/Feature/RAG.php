@@ -109,6 +109,8 @@ The following JSON object contains the URL and the page content. You should use 
 			true
 		);
 
+		$models_url = str_replace( home_url(), '', ELASTICPRESS_LABS_URL . 'assets/models/our-model/' );
+
 		wp_localize_script(
 			'ep-rag-block-frontend-script',
 			'epRag',
@@ -116,6 +118,7 @@ The following JSON object contains the URL and the page content. You should use 
 				'searchQuery'               => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'restApiEndpoint'           => 'elasticpress-labs/v1/rag',
 				'searchTermEmbeddingMethod' => $this->get_setting( 'ep_rag_search_term_embed_method' ),
+				'modelUrl'                  => $models_url,
 			]
 		);
 
