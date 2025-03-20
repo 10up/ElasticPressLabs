@@ -367,6 +367,8 @@ class Post extends Indexable {
 	/**
 	 * Return the list of taxonomies that should be included in the post representation.
 	 *
+	 * @todo use vector embeddings settings page to get the list of taxonomies instead of the weighting.
+	 *
 	 * @param integer $post_id   The post ID.
 	 * @param string  $post_type The post type.
 	 * @return array
