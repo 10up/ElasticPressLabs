@@ -456,8 +456,6 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	protected function get_embeddable_meta( int $post_id, string $post_type ): array {
-		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
-
 		$fields = $this->settings_page->get_embedding_fields( $post_id );
 
 		if ( empty( $fields ) ) {
