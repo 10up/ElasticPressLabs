@@ -306,22 +306,23 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function get_post_chunks( int $post_id ): array {
-		$post = get_post( $post_id );
+		$fields = $this->settings_page->get_embedding_fields( $post_id );
+		$post   = get_post( $post_id );
 
 		$main_content = '';
 
 		$title = get_the_title( $post_id );
-		if ( $title ) {
+		if ( $title && in_array( 'post_title', $fields, true ) ) {
 			$main_content .= "# Title\n{$title}\n\n";
 		}
 
-		if ( ! empty( $post->post_excerpt ) ) {
+		if ( ! empty( $post->post_excerpt ) && in_array( 'post_excerpt', $fields, true ) ) {
 			$excerpt       = get_the_excerpt( $post_id );
 			$main_content .= "# Summary\n{$excerpt}\n\n";
 		}
 
 		$content = get_the_content( null, false, $post_id );
-		if ( $content ) {
+		if ( $content && in_array( 'post_content', $fields, true ) ) {
 			$main_content .= "# Content\n{$content}\n\n";
 		}
 
@@ -451,8 +452,10 @@ class Post extends Indexable {
 	 */
 	protected function get_embeddable_meta( int $post_id, string $post_type ): array {
 		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
-		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
-		if ( empty( $weighting[ $post_type ] ) ) {
+
+		$fields = $this->settings_page->get_embedding_fields( $post_id );
+
+		if ( empty( $fields ) ) {
 			/**
 			 * Filter the list of metafields which values should be included in the post representation.
 			 *
@@ -467,18 +470,7 @@ class Post extends Indexable {
 			return apply_filters( 'ep_embeddings_post_embeddable_meta', [], $post_id, $post_type );
 		}
 
-		$post_type_weighting = $weighting[ $post_type ];
-
-		$meta_fields = array_reduce(
-			array_keys( $post_type_weighting ),
-			function ( $acc, $field ) use ( $post_type_weighting ) {
-				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/meta\.(.*)\.value/', $field, $matches ) ) {
-					$acc[] = $matches[1];
-				}
-				return $acc;
-			},
-			[]
-		);
+		$meta_fields = $this->settings_page->get_embedding_fields( $post_id );
 
 		// This filter is documented above.
 		return apply_filters( 'ep_embeddings_post_embeddable_meta', $meta_fields, $post_id, $post_type );

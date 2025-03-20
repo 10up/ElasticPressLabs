@@ -389,4 +389,20 @@ class Settings {
 
 		return false;
 	}
+
+	/**
+	 * Get the fields used for embedding content.
+	 *
+	 * @param int $post_id The ID of the post to get the fields for.
+	 * @return array The fields used for embedding content.
+	 */
+	public function get_embedding_fields( $post_id ) {
+		$config = $this->get_post_type_config( $post_id );
+
+		if ( empty( $config ) ) {
+			return [];
+		}
+
+		return $config['fieldsEmbedding'] ?? [];
+	}
 }
