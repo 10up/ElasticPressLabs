@@ -21,7 +21,7 @@ class Post extends Indexable {
 	 *
 	 * @var Settings
 	 */
-	public $settings_page = null;
+	public $settings_page;
 	/**
 	 * Setup hooks
 	 */
