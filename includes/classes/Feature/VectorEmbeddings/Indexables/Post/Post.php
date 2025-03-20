@@ -265,6 +265,11 @@ class Post extends Indexable {
 		$embeddings  = $this->feature->get_embedding( $post_id, 'post', $post_chunks );
 
 		if ( ! is_array( $embeddings ) ) {
+			if ( is_wp_error( $embeddings ) ) {
+				if ( defined( 'WP_CLI' ) && WP_CLI ) {
+					\WP_CLI::debug( __( 'Failed at generating embedding. Check your credentials.', 'elasticpress' ) );
+				}
+			}
 			return $args;
 		}
 
