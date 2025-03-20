@@ -69,6 +69,8 @@ export default () => {
 						)}
 						value={name}
 						onChange={onChangeName}
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 					/>
 					<TemplateField value={template} onChange={setTemplate} />
 					<Flex justify="flex-start">

@@ -41,6 +41,7 @@ export default ({ value, onChange, disabled }) => {
 				),
 				{ code: <code /> },
 			)}
+			__nextHasNoMarginBottom
 		>
 			{isValueValidJson() || (
 				<Notice status="error" isDismissible={false}>
