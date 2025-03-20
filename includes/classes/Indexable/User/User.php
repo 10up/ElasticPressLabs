@@ -37,21 +37,16 @@ class User extends Indexable {
 	public $slug = 'user';
 
 	/**
-	 * Create indexable and setup dependencies
-	 */
-	public function __construct() {
-		$this->labels = [
-			'plural'   => esc_html__( 'Users', 'elasticpress-labs' ),
-			'singular' => esc_html__( 'User', 'elasticpress-labs' ),
-		];
-	}
-
-	/**
 	 * Instantiate the indexable SyncManager and QueryIntegration, the main responsibles for the WP integration.
 	 *
 	 * @return void
 	 */
 	public function setup() {
+		$this->labels = [
+			'plural'   => esc_html__( 'Users', 'elasticpress-labs' ),
+			'singular' => esc_html__( 'User', 'elasticpress-labs' ),
+		];
+
 		$this->sync_manager      = new SyncManager( $this->slug );
 		$this->query_integration = new QueryIntegration( $this->slug );
 	}
