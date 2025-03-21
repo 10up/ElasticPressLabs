@@ -12,8 +12,12 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 const { modelUrl, restApiEndpoint, searchQuery, searchTermEmbeddingMethod } = window.epRag;
 
-env.allowLocalModels = true;
-env.allowRemoteModels = false;
+let finalModelUrl = 'Xenova/all-MiniLM-L6-v2';
+if (modelUrl) {
+	env.allowLocalModels = true;
+	env.allowRemoteModels = false;
+	finalModelUrl = modelUrl;
+}
 
 /**
  * App component
@@ -26,9 +30,7 @@ const App = () => {
 
 	useEffect(() => {
 		if (searchTermEmbeddingMethod === 'client-side') {
-			pipeline('feature-extraction', modelUrl, {
-				quantized: false,
-			}).then((pipe) => {
+			pipeline('feature-extraction', finalModelUrl).then((pipe) => {
 				pipe(searchQuery, { pooling: 'mean', normalize: true }).then((features) => {
 					apiFetch({
 						path: restApiEndpoint,
