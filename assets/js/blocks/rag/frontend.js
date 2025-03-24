@@ -67,7 +67,7 @@ const App = () => {
 		</Placeholder>
 	) : (
 		// eslint-disable-next-line react/no-danger
-		<p dangerouslySetInnerHTML={{ __html: message }} />
+		<div className="ep-rag-generated" dangerouslySetInnerHTML={{ __html: message }} />
 	);
 };
 
