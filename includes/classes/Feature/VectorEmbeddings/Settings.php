@@ -247,6 +247,10 @@ class Settings {
 			return false;
 		}
 
+		if ( ! $config['embeddable'] ) {
+			return false;
+		}
+
 		[
 			'embeddable'            => $embeddable,
 			'fieldsEmbedding'       => $fields_embedding,
@@ -272,7 +276,7 @@ class Settings {
 			return true;
 		}
 
-		return false;
+		return true;
 	}
 
 	/**
