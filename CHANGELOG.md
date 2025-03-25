@@ -25,13 +25,14 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Added
 * Geo Location Feature. Props [@burhandodhy](https://github.com/burhandodhy) and [@felipeelia](https://github.com/felipeelia) via [#123](https://github.com/10up/ElasticPressLabs/pull/123).
-* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#118](https://github.com/10up/ElasticPressLabs/pull/118).
+* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#118](https://github.com/10up/ElasticPressLabs/pull/118) and [#135](https://github.com/10up/ElasticPressLabs/pull/135).
 
 ### Changed
 * Minimum requirements to run the plugin: PHP 7.4+, WP 6.0+, and EP 5.2.0+. Props [@felipeelia](https://github.com/felipeelia) via [#122](https://github.com/10up/ElasticPressLabs/pull/122).
 
 ### Fixed
-* PHP Notice: Function _load_textdomain_just_in_time was called incorrectly. Props [@burhandodhy](https://github.com/burhandodhy) via [#125](https://github.com/10up/ElasticPressLabs/pull/125).
+* PHP Notice: Function _load_textdomain_just_in_time was called incorrectly. Props [@burhandodhy](https://github.com/burhandodhy) via [#125](https://github.com/10up/ElasticPressLabs/pull/125) and [#132](https://github.com/10up/ElasticPressLabs/pull/132).
+* Editor deprecated warnings. Props [@burhandodhy](https://github.com/burhandodhy) via [#133](https://github.com/10up/ElasticPressLabs/pull/133).
 
 ### Developer
 * Fixed PR links in the changelog. Props [@felipeelia](https://github.com/felipeelia) via [#115](https://github.com/10up/ElasticPressLabs/pull/115).

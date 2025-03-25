@@ -42,6 +42,7 @@ __Changed:__
 __Fixed:__
 
 * PHP Notice: Function _load_textdomain_just_in_time was called incorrectly. Props [@burhandodhy](https://github.com/burhandodhy).
+* Editor deprecated warnings. Props [@burhandodhy](https://github.com/burhandodhy).
 
 __Developer:__
 
