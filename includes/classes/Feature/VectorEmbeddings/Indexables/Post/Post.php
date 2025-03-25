@@ -78,6 +78,16 @@ class Post extends Indexable {
 				'type'         => 'boolean',
 			]
 		);
+
+		register_post_meta(
+			'',
+			'ep_embedding_include',
+			[
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'boolean',
+			]
+		);
 	}
 
 	/**
@@ -105,6 +115,14 @@ class Post extends Indexable {
 			Utils\get_asset_info( 'embeddings-editor-script', 'dependencies' ),
 			Utils\get_asset_info( 'embeddings-editor-script', 'version' ),
 			true
+		);
+
+		wp_localize_script(
+			'ep-embeddings-editor',
+			'epEmbeddingsEditor',
+			[
+				'postTypeConfig' => $this->settings_page->get_post_type_config( $post->ID ),
+			]
 		);
 
 		wp_set_script_translations( 'ep-embeddings-editor', 'elasticpress-labs' );

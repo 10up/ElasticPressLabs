@@ -257,7 +257,7 @@ class Settings {
 		] = $config;
 
 		if ( 'manual' === $embedding_mode ) {
-			return get_post_meta( $post_id, 'ep_embeddings_include', true );
+			return get_post_meta( $post_id, 'ep_embedding_include', true );
 		}
 
 		if ( ! $embeddable ) {
