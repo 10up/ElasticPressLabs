@@ -45,8 +45,9 @@ export default () => {
 	};
 
 	const onChangeName = (newName) => {
-		setName(newName);
-		setDisabled(Object.keys(templates).includes(newName));
+		const sanitizedName = newName.toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
+		setName(sanitizedName);
+		setDisabled(Object.keys(templates).includes(sanitizedName));
 	};
 
 	return (
@@ -64,7 +65,7 @@ export default () => {
 					<TextControl
 						label={__('Name', 'elasticpress-labs')}
 						help={__(
-							'Template names are not editable. Double-check your template name before saving it.',
+							'Template names are not editable and only accept lowercase letters, numbers, -, and _. Double-check your template name before saving it.',
 							'elasticpress-labs',
 						)}
 						value={name}
