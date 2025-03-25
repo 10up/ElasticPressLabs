@@ -406,7 +406,7 @@ The following JSON object contains the URL and the page content. You should use 
 			[
 				'key'     => 'ep_rag_prompt',
 				'label'   => __( 'AI Prompt', 'elasticpress-labs' ),
-				'help'    => __( 'The <code>{search_term}</code> and <code>{posts}</code> strings will be replaced.', 'elasticpress-labs' ),
+				'help'    => __( 'The <code>{posts}</code> string will be replaced.', 'elasticpress-labs' ),
 				'type'    => 'textarea',
 				'default' => $this->default_settings['ep_rag_prompt'],
 			],
