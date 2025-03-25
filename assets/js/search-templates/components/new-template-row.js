@@ -2,7 +2,7 @@
  * WordPress Dependencies.
  */
 import { Button, Flex, Notice, PanelBody, PanelRow, TextControl } from '@wordpress/components';
-import { useState, WPElement } from '@wordpress/element';
+import { useEffect, useState, WPElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -20,7 +20,7 @@ import TemplateField from './template-field';
 export default () => {
 	const [name, setName] = useState('');
 	const [template, setTemplate] = useState('');
-	const [disabled, setDisabled] = useState(false);
+	const [disabled, setDisabled] = useState(true);
 
 	const { templates } = useSearchTemplate();
 	const { saveTemplate } = useSearchTemplateDispatch();
@@ -47,14 +47,19 @@ export default () => {
 	const onChangeName = (newName) => {
 		const sanitizedName = newName.toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
 		setName(sanitizedName);
-		setDisabled(Object.keys(templates).includes(sanitizedName));
 	};
+
+	const updateSaveButtonState = () => {
+		setDisabled(name === '' || Object.keys(templates).includes(name) || template === '');
+	};
+
+	useEffect(updateSaveButtonState, [name, templates, template]);
 
 	return (
 		<PanelBody title={__('Add New Template', 'elasticpress-labs')} initialOpen>
 			<PanelRow>
 				<Flex direction="column" style={{ width: '100%' }}>
-					{name && disabled && (
+					{name && Object.keys(templates).includes(name) && (
 						<Notice status="error" isDismissible={false}>
 							{__(
 								'This name is already in use. You can change the existing template instead.',
