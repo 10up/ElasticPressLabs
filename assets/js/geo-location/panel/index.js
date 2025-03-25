@@ -71,12 +71,17 @@ const GeoLocationPanel = () => {
 				value={ep_latitude}
 				onChange={onUpdateLatitude}
 				type="number"
+				style={{ marginBottom: '8px' }}
+				__nextHasNoMarginBottom
+				__next40pxDefaultSize
 			/>
 			<TextControl
 				label={__('Longitude', 'elasticpress-labs')}
 				value={ep_longitude}
 				onChange={onUpdateLongitude}
 				type="number"
+				__nextHasNoMarginBottom
+				__next40pxDefaultSize
 			/>
 		</WrapperElement>
 	);

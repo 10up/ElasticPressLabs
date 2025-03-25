@@ -245,6 +245,10 @@ class SearchTemplates extends Feature {
 	 * Set the `settings_schema` attribute
 	 */
 	protected function set_settings_schema() {
+		if ( ! $this->is_active() ) {
+			return;
+		}
+
 		$this->settings_schema = [
 			[
 				'key'   => 'additional_links',
