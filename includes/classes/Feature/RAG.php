@@ -192,8 +192,8 @@ The following JSON object contains the URL and the page content. You should use 
 			];
 		}
 
-		$prompt = $this->get_prompt( $search_term, $posts_representations );
-		return $this->ai_api_request( $prompt );
+		$prompt = $this->get_prompt( $posts_representations );
+		return $this->ai_api_request( $prompt, $search_term );
 	}
 
 	/**
@@ -269,25 +269,25 @@ The following JSON object contains the URL and the page content. You should use 
 	/**
 	 * Generate the prompt for the AI model
 	 *
-	 * @param string $search_term           The user search query
-	 * @param array  $posts_representations The posts to be used as context
+	 * @param array $posts_representations The posts to be used as context
 	 * @return string
 	 */
-	public function get_prompt( $search_term, $posts_representations ) {
+	public function get_prompt( $posts_representations ) {
 		$posts_representations_str = wp_json_encode( $posts_representations );
 
 		$prompt = $this->get_setting( 'ep_rag_prompt' );
 
-		return str_replace( [ '{search_term}', '{posts}' ], [ $search_term, $posts_representations_str ], $prompt );
+		return str_replace( '{posts}', $posts_representations_str, $prompt );
 	}
 
 	/**
 	 * Send a request to the AI API
 	 *
-	 * @param string $prompt The prompt
+	 * @param string $prompt      Prompt for the AI model
+	 * @param string $search_term Search query
 	 * @return string
 	 */
-	public function ai_api_request( $prompt ) {
+	public function ai_api_request( $prompt, $search_term ) {
 		$headers = [
 			'Authorization' => 'Bearer ' . $this->get_setting( 'ep_rag_api_key' ),
 			'Content-Type'  => 'application/json',
@@ -297,8 +297,12 @@ The following JSON object contains the URL and the page content. You should use 
 			'model'    => $this->get_setting( 'ep_rag_chat_model' ),
 			'messages' => [
 				[
-					'role'    => 'user',
+					'role'    => 'system',
 					'content' => $prompt,
+				],
+				[
+					'role'    => 'user',
+					'content' => $search_term,
 				],
 			],
 		];
