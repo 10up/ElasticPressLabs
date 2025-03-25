@@ -276,7 +276,9 @@ class Settings {
 			return true;
 		}
 
-		return true;
+		$default = $this->get_default_inclusion_rule();
+
+		return $default;
 	}
 
 	/**
@@ -409,5 +411,76 @@ class Settings {
 		}
 
 		return $config['fieldsEmbedding'] ?? [];
+	}
+
+	/**
+	 * Get the default inclusion rule.
+	 *
+	 * Default Inclusion Rule Help
+	 *
+	 * The Default Inclusion Rule determines how posts are included or excluded for vector embeddings
+	 * based on taxonomy conditions.
+	 *
+	 * - Taxonomy with `termsInclude`:
+	 *     - If a taxonomy has `termsInclude` values, only posts with the specified terms will be included.
+	 *     - Posts without these terms will be excluded.
+	 *     - Default behavior: Posts are not included by default.
+	 *
+	 * - Taxonomy with `termsExclude`:
+	 *     - If a taxonomy has `termsExclude` values, posts with the specified terms will be excluded.
+	 *     - Posts without these terms will be included.
+	 *     - Default behavior: Posts are included by default.
+	 *
+	 * - Both `termsInclude` and `termsExclude`:
+	 *     - If both `termsInclude` and `termsExclude` are set for a taxonomy, the rule defaults to excluding
+	 *       posts that match `termsExclude`, even if they also match `termsInclude`.
+	 *     - Default behavior: Posts are not included by default.
+	 *
+	 * Scenarios:
+	 *
+	 * - No Rules Set:
+	 *     - If no `termsInclude` or `termsExclude` values are set, all posts are included by default.
+	 *
+	 * - Conflicting Rules:
+	 *     - If conflicting rules are set, this system prioritizes `termsExclude` over `termsInclude`.
+	 *
+	 * Examples:
+	 *
+	 * - Example 1: A taxonomy has `termsInclude` set to "Category A".
+	 *     - Posts in "Category A" are included.
+	 *     - Posts not in "Category A" are excluded.
+	 *
+	 * - Example 2: A taxonomy has `termsExclude` set to "Tag B".
+	 *     - Posts with "Tag B" are excluded.
+	 *     - Posts without "Tag B" are included.
+	 *
+	 * - Example 3: A taxonomy has both `termsInclude` ("Category A") and `termsExclude` ("Tag B").
+	 *     - Posts with "Tag B" are always excluded, even if they are in "Category A".
+	 *     - Only posts in "Category A" that do not have "Tag B" are included.
+	 *
+	 * @return bool Whether to include posts by default.
+	 */
+	public function get_default_inclusion_rule() {
+		if ( empty( $this->current_settings['postTypeConfig'] ) ) {
+			return false; // No rules set - posts are not included by default
+		}
+
+		$has_include_rules = false;
+
+		// Check each post type config for taxonomy rules
+		foreach ( $this->current_settings['postTypeConfig'] as $post_type_config ) {
+			if ( empty( $post_type_config['taxonomies'] ) ) {
+				return true;
+			}
+
+			foreach ( $post_type_config['taxonomies'] as $taxonomy ) {
+				// Check for include rules
+				if ( ! empty( $taxonomy['termsInclude'] ) ) {
+					$has_include_rules = true;
+				}
+			}
+		}
+
+		return ! $has_include_rules;
 	}
 }
