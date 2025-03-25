@@ -252,12 +252,8 @@ class Settings {
 		}
 
 		[
-			'embeddable'            => $embeddable,
-			'fieldsEmbedding'       => $fields_embedding,
-			'fieldsIndexingInclude' => $fields_indexing_include,
-			'fieldsIndexingExclude' => $fields_indexing_exclude,
-			'taxonomies'            => $taxonomies,
-			'embeddingMode'         => $embedding_mode,
+			'embeddable'    => $embeddable,
+			'embeddingMode' => $embedding_mode
 		] = $config;
 
 		if ( 'manual' === $embedding_mode ) {
