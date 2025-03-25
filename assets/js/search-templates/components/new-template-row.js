@@ -47,14 +47,13 @@ export default () => {
 	const onChangeName = (newName) => {
 		const sanitizedName = newName.toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
 		setName(sanitizedName);
-		setDisabled(Object.keys(templates).includes(sanitizedName));
 	};
 
 	const updateSaveButtonState = () => {
-		setDisabled(name === '' || template === '');
+		setDisabled(name === '' || Object.keys(templates).includes(name) || template === '');
 	};
 
-	useEffect(updateSaveButtonState, [name, template]);
+	useEffect(updateSaveButtonState, [name, templates, template]);
 
 	return (
 		<PanelBody title={__('Add New Template', 'elasticpress-labs')} initialOpen>
