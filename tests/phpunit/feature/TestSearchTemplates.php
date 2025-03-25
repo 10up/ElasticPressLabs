@@ -145,6 +145,8 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	 * @group search-templates
 	 */
 	public function test_set_settings_schema() {
+		\ElasticPress\Features::factory()->activate_feature( 'search_templates' );
+
 		$expected = [
 			[
 				'default'          => false,
