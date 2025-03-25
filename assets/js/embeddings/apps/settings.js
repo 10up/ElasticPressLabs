@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { Button, Flex, TabPanel, __experimentalSpacer as Spacer } from '@wordpress/components';
+import { Button, Flex, TabPanel, Panel, PanelBody } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
@@ -58,29 +58,32 @@ export default () => {
 					'elasticpress',
 				)}
 			</p>
-			<Spacer marginBottom={6} />
-			<TabPanel
-				className="ep-vector-embedding-settings__tabs"
-				activeClass="ep-vector-embedding-settings__tabs__tab--active"
-				onSelect={(val) => setCurrentTab(val)}
-				initialTabName={postTypes[0].key}
-				orientation={is2columns ? 'vertical' : 'horizontal'}
-				tabs={tabs}
-			>
-				{({ postType, Component }) => {
-					return <Component key={postType.key} postType={postType} />;
-				}}
-			</TabPanel>
+			<Panel>
+				<PanelBody>
+					<TabPanel
+						className="ep-vector-embedding-settings__tabs"
+						activeClass="ep-vector-embedding-settings__tabs__tab--active"
+						onSelect={(val) => setCurrentTab(val)}
+						initialTabName={postTypes[0].key}
+						orientation={is2columns ? 'vertical' : 'horizontal'}
+						tabs={tabs}
+					>
+						{({ postType, Component }) => {
+							return <Component key={postType.key} postType={postType} />;
+						}}
+					</TabPanel>
 
-			<Flex justify="flex-end">
-				<Button
-					className="ep-vector-embeddings-panel__save"
-					variant="primary"
-					onClick={onSubmit}
-				>
-					{__('Save settings', 'elasticpress')}
-				</Button>
-			</Flex>
+					<Flex justify="flex-end">
+						<Button
+							className="ep-vector-embeddings-panel__save"
+							variant="primary"
+							onClick={onSubmit}
+						>
+							{__('Save settings', 'elasticpress')}
+						</Button>
+					</Flex>
+				</PanelBody>
+			</Panel>
 		</form>
 	);
 };
