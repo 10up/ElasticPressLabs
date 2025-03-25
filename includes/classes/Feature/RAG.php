@@ -34,8 +34,6 @@ class RAG extends Feature {
 		'ep_rag_number_of_posts'          => 5,
 		'ep_rag_prompt'                   => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
-The search term is '{search_term}'.
-
 The following JSON object contains the URL and the page content. You should use it as context:
 
 {posts}",
