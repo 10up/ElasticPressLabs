@@ -479,6 +479,11 @@ class Settings {
 			}
 		}
 
+		// if post meta is set to include, return true
+		if ( ! empty( $this->current_settings['fieldsIndexingInclude'] ) ) {
+			$has_include_rules = true;
+		}
+
 		return ! $has_include_rules;
 	}
 
