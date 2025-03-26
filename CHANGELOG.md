@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
-## [2.4.0] - 2025-XX-XX
+## [2.4.0] - 2025-03-26
 
 - New minimum versions (see [#122](https://github.com/10up/ElasticPressLabs/pull/122)) are:
 	||Min|Max|
@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Added
 * Geo Location Feature. Props [@burhandodhy](https://github.com/burhandodhy) and [@felipeelia](https://github.com/felipeelia) via [#123](https://github.com/10up/ElasticPressLabs/pull/123).
-* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#118](https://github.com/10up/ElasticPressLabs/pull/118), [#135](https://github.com/10up/ElasticPressLabs/pull/135), and [#136](https://github.com/10up/ElasticPress/pull/136).
+* Search Templates feature. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#118](https://github.com/10up/ElasticPressLabs/pull/118), [#135](https://github.com/10up/ElasticPressLabs/pull/135), and [#136](https://github.com/10up/ElasticPressLabs/pull/136).
 
 ### Changed
 * Minimum requirements to run the plugin: PHP 7.4+, WP 6.0+, and EP 5.2.0+. Props [@felipeelia](https://github.com/felipeelia) via [#122](https://github.com/10up/ElasticPressLabs/pull/122).
