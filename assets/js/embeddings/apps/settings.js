@@ -54,7 +54,7 @@ export default () => {
 		<form className="ep-vector-embedding-settings__post-types-list">
 			<p>
 				{__(
-					'Configure the settings for the vector embeddings for each post type. You can also configure the indexing settings.',
+					'Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data. Additionally, you can control',
 					'elasticpress',
 				)}
 			</p>
