@@ -361,7 +361,9 @@ class Post extends Indexable {
 		 */
 		$main_content = apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
 
-		$chunks = $this->feature->chunk_content( $main_content );
+		$chunk_size   = $this->settings_page->get_chunk_size();
+		$overlap_size = $this->settings_page->get_chunk_overlap();
+		$chunks       = $this->feature->chunk_content( $main_content, $chunk_size, $overlap_size );
 
 		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
 		if ( $taxonomies ) {

@@ -2,9 +2,9 @@
  * Window dependencies.
  */
 const {
-	settings: { postTypeConfig },
+	settings: { postTypeConfig, chunkSize, chunkOverlap },
 	indexablePostTypes,
 	apiUrl,
 } = window.epVectorEmbeddings;
 
-export { postTypeConfig, indexablePostTypes, apiUrl };
+export { postTypeConfig, chunkSize, chunkOverlap, indexablePostTypes, apiUrl };

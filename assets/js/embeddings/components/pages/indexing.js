@@ -1,14 +1,37 @@
+/**
+ * External dependencies
+ */
 import { RangeControl, Panel, PanelBody, PanelHeader } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies
+ */
+import { useVectorEmebeddingSettings } from '../../provider';
 
 export default () => {
+	const { currentSettings, setChunkSize, setChunkOverlap } = useVectorEmebeddingSettings();
+	const { chunkSize, chunkOverlap } = currentSettings;
 	return (
 		<Panel>
 			<PanelHeader>
-				<h2>General</h2>
+				<h2>{__('Indexing', 'elasticpress-labs')}</h2>
 			</PanelHeader>
 			<PanelBody>
-				<RangeControl label="Embedding Dimension" value={10} min={1} max={100} />
-				<RangeControl label="Embedding Epochs" value={50} min={1} max={100} />
+				<RangeControl
+					label="Chunk Size"
+					value={chunkSize}
+					onChange={setChunkSize}
+					min={50}
+					max={300}
+				/>
+				<RangeControl
+					label="Chunk Overlap"
+					value={chunkOverlap}
+					onChange={setChunkOverlap}
+					min={1}
+					max={100}
+				/>
 			</PanelBody>
 		</Panel>
 	);

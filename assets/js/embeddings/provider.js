@@ -17,6 +17,8 @@ const Context = createContext();
  * @param {Function} props.children Component children.
  * @param {object} props.postTypeConfig Post Type Configurations.
  * @param {object} props.indexablePostTypes Indexable Post Types.
+ * @param {number} props.chunkSize Chunk Size.
+ * @param {number} props.chunkOverlap Chunk Overlap.
  *
  * @returns {WPElement} Element.
  */
@@ -25,10 +27,12 @@ export const VectorEmbeddingsProvider = ({
 	children,
 	postTypeConfig,
 	indexablePostTypes,
+	chunkSize,
+	chunkOverlap,
 }) => {
 	const [isBusy, setIsBusy] = useState(false);
 	const [currentSettings, setCurrentSettings] = useState({
-		...{ postTypeConfig, indexablePostTypes },
+		...{ postTypeConfig, indexablePostTypes, chunkSize, chunkOverlap },
 	});
 
 	const setEmbeddingForPostType = (postType, taxonomy, key, value) => {
@@ -73,6 +77,20 @@ export const VectorEmbeddingsProvider = ({
 		});
 	};
 
+	const setChunkSize = (value) => {
+		setCurrentSettings((prevConfig) => ({
+			...prevConfig,
+			chunkSize: value,
+		}));
+	};
+
+	const setChunkOverlap = (value) => {
+		setCurrentSettings((prevConfig) => ({
+			...prevConfig,
+			chunkOverlap: value,
+		}));
+	};
+
 	/**
 	 * Save settings.
 	 *
@@ -104,6 +122,8 @@ export const VectorEmbeddingsProvider = ({
 		isBusy,
 		save,
 		setEmbeddingForPostType,
+		setChunkOverlap,
+		setChunkSize,
 	};
 
 	/**

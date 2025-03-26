@@ -40,6 +40,8 @@ class Settings {
 			self::SETTINGS_KEY,
 			[
 				'postTypeConfig' => $this->get_default_post_type_config(),
+				'chunkSize'      => 100,
+				'chunkOverlap'   => 50,
 			]
 		);
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
@@ -478,5 +480,23 @@ class Settings {
 		}
 
 		return ! $has_include_rules;
+	}
+
+	/**
+	 * Get chunk size set in settings
+	 *
+	 * @return int
+	 */
+	public function get_chunk_size() {
+		return $this->current_settings['chunkSize'] ?? 100;
+	}
+
+	/**
+	 * Get chunk overlap set in settings
+	 *
+	 * @return int
+	 */
+	public function get_chunk_overlap() {
+		return $this->current_settings['chunkOverlap'] ?? 50;
 	}
 }
