@@ -1,8 +1,10 @@
 {
   "extends": "@10up/eslint-config/wordpress",
-  "rules": {},
+  "rules": {
+    "@wordpress/no-unsafe-wp-apis": "off"
+  },
   "globals": {
-	  "module": true,
+    "module": true,
     "process": true,
     "jQuery": true
   }
