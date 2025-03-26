@@ -73,7 +73,7 @@ export default () => {
 						}}
 					</TabPanel>
 
-					<Flex justify="flex-end">
+					<Flex justify="flex-end" style={{ marginTop: '20px' }}>
 						<Button
 							className="ep-vector-embeddings-panel__save"
 							variant="primary"
