@@ -66,7 +66,7 @@ export default ({ postType }) => {
 								</li>
 								<li>
 									{__(
-										'Both Include & Exclude: If both are set, excluded terms and fields take priority-—posts with those terms will always be left out, even if they match the included terms.',
+										'Both Include & Exclude: If both are set, excluded terms and fields take priority — posts with those terms will always be left out, even if they match the included terms.',
 										'elasticpress',
 									)}
 								</li>
