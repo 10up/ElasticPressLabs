@@ -44,7 +44,7 @@ export default ({ postType }) => {
 					const { label, value } = field;
 					return (
 						<CheckboxControl
-							key={field}
+							key={value}
 							label={label}
 							checked={fieldsEmbedding.includes(value)}
 							onChange={() => {

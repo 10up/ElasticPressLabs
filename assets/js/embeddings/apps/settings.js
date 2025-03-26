@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { Button, Flex, TabPanel, Panel, PanelBody } from '@wordpress/components';
+import { Button, Flex, TabPanel, Panel, PanelBody, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
@@ -15,7 +15,7 @@ import Indexing from '../components/pages/indexing';
 
 export default () => {
 	const { currentSettings, save } = useVectorEmebeddingSettings();
-	const { postTypeConfig: postTypes } = currentSettings;
+	const { postTypeConfig: postTypes, embeddingsFiltered } = currentSettings;
 	const { createNotice } = useSettingsScreen();
 	const [currentTab, setCurrentTab] = useState(0); // eslint-disable-line
 	const is2columns = window.innerWidth > 782;
@@ -58,8 +58,17 @@ export default () => {
 					'elasticpress',
 				)}
 			</p>
+
 			<Panel>
 				<PanelBody>
+					{embeddingsFiltered && (
+						<Notice status="warning" isDismissible={false}>
+							{__(
+								'This configuration is currently filtered via the `ep_vector_embeddings_settings` filter. Changes made here will not be applied.',
+								'elasticpress',
+							)}
+						</Notice>
+					)}
 					<TabPanel
 						className="ep-vector-embedding-settings__tabs"
 						activeClass="ep-vector-embedding-settings__tabs__tab--active"

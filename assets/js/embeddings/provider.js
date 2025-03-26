@@ -29,10 +29,11 @@ export const VectorEmbeddingsProvider = ({
 	indexablePostTypes,
 	chunkSize,
 	chunkOverlap,
+	embeddingsFiltered,
 }) => {
 	const [isBusy, setIsBusy] = useState(false);
 	const [currentSettings, setCurrentSettings] = useState({
-		...{ postTypeConfig, indexablePostTypes, chunkSize, chunkOverlap },
+		...{ postTypeConfig, indexablePostTypes, chunkSize, chunkOverlap, embeddingsFiltered },
 	});
 
 	const setEmbeddingForPostType = (postType, taxonomy, key, value) => {

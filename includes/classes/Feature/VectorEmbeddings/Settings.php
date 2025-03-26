@@ -129,9 +129,10 @@ class Settings {
 			'ep_vector_embeddings_scripts',
 			'epVectorEmbeddings',
 			[
-				'apiUrl'         => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-				'settings'       => $this->current_settings,
-				'indexableTypes' => array_keys( $this->get_searchable_post_types() ),
+				'apiUrl'             => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
+				'settings'           => $this->current_settings,
+				'indexableTypes'     => array_keys( $this->get_searchable_post_types() ),
+				'embeddingsFiltered' => has_filter( 'ep_vector_embeddings_is_embeddable' ),
 			]
 		);
 	}
@@ -243,6 +244,18 @@ class Settings {
 	 * @return bool True if the post is embeddable, false otherwise.
 	 */
 	public function is_embeddable( $post_id ) {
+		/**
+		 * Override the embeddable status of a post.
+		 *
+		 * @param bool $embeddable The embeddable status of the post.
+		 * @param int $post_id The ID of the post to check.
+		 * @return bool
+		 */
+		$embeddable = apply_filters( 'ep_vector_embeddings_is_embeddable', null, $post_id );
+		if ( has_filter( 'ep_vector_embeddings_is_embeddable' ) ) {
+			return $embeddable;
+		}
+
 		$config = $this->get_post_type_config( $post_id );
 
 		if ( empty( $config ) ) {

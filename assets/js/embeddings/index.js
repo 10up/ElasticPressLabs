@@ -10,7 +10,7 @@ import { __ } from '@wordpress/i18n';
 import { SettingsScreenProvider } from '../settings-screen';
 import { VectorEmbeddingsProvider } from './provider';
 import PostTypesList from './apps/settings';
-import { apiUrl, postTypeConfig, chunkSize, chunkOverlap } from './config';
+import { apiUrl, postTypeConfig, chunkSize, chunkOverlap, embeddingsFiltered } from './config';
 
 /**
  * Styles.
@@ -25,7 +25,9 @@ import './style.css';
 const App = () => {
 	return (
 		<SettingsScreenProvider title={__('Manage Vector Embeddings', 'elasticpress')}>
-			<VectorEmbeddingsProvider {...{ apiUrl, postTypeConfig, chunkSize, chunkOverlap }}>
+			<VectorEmbeddingsProvider
+				{...{ apiUrl, postTypeConfig, chunkSize, chunkOverlap, embeddingsFiltered }}
+			>
 				<PostTypesList />
 			</VectorEmbeddingsProvider>
 		</SettingsScreenProvider>

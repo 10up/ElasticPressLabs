@@ -28,5 +28,9 @@
 		width: 100%;
 	}
 	width: 800px;
-}	
+}
 
+.ep-vector-embedding-settings__post-types-list .components-notice {
+
+	margin-bottom: 20px;
+}
