@@ -30,7 +30,7 @@ export default ({ postType }) => {
 			<PanelHeader>
 				<h2>{label}</h2>
 			</PanelHeader>
-			<PanelBody initialOpen>
+			<PanelBody>
 				<PanelRow>
 					<CheckboxControl
 						label={__('Allow Vector Embedding', 'elasticpress')}
@@ -46,7 +46,7 @@ export default ({ postType }) => {
 				</PanelRow>
 			</PanelBody>
 			{embeddable && (
-				<PanelBody initialOpen title={__('Indexing Criteria', 'elasticpress')}>
+				<PanelBody title={__('Indexing Criteria', 'elasticpress')}>
 					<EmbeddingMode {...{ postType }} />
 					{embeddingMode === 'automatic' && (
 						<>
@@ -91,7 +91,7 @@ export default ({ postType }) => {
 				</PanelBody>
 			)}
 			{embeddable && (
-				<PanelBody initialOpen={false} title={__('Content Fields', 'elasticpress')}>
+				<PanelBody initialOpen title={__('Content Fields', 'elasticpress')}>
 					<EmbeddedFields postType={postType} />
 				</PanelBody>
 			)}
