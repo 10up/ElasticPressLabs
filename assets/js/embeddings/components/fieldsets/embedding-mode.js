@@ -15,8 +15,8 @@ export default ({ postType }) => {
 	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
 
 	const options = [
-		{ label: __('Automatic', 'elasticpress'), value: 'automatic' },
 		{ label: __('Manual', 'elasticpress'), value: 'manual' },
+		{ label: __('Automatic', 'elasticpress'), value: 'automatic' },
 	];
 
 	return (
