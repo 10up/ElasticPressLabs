@@ -130,7 +130,7 @@ export default ({ templateName }) => {
 					/>
 					<Flex justify="flex-start">
 						<Button
-							disabled={false}
+							disabled={template === '' || isSaving}
 							isBusy={false}
 							onClick={onSaveTemplate}
 							type="button"
