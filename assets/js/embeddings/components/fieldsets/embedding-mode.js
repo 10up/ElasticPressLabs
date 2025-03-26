@@ -1,11 +1,7 @@
 /**
  * WordPress dependencies
  */
-import {
-	__experimentalSpacer as Spacer,
-	__experimentalToggleGroupControl as ToggleGroupControl,
-	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
-} from '@wordpress/components';
+import { __experimentalSpacer as Spacer, RadioControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -17,6 +13,12 @@ import { useVectorEmebeddingSettings } from '../../provider';
 export default ({ postType }) => {
 	const { embeddingMode, key } = postType;
 	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+
+	const options = [
+		{ label: __('Automatic', 'elasticpress'), value: 'automatic' },
+		{ label: __('Manual', 'elasticpress'), value: 'manual' },
+	];
+
 	return (
 		<Spacer marginBottom={6}>
 			<p>
@@ -47,34 +49,25 @@ export default ({ postType }) => {
 				)}
 			</p>
 			<Group>
-				<ToggleGroupControl
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-					isBlock
-					style={{ maxWidth: '300px' }}
+				<RadioControl
 					label="Embedding Mode"
 					help={
 						embeddingMode === 'automatic'
 							? __(
-									'Posts be will indexed according to the confiruation below.',
+									'Posts be will indexed according to the configuration below.',
 									'elasticpress',
 								)
 							: __(
-									'Editors will manually select which posts will qualify for vector embedding',
+									'Users will manually select which posts will qualify for vector embedding',
 									'elasticpress',
 								)
 					}
-					value={embeddingMode}
+					selected={embeddingMode}
+					options={options}
 					onChange={(value) => {
 						setEmbeddingForPostType(key, null, 'embeddingMode', value);
 					}}
-				>
-					<ToggleGroupControlOption
-						label={__('Automatic', 'elasticpress')}
-						value="automatic"
-					/>
-					<ToggleGroupControlOption label={__('Manual', 'elasticpress')} value="manual" />
-				</ToggleGroupControl>
+				/>
 			</Group>
 		</Spacer>
 	);
