@@ -46,10 +46,37 @@ export default ({ postType }) => {
 				</PanelRow>
 			</PanelBody>
 			{embeddable && (
-				<PanelBody initialOpen={false} title={__('Indexing Criteria', 'elasticpress')}>
+				<PanelBody initialOpen title={__('Indexing Criteria', 'elasticpress')}>
 					<EmbeddingMode {...{ postType }} />
 					{embeddingMode === 'automatic' && (
 						<>
+							<h4>{__('Rules', 'elasticpress')}</h4>
+							<ul style={{ paddingLeft: '20px', listStyle: 'disc' }}>
+								<li>
+									{__(
+										'Include: If you specify terms or fields to include, only posts with those terms or fields will be included. All others will be excluded.',
+										'elasticpress',
+									)}
+								</li>
+								<li>
+									{__(
+										'Exclude: If you specify terms or fields to exclude, posts with those terms and fields will be left out, while all others will be included.',
+										'elasticpress',
+									)}
+								</li>
+								<li>
+									{__(
+										'Both Include & Exclude: If both are set, excluded terms and fields take priority-—posts with those terms will always be left out, even if they match the included terms.',
+										'elasticpress',
+									)}
+								</li>
+								<li>
+									{__(
+										'If no rules are set, all posts are included by default.',
+										'elasticpress',
+									)}
+								</li>
+							</ul>
 							<TaxonomyInclusion {...{ taxonomies, postType }} />
 							<MetaInclusion
 								{...{

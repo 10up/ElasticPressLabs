@@ -18,6 +18,7 @@ export default ({ taxonomies, postType }) => {
 
 	return (
 		<div>
+			<h4>{__('Taxonomies', 'elasticpress-labs')}</h4>
 			{hasTaxonomies > 0 ? (
 				Object.keys(taxonomies).map((taxonomy) => {
 					const { label, termsInclude, termsExclude, enabled } = taxonomies[taxonomy];
