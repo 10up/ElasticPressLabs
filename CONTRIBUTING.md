@@ -28,21 +28,26 @@ The `develop` branch is the development branch which means it contains the next 
 
 ## Release instructions
 
-1. Branch: Starting from `develop`, cut a release branch named `release/X.Y.Z` for your changes.
-1. Version bump: Bump the version number in `elasticpresslabs.php`, `/languages/elasticpress-labs.pot`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
-1. Changelog: Add/update the changelog in `CHANGELOG.md` and `readme.txt`, ensuring to link the [X.Y.Z] release reference in the footer of `CHANGELOG.md` (e.g., https://github.com/10up/ElasticPressLabs/compare/X.Y.Z-1...X.Y.Z).
-1. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
-1. Readme updates: Make any other readme changes as necessary. `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content. The two are slightly different.
-1. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
-1. POT file: Run `wp i18n make-pot . languages/elasticpress-labs.pot` and commit the file. In case of errors, try to disable Xdebug (see [#3079](https://github.com/10up/ElasticPress/pull/3079#issuecomment-1291028290).)
-1. Release date: Double check the release date in both changelog files.
-1. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
-1. Test: While still on the `trunk` branch, test for functionality locally.
-1. Push: Push your `trunk` branch to GitHub (e.g. `git push origin trunk`).
-1. [Check the _Build and Tag_ action](https://github.com/10up/elasticpresslabs/actions/workflows/build-and-tag.yml): a new tag named with the version number should've been created. It should contain all the built assets.
-1. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new), naming the release with the new version number, and targeting the tag created in the previous step. Paste the release changelog from `CHANGELOG.md` into the body of the release and include a link to the closed issues on the [milestone](https://github.com/10up/elasticpresslabs/milestone/#?closed=1).
-1. Close milestone: Edit the [milestone](https://github.com/10up/elasticpresslabs/milestone/#) with release date (in the `Due date (optional)` field) and link to GitHub release (in the `Description` field), then close the milestone.
-1. Punt incomplete items: If any open issues or PRs which were milestoned for `X.Y.Z` do not make it into the release, update their milestone to `X.Y.Z+1`, `X.Y+1.0`, `X+1.0.0` or `Future Release`.
+Open a [new blank issue](https://github.com/10up/ElasticPressLabs/issues/new) with `[Release] X.Y.Z`, then copy and paste the following items, replacing version numbers and links to the milestone.
+
+- [ ] 1. Branch: Starting from `develop`, cut a release branch named `release/X.Y.Z` for your changes.
+- [ ] 2. Version bump: Bump the version number in `elasticpresslabs.php`, `package-lock.json`, `package.json`, `readme.txt`, and any other relevant files if it does not already reflect the version being released.  In `elasticpresslabs.php` update both the plugin "Version:" property and the plugin `ELASTICPRESS_LABS_VERSION` constant.
+- [ ] 3. Changelog: Add/update the changelog in `CHANGELOG.md` and `readme.txt`, ensuring to link the [X.Y.Z] release reference in the footer of `CHANGELOG.md` (e.g., https://github.com/10up/ElasticPressLabs/compare/X.Y.Z-1...X.Y.Z).
+- [ ] 4. Props: Update `CREDITS.md` file with any new contributors, confirm maintainers are accurate.
+- [ ] 5. Readme updates: Make any other readme changes as necessary. `README.md` is geared toward GitHub and `readme.txt` contains WordPress.org-specific content. The two are slightly different.
+- [ ] 6. New files: Check to be sure any new files/paths that are unnecessary in the production version are included in `.gitattributes`.
+- [ ] 7. POT file: Run `wp i18n make-pot . languages/elasticpress-labs.pot` and commit the file. In case of errors, try to disable Xdebug (see [#3079](https://github.com/10up/ElasticPress/pull/3079#issuecomment-1291028290).)
+- [ ] 8. Release date: Double check the release date in both changelog files.
+- [ ] 9. Merge: Merge the release branch/PR into `develop`, then make a non-fast-forward merge from `develop` into `trunk` (`git checkout trunk && git merge --no-ff develop`). `trunk` contains the stable development version.
+- [ ] 10. Test: While still on the `trunk` branch, test for functionality locally.
+- [ ] 11. Push: Push your `trunk` branch to GitHub (e.g. `git push origin trunk`).
+- [ ] 12. [Check the _Build and Tag_ action](https://github.com/10up/elasticpresslabs/actions/workflows/build-and-tag.yml): a new tag named with the version number should've been created. It should contain all the built assets.
+- [ ] 13. Release: Create a [new release](https://github.com/10up/elasticpresslabs/releases/new):
+   * **Tag**: The tag created in the previous step
+   * **Release title**: `Version X.Y.Z`
+   * **Description**: Release changelog from `CHANGELOG.md` + `See: https://github.com/10up/elasticpresslabs/milestone/#?closed=1`
+- [ ] 14. Close milestone: Edit the [milestone](https://github.com/10up/elasticpresslabs/milestone/#) with release date (in the `Due date (optional)` field) and link to GitHub release (in the `Description` field), then close the milestone.
+- [ ] 15. Punt incomplete items: If any open issues or PRs which were milestoned for `X.Y.Z` do not make it into the release, update their milestone to `X.Y.Z+1`, `X.Y+1.0`, `X+1.0.0` or `Future Release`.
 
 ## Hotfix release instructions
 

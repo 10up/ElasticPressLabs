@@ -1,21 +1,21 @@
-# Copyright (C) 2024 10up
+# Copyright (C) 2025 10up
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.3.1\n"
+"Project-Id-Version: ElasticPress Labs 2.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-12-11T17:01:02+00:00\n"
+"POT-Creation-Date: 2025-03-26T10:57:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.8.1\n"
 "X-Domain: elasticpress-labs\n"
 
 #. Plugin Name of the plugin
-#: includes/classes/Feature/ElasticPressLabs.php:37
+#: includes/classes/Feature/ElasticPressLabs.php:54
 msgid "ElasticPress Labs"
 msgstr ""
 
@@ -39,209 +39,285 @@ msgstr ""
 msgid "Error: Please run $ composer install in the ElasticPress Labs plugin directory."
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:39
+#: includes/classes/Feature/BooleanSearchOperators.php:58
 msgid "Boolean Search Operators"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:302
+#: includes/classes/Feature/BooleanSearchOperators.php:314
+#: includes/classes/Feature/GeoLocation.php:96
 msgid "This feature requires the \"Post Search\" feature to be enabled"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:313
+#: includes/classes/Feature/BooleanSearchOperators.php:325
 msgid "Allow boolean operators in search queries"
 msgstr ""
 
-#: includes/classes/Feature/BooleanSearchOperators.php:341
+#: includes/classes/Feature/BooleanSearchOperators.php:353
 msgid "Allows users to search using the following boolean operators:"
 msgstr ""
 
 #. translators: 1: <code>+</code>, 2: <code>AND</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:348
+#: includes/classes/Feature/BooleanSearchOperators.php:360
 msgid "%1$s or %2$s signifies AND operation. eg.: modern +art, modern AND art"
 msgstr ""
 
 #. translators: 1: <code>|</code>, 2: <code>OR</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:360
+#: includes/classes/Feature/BooleanSearchOperators.php:372
 msgid "%1$s or %2$s signifies OR operation. eg.: modern | art, modern OR art"
 msgstr ""
 
 #. translators: 1: <code>-</code>, 2: <code>NOT</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:372
+#: includes/classes/Feature/BooleanSearchOperators.php:384
 msgid "%1$s or %2$s signifies NOT operation. eg.: modern -art, modern NOT art"
 msgstr ""
 
 #. translators: 1: <code>"</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:384
+#: includes/classes/Feature/BooleanSearchOperators.php:396
 msgid "%1$s wraps characters to signify a phrase. eg.: \"modern art\""
 msgstr ""
 
 #. translators: 1: <code>*</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:395
+#: includes/classes/Feature/BooleanSearchOperators.php:407
 msgid "%1$s signifies a prefix wildcard. eg.: art*"
 msgstr ""
 
 #. translators: 1: <code>()</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:406
+#: includes/classes/Feature/BooleanSearchOperators.php:418
 msgid "%1$s signifies precedence. eg.: (MoMA OR (modern AND art))"
 msgstr ""
 
 #. translators: 1: <code>~#</code>
-#: includes/classes/Feature/BooleanSearchOperators.php:417
+#: includes/classes/Feature/BooleanSearchOperators.php:429
 msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:49
+#: includes/classes/Feature/CoAuthorsPlus.php:71
 msgid "Co-Authors Plus"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:197
+#: includes/classes/Feature/CoAuthorsPlus.php:209
 msgid "Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:209
-#: includes/classes/Feature/CoAuthorsPlus.php:230
+#: includes/classes/Feature/CoAuthorsPlus.php:221
+#: includes/classes/Feature/CoAuthorsPlus.php:242
 msgid "If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:248
+#: includes/classes/Feature/CoAuthorsPlus.php:260
 msgid "You need to have Co-Authors Plus installed and activated."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:251
+#: includes/classes/Feature/CoAuthorsPlus.php:263
 msgid "You need to activate the Protected Content Feature to this feature work properly."
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:50
+#: includes/classes/Feature/ElasticPressLabs.php:62
 msgid "Enable or disable the ElastisPress Labs Features."
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:136
+#: includes/classes/Feature/ElasticPressLabs.php:148
 msgid "Register feature"
 msgstr ""
 
-#: includes/classes/Feature/ElasticPressLabs.php:147
+#: includes/classes/Feature/ElasticPressLabs.php:159
 msgid "Unregister feature"
 msgstr ""
 
-#: includes/classes/Feature/ExternalContent.php:36
+#: includes/classes/Feature/ExternalContent.php:50
 msgid "External Content"
 msgstr ""
 
-#: includes/classes/Feature/ExternalContent.php:38
+#: includes/classes/Feature/ExternalContent.php:52
 msgid "List meta keys containing a path or a URL, and ElasticPress will index the content of those path or URL. For example, for a meta key called <code>meta_key</code> with <code>https://wordpress.org/news/wp-json/wp/v2/posts/16837</code> as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called <code>ep_external_content_meta_key</code>."
 msgstr ""
 
 #. translators: Search Fields & Weighting Dashboard URL
-#: includes/classes/Feature/ExternalContent.php:85
+#: includes/classes/Feature/ExternalContent.php:97
 msgid "Add one field per line. Visit the <a href=\"%s\">Search Fields & Weighting Dashboard</a> if you want to make their <code>ep_external_content_*</code> version searchable."
 msgstr ""
 
-#: includes/classes/Feature/ExternalContent.php:97
+#: includes/classes/Feature/ExternalContent.php:109
 msgid "Meta fields with external URLs"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:34
+#: includes/classes/Feature/GeoLocation.php:54
+msgid "Geo Location"
+msgstr ""
+
+#. translators: %1$s and %2$s are the opening and closing <a> tags, respectively
+#: includes/classes/Feature/GeoLocation.php:58
+msgid "Allow users to search for posts based on their location. %1$sLearn more about it.%2$s"
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:73
+msgid "Providing a Google Maps API key enables an autocomplete address field that automatically fetches the latitude and longitude."
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:75
+msgid "Google Maps API Key"
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:100
+msgid "This feature requires Elasticsearch 7.0 or higher"
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:287
+#: assets/js/geo-location/panel/index.js:70
+#: dist/js/geo-location-editor-script.js:1
+msgid "Latitude"
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:298
+#: assets/js/geo-location/panel/index.js:79
+#: dist/js/geo-location-editor-script.js:1
+msgid "Longitude"
+msgstr ""
+
+#: includes/classes/Feature/GeoLocation.php:309
+#: assets/js/geo-location/panel/AutoCompleteField.js:31
+#: dist/js/geo-location-editor-script.js:1
+msgid "Address"
+msgstr ""
+
+#: includes/classes/Feature/MetaKeyPattern.php:54
 msgid "Meta Key Pattern"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:50
+#: includes/classes/Feature/MetaKeyPattern.php:62
 msgid "Include or exclude meta key patterns."
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:101
-#: includes/classes/Feature/MetaKeyPattern.php:158
+#: includes/classes/Feature/MetaKeyPattern.php:113
+#: includes/classes/Feature/MetaKeyPattern.php:170
 msgid "Allow patterns"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:112
-#: includes/classes/Feature/MetaKeyPattern.php:132
-#: includes/classes/Feature/MetaKeyPattern.php:163
+#: includes/classes/Feature/MetaKeyPattern.php:124
+#: includes/classes/Feature/MetaKeyPattern.php:144
+#: includes/classes/Feature/MetaKeyPattern.php:175
 msgid "Separate multiple regular expressions with line breaks."
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:113
+#: includes/classes/Feature/MetaKeyPattern.php:125
 msgid "Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:121
-#: includes/classes/Feature/MetaKeyPattern.php:165
+#: includes/classes/Feature/MetaKeyPattern.php:133
+#: includes/classes/Feature/MetaKeyPattern.php:177
 msgid "Deny patterns"
 msgstr ""
 
-#: includes/classes/Feature/MetaKeyPattern.php:156
+#: includes/classes/Feature/MetaKeyPattern.php:168
 msgid "<p>Separate multiple regular expressions with line breaks.</p><p>Include the weight of the pattern adding a pipe (|) followed by a number. Example: /^[a-z]/|5</p>"
 msgstr ""
 
 #. translators: Sync Page URL
-#: includes/classes/Feature/MetaKeyPattern.php:481
+#: includes/classes/Feature/MetaKeyPattern.php:493
 msgid "Changes in this feature will only be applied after you <a href=\"%1$s\">delete all data and sync</a>."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:32
+#: includes/classes/Feature/SearchAlgorithm.php:51
 msgid "Search Algorithm Version"
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:47
+#: includes/classes/Feature/SearchAlgorithm.php:59
 msgid "Change the version of the search algorithm."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:56
+#: includes/classes/Feature/SearchAlgorithm.php:68
 msgid "By default, the ElasticPress uses version 3.5 but you can change to version 3.4."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:90
-#: includes/classes/Feature/SearchAlgorithm.php:145
+#: includes/classes/Feature/SearchAlgorithm.php:102
+#: includes/classes/Feature/SearchAlgorithm.php:157
 msgid "Version"
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:172
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:145
+#: includes/classes/Feature/SearchAlgorithm.php:184
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:157
 msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
-#: includes/classes/Feature/Users.php:25
-#: includes/classes/Indexable/User/User.php:44
+#: includes/classes/Feature/SearchTemplates.php:52
+#: includes/classes/Feature/SearchTemplates.php:119
+#: assets/js/search-templates/index.js:25
+#: dist/js/search-templates-script.js:2
+msgid "Search Templates"
+msgstr ""
+
+#. translators: %s: Search API documentation URL
+#: includes/classes/Feature/SearchTemplates.php:56
+msgid "Search templates are Elasticsearch queries stored in ElasticPress.io servers used by the <a href=\"%s\" target=\"_blank\">Search API</a>."
+msgstr ""
+
+#: includes/classes/Feature/SearchTemplates.php:62
+msgid "Please note that all the API fields are still available for custom search templates. Your templates do not to differ in post types, offset, pagination arguments, or even filters, as for those you can still use query parameters. The templates can be used for searching in different fields or applying different scores, for instance."
+msgstr ""
+
+#: includes/classes/Feature/SearchTemplates.php:63
+msgid "Requires an <a href=\"https://www.elasticpress.io/\" target=\"_blank\">ElasticPress.io plan</a> to function."
+msgstr ""
+
+#: includes/classes/Feature/SearchTemplates.php:90
+msgid "You need an ElasticPress.io account to use this feature."
+msgstr ""
+
+#: includes/classes/Feature/SearchTemplates.php:118
+msgid "ElasticPress.io Search Templates"
+msgstr ""
+
+#: includes/classes/Feature/SearchTemplates.php:258
+msgid "Manage search templates"
+msgstr ""
+
+#: includes/classes/Feature/Users.php:43
+#: includes/classes/Indexable/User/User.php:46
 msgid "Users"
 msgstr ""
 
-#: includes/classes/Feature/Users.php:27
+#: includes/classes/Feature/Users.php:45
 msgid "Improve user search relevancy and query performance."
 msgstr ""
 
-#: includes/classes/Feature/Users.php:29
+#: includes/classes/Feature/Users.php:47
 msgid "https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#users"
 msgstr ""
 
-#: includes/classes/Feature/Users.php:61
+#: includes/classes/Feature/Users.php:73
 msgid "This feature will empower your website to overcome traditional WordPress user search and query limitations that can present themselves at scale."
 msgstr ""
 
-#: includes/classes/Feature/Users.php:62
+#: includes/classes/Feature/Users.php:74
 msgid "Be aware that storing user data may bound you to certain legal obligations depending on your local government regulations."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:33
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:49
 msgid "WooCommerce Admin Subscription Search"
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:45
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:57
 msgid "Have WooCommerce Subscription admin search use EP."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:54
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:66
 msgid "By default, WooCommerce Subscriptions does not use ElasticPress. This tells it to index and search those, just like ElasticPress does for orders."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:140
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:152
 msgid "This feature requires the WooCommerce Subscriptions plugin to be activated."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:143
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:155
 msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
 msgstr ""
 
-#: includes/classes/Indexable/User/User.php:45
+#: includes/classes/Indexable/User/User.php:47
 msgid "User"
+msgstr ""
+
+#: includes/classes/REST/SearchTemplates.php:55
+msgid "Template name."
 msgstr ""
 
 #: includes/functions/core.php:243
@@ -251,4 +327,131 @@ msgstr ""
 #. translators: Min. EP version
 #: includes/functions/core.php:258
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
+msgstr ""
+
+#: assets/js/geo-location/panel/AutoCompleteField.js:32
+#: dist/js/geo-location-editor-script.js:1
+msgid "Enter an address"
+msgstr ""
+
+#: assets/js/geo-location/panel/index.js:62
+#: dist/js/geo-location-editor-script.js:1
+msgid "ElasticPress Geo Location"
+msgstr ""
+
+#: assets/js/search-templates/apps/search-templates-list.js:28
+#: dist/js/search-templates-script.js:2
+msgid "Search templates are Elasticsearch queries stored in ElasticPress.io servers used by the <a>Search API</a>. Please note that all the API fields are still available for custom search templates. Your templates do not to differ in post types, offset, pagination arguments, or even filters, as for those you can still use query parameters. The templates can be used for searching in different fields or applying different scores, for instance."
+msgstr ""
+
+#: assets/js/search-templates/apps/search-templates-list.js:37
+#: dist/js/search-templates-script.js:2
+msgid "Once you have a search template saved, you can start sending requests to your endpoint URL below. Your template needs to have <code>{{ep_placeholder}}</code> in all places where the search term needs to be used."
+msgstr ""
+
+#. translators: %s: endpoint URL
+#: assets/js/search-templates/apps/search-templates-list.js:48
+#: dist/js/search-templates-script.js:2
+msgid "<strong>Endpoint URL:</strong> <code>%s</code>"
+msgstr ""
+
+#: assets/js/search-templates/apps/search-templates-list.js:57
+#: dist/js/search-templates-script.js:2
+msgid "Loading..."
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:34
+#: assets/js/search-templates/components/template-row.js:76
+#: dist/js/search-templates-script.js:2
+msgid "Template saved."
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:40
+#: assets/js/search-templates/components/template-row.js:81
+#: dist/js/search-templates-script.js:2
+msgid "Could not save the template. Please try again."
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:43
+#: assets/js/search-templates/components/template-row.js:53
+#: assets/js/search-templates/components/template-row.js:84
+#: assets/js/search-templates/components/template-row.js:103
+#: dist/js/search-templates-script.js:2
+msgid "ElasticPress Labs Error: "
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:54
+#: dist/js/search-templates-script.js:2
+msgid "Add New Template"
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:59
+#: dist/js/search-templates-script.js:2
+msgid "This name is already in use. You can change the existing template instead."
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:66
+#: assets/js/search-templates/components/template-row.js:118
+#: dist/js/search-templates-script.js:2
+msgid "Name"
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:67
+#: dist/js/search-templates-script.js:2
+msgid "Template names are not editable and only accept lowercase letters, numbers, -, and _. Double-check your template name before saving it."
+msgstr ""
+
+#: assets/js/search-templates/components/new-template-row.js:85
+#: dist/js/search-templates-script.js:2
+msgid "Save Template"
+msgstr ""
+
+#: assets/js/search-templates/components/template-field.js:38
+#: dist/js/search-templates-script.js:2
+msgid "Make sure your template is a valid JSON object and has <code>{{ep_placeholder}}</code>, so it can be replaced by the actual search term."
+msgstr ""
+
+#: assets/js/search-templates/components/template-field.js:48
+#: dist/js/search-templates-script.js:2
+msgid "This does not seem to be a valid JSON object."
+msgstr ""
+
+#: assets/js/search-templates/components/template-field.js:53
+#: dist/js/search-templates-script.js:2
+msgid "Template"
+msgstr ""
+
+#: assets/js/search-templates/components/template-field.js:66
+#: dist/js/search-templates-script.js:2
+msgid "Import default template"
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:50
+#: dist/js/search-templates-script.js:2
+msgid "Could not load your templates."
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:95
+#: dist/js/search-templates-script.js:2
+msgid "Template deleted."
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:100
+#: dist/js/search-templates-script.js:2
+msgid "Could not delete the template. Please try again."
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:119
+#: dist/js/search-templates-script.js:2
+msgid "Template names are not editable. If you need a different name, delete the template and recreate it."
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:139
+#: dist/js/search-templates-script.js:2
+msgid "Save changes"
+msgstr ""
+
+#: assets/js/search-templates/components/template-row.js:149
+#: dist/js/search-templates-script.js:2
+msgid "Delete template"
 msgstr ""
