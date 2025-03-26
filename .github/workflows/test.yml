@@ -1,4 +1,4 @@
-name: Test
+name: Unit Test
 
 env:
   COMPOSER_VERSION: "2"
@@ -53,6 +53,11 @@ jobs:
 
     - name: Check ES response
       run: curl --connect-timeout 5 --max-time 10 --retry 5 --retry-max-time 40 --retry-all-errors http://127.0.0.1:8890
+
+    - name: Install SVN ( Subversion )
+      run: |
+        sudo apt-get update
+        sudo apt-get install subversion
 
     - name: Setup WP Tests
       run: |

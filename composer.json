@@ -12,7 +12,7 @@
     }
   ],
   "require": {
-    "php": "^7.0|^8.0",
+    "php": "^7.4|^8.0",
     "yahnis-elsts/plugin-update-checker": "*"
   },
   "autoload": {
@@ -37,8 +37,8 @@
     "phpcompatibility/php-compatibility": "dev-develop as 9.99.99"
   },
   "scripts": {
-    "lint": "phpcs . -s --runtime-set testVersion 7.0-",
-    "lint-fix": "phpcbf . --runtime-set testVersion 7.0-",
+    "lint": "phpcs . -s --runtime-set testVersion 7.4-",
+    "lint-fix": "phpcbf . --runtime-set testVersion 7.4-",
     "test": "phpunit",
     "setup-local-tests": "bash bin/install-wp-tests.sh epl_wp_test root password 127.0.0.1 latest true",
     "post-autoload-dump": [

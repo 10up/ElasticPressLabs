@@ -42,6 +42,7 @@ class BaseTestCase extends \WP_UnitTestCase {
 	 */
 	protected function setup_factory() {
 		$this->ep_factory       = new \stdClass();
+		$this->ep_factory->post = new PostFactory();
 		$this->ep_factory->user = new UserFactory();
 	}
 }

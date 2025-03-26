@@ -17,7 +17,7 @@ use ElasticPressLabs\Feature\ExternalContent;
 class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
-	 * The body reponse for HTTP requests
+	 * The body response for HTTP requests
 	 *
 	 * @var string
 	 */
@@ -54,6 +54,7 @@ class TestExternalContent extends \WP_UnitTestCase {
 	 */
 	public function test_construct() {
 		$instance = $this->get_feature();
+		$instance->set_i18n_strings();
 
 		$this->assertEquals( 'external_content', $instance->slug );
 		$this->assertEquals( 'External Content', $instance->title );
