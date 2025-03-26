@@ -64,7 +64,7 @@ export default () => {
 					{embeddingsFiltered && (
 						<Notice status="warning" isDismissible={false}>
 							{__(
-								'This configuration is currently filtered via the `ep_vector_embeddings_settings` filter. Changes made here will not be applied.',
+								'This configuration is currently filtered via the `ep_embeddings_is_embeddable` filter. Changes made here will not be applied.',
 								'elasticpress',
 							)}
 						</Notice>
