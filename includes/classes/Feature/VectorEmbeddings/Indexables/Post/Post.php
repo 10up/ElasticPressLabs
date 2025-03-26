@@ -6,19 +6,29 @@
  * @package ElasticPressLabs
  */
 
-namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables;
+namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables\Post;
 
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
 use ElasticPressLabs\Utils;
+use ElasticPressLabs\Feature\VectorEmbeddings\Settings;
 
 /**
  * Vector Embeddings - Post Indexable class
  */
 class Post extends Indexable {
 	/**
+	 * Settings page instance.
+	 *
+	 * @var Settings
+	 */
+	public $settings_page;
+	/**
 	 * Setup hooks
 	 */
 	public function setup() {
+		$this->settings_page = new Settings();
+		$this->settings_page->setup();
+
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
 
@@ -68,6 +78,16 @@ class Post extends Indexable {
 				'type'         => 'boolean',
 			]
 		);
+
+		register_post_meta(
+			'',
+			'ep_embedding_include',
+			[
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'boolean',
+			]
+		);
 	}
 
 	/**
@@ -95,6 +115,14 @@ class Post extends Indexable {
 			Utils\get_asset_info( 'embeddings-editor-script', 'dependencies' ),
 			Utils\get_asset_info( 'embeddings-editor-script', 'version' ),
 			true
+		);
+
+		wp_localize_script(
+			'ep-embeddings-editor',
+			'epEmbeddingsEditor',
+			[
+				'postTypeConfig' => $this->settings_page->get_post_type_config( $post->ID ),
+			]
 		);
 
 		wp_set_script_translations( 'ep-embeddings-editor', 'elasticpress-labs' );
@@ -255,6 +283,11 @@ class Post extends Indexable {
 		$embeddings  = $this->feature->get_embedding( $post_id, 'post', $post_chunks );
 
 		if ( ! is_array( $embeddings ) ) {
+			if ( is_wp_error( $embeddings ) ) {
+				if ( defined( 'WP_CLI' ) && WP_CLI ) {
+					\WP_CLI::debug( __( 'Failed at generating embedding. Check your credentials.', 'elasticpress' ) );
+				}
+			}
 			return $args;
 		}
 
@@ -272,6 +305,7 @@ class Post extends Indexable {
 
 		$should_add = ! empty( $post ) && ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
 
+		$should_add = $this->settings_page->is_embeddable( $post_id );
 		/**
 		 * Filter whether the vector field should or not be added to the post.
 		 *
@@ -295,22 +329,23 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function get_post_chunks( int $post_id ): array {
-		$post = get_post( $post_id );
+		$fields = $this->settings_page->get_embedding_fields( $post_id );
+		$post   = get_post( $post_id );
 
 		$main_content = '';
 
 		$title = get_the_title( $post_id );
-		if ( $title ) {
+		if ( $title && in_array( 'post_title', $fields, true ) ) {
 			$main_content .= "# Title\n{$title}\n\n";
 		}
 
-		if ( ! empty( $post->post_excerpt ) ) {
+		if ( ! empty( $post->post_excerpt ) && in_array( 'post_excerpt', $fields, true ) ) {
 			$excerpt       = get_the_excerpt( $post_id );
 			$main_content .= "# Summary\n{$excerpt}\n\n";
 		}
 
 		$content = get_the_content( null, false, $post_id );
-		if ( $content ) {
+		if ( $content && in_array( 'post_content', $fields, true ) ) {
 			$main_content .= "# Content\n{$content}\n\n";
 		}
 
@@ -326,7 +361,9 @@ class Post extends Indexable {
 		 */
 		$main_content = apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
 
-		$chunks = $this->feature->chunk_content( $main_content );
+		$chunk_size   = $this->settings_page->get_chunk_size();
+		$overlap_size = $this->settings_page->get_chunk_overlap();
+		$chunks       = $this->feature->chunk_content( $main_content, $chunk_size, $overlap_size );
 
 		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
 		if ( $taxonomies ) {
@@ -349,6 +386,8 @@ class Post extends Indexable {
 
 	/**
 	 * Return the list of taxonomies that should be included in the post representation.
+	 *
+	 * @todo use vector embeddings settings page to get the list of taxonomies instead of the weighting.
 	 *
 	 * @param integer $post_id   The post ID.
 	 * @param string  $post_type The post type.
@@ -439,9 +478,9 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	protected function get_embeddable_meta( int $post_id, string $post_type ): array {
-		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
-		$weighting      = $search_feature->weighting->get_weighting_configuration_with_defaults();
-		if ( empty( $weighting[ $post_type ] ) ) {
+		$fields = $this->settings_page->get_embedding_fields( $post_id );
+
+		if ( empty( $fields ) ) {
 			/**
 			 * Filter the list of metafields which values should be included in the post representation.
 			 *
@@ -456,18 +495,7 @@ class Post extends Indexable {
 			return apply_filters( 'ep_embeddings_post_embeddable_meta', [], $post_id, $post_type );
 		}
 
-		$post_type_weighting = $weighting[ $post_type ];
-
-		$meta_fields = array_reduce(
-			array_keys( $post_type_weighting ),
-			function ( $acc, $field ) use ( $post_type_weighting ) {
-				if ( $post_type_weighting[ $field ]['enabled'] && preg_match( '/meta\.(.*)\.value/', $field, $matches ) ) {
-					$acc[] = $matches[1];
-				}
-				return $acc;
-			},
-			[]
-		);
+		$meta_fields = $this->settings_page->get_embedding_fields( $post_id );
 
 		// This filter is documented above.
 		return apply_filters( 'ep_embeddings_post_embeddable_meta', $meta_fields, $post_id, $post_type );

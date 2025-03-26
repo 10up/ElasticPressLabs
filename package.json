@@ -56,7 +56,8 @@
       "rag-block-script": "./assets/js/blocks/rag/index.js",
       "rag-block-frontend-script": "./assets/js/blocks/rag/frontend.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
-      "embeddings-editor-script": "./assets/js/embeddings-editor/index.js"
+      "embeddings-editor-script": "./assets/js/embeddings-editor/index.js",
+      "embeddings-script": "./assets/js/embeddings/index.js"
     },
     "wpDependencyExternals": true
   },

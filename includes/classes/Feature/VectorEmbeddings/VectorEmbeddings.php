@@ -48,6 +48,13 @@ class VectorEmbeddings extends Feature {
 	];
 
 	/**
+	 * Settings Page Module
+	 *
+	 * @var SettingsPage
+	 */
+	public $settings_page;
+
+	/**
 	 * Initialize feature setting it's config
 	 */
 	public function __construct() {
@@ -71,7 +78,7 @@ class VectorEmbeddings extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$this->indexables['post'] = new Indexables\Post( $this );
+		$this->indexables['post'] = new Indexables\Post\Post( $this );
 		$this->indexables['post']->setup();
 
 		if ( $this->get_setting( 'ep_embeddings_use_epio' ) ) {
@@ -181,7 +188,7 @@ class VectorEmbeddings extends Feature {
 	public function get_embedding( int $object_id, string $object_type, $text ) {
 		// Generate the embedding.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			\WP_CLI::line( "Generating embedding for {$object_type} ID: {$object_id}" );
+			\WP_CLI::debug( "Generating embedding for {$object_type} ID: {$object_id}" );
 		}
 
 		return $this->generate_embedding( $text );
