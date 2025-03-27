@@ -5,6 +5,7 @@ env:
   COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
   NODE_VERSION: "20"
   NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
+  CYPRESS_GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
 
 on:
   schedule:

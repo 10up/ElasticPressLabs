@@ -34,12 +34,9 @@ export default () => {
 			</p>
 			<p>
 				{createInterpolateElement(
-					sprintf(
-						__(
-							'Once you have a search template saved, you can start sending requests to your endpoint URL below. Your template needs to have <code>{{ep_placeholder}}</code> in all places where the search term needs to be used.',
-							'elasticpress-labs',
-						),
-						endpointExample,
+					__(
+						'Once you have a search template saved, you can start sending requests to your endpoint URL below. Your template needs to have <code>{{ep_placeholder}}</code> in all places where the search term needs to be used.',
+						'elasticpress-labs',
 					),
 					{ code: <code /> },
 				)}
@@ -47,6 +44,7 @@ export default () => {
 			<p>
 				{createInterpolateElement(
 					sprintf(
+						/* translators: %s: endpoint URL */
 						__('<strong>Endpoint URL:</strong> <code>%s</code>', 'elasticpress-labs'),
 						endpointExample,
 					),

@@ -18,10 +18,52 @@ This plugin provides a simple interface to enable and disable features.
 
 ## Requirements
 
-* [Elasticsearch](https://www.elastic.co) 5.2+ **ElasticSearch max version supported: 7.10**
+* [Elasticsearch](https://www.elastic.co) 5.2+
 * [PHP](https://php.net/) 7.4+
 * [WordPress](http://wordpress.org) 6.0+
 * [ElasticPress plugin](https://github.com/10up/ElasticPress/) 5.0.0+
+
+## Features
+
+### Boolean Search Operators
+
+Allow users to search using boolean operators such as AND, OR, NOT, and double quotes.
+
+### Co-Authors Plus
+
+If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to see correct results when listing posts by author name in the Admin Post List screen.
+
+### External Content
+
+List meta keys containing a path or a URL, and ElasticPress will index the content of that path or URL. For example, for a meta key called `meta_key` with `https://wordpress.org/news/wp-json/wp/v2/posts/16837` as its value, the JSON returned by that REST API endpoint will be indexed in a meta key called `ep_external_content_meta_key`.
+
+### Geo Location
+
+Allow users to search for posts based on their location. Optionally, set a Google Maps API key and easily store coordinates related to your content.
+
+### Meta Key Pattern
+
+Allow and deny meta fields from being indexed using regular expressions.
+
+### Search Algorithm Version
+
+Change the search algorithm used by your site. Current options are:
+
+* *Default:* Use a fuzzy match approach which includes results that have misspellings, and also includes matches on only some of the words in the search. 
+* *Version 3.5:* Search for the existence of all words in the search first, then return results based on how closely those words appear.
+* *Version 4.0:* Search for all search terms in one field first, then prioritize them over search terms matched in different fields. Used by default on ElasticPress 4.0+. 
+
+### Search Templates
+
+Search templates are Elasticsearch queries stored in [ElasticPress.io](https://www.elasticpress.io/) servers used by the [Search API](https://www.elasticpress.io/documentation/article/instant-results-post-search-api/).
+
+### Users
+
+Improve user search relevancy and query performance.
+
+### WooCommerce Admin Subscription Search
+
+Integration with the WooCommerce Subscriptions plugin. 
 
 ## Screenshots
 
