@@ -24,26 +24,9 @@ class Settings {
 	const SETTINGS_KEY = 'ep_vector_embeddings_settings';
 
 	/**
-	 * Holds the value of the current settings, whether default or saved.
-	 * Used by various methods to determine the current state of the settings, as well as
-	 * localize to the settings app.
-	 *
-	 * @var array
-	 */
-	public $current_settings = [];
-
-	/**
 	 * WordPress Hooks
 	 */
 	public function setup() {
-		$this->current_settings = get_option(
-			self::SETTINGS_KEY,
-			[
-				'postTypeConfig' => $this->get_default_post_type_config(),
-				'chunkSize'      => 100,
-				'chunkOverlap'   => 50,
-			]
-		);
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
@@ -130,8 +113,8 @@ class Settings {
 			'epVectorEmbeddings',
 			[
 				'apiUrl'             => rest_url( 'elasticpress-labs/v1/vector-embeddings' ),
-				'settings'           => $this->current_settings,
-				'indexableTypes'     => array_keys( $this->get_searchable_post_types() ),
+				'settings'           => $this->get_settings(),
+				'indexablePostTypes' => array_keys( $this->get_searchable_post_types() ),
 				'embeddingsFiltered' => has_filter( 'ep_embeddings_is_embeddable' ),
 			]
 		);
@@ -210,7 +193,20 @@ class Settings {
 	 * @return array
 	 */
 	public function get_settings() {
-		return $this->current_settings;
+		static $settings;
+
+		if ( ! $settings ) {
+			$settings = get_option(
+				self::SETTINGS_KEY,
+				[
+					'postTypeConfig' => $this->get_default_post_type_config(),
+					'chunkSize'      => 100,
+					'chunkOverlap'   => 50,
+				]
+			);
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -223,7 +219,7 @@ class Settings {
 		$post_type = get_post_type( $post_id );
 
 		$post_type_config = array_filter(
-			$this->current_settings['postTypeConfig'],
+			$this->get_settings()['postTypeConfig'],
 			function ( $config ) use ( $post_type ) {
 				return $config['key'] === $post_type;
 			}
@@ -474,14 +470,14 @@ class Settings {
 	 * @return bool Whether to include posts by default.
 	 */
 	public function get_default_inclusion_rule() {
-		if ( empty( $this->current_settings['postTypeConfig'] ) ) {
+		if ( empty( $this->get_settings()['postTypeConfig'] ) ) {
 			return false; // No rules set - posts are not included by default
 		}
 
 		$has_include_rules = false;
 
 		// Check each post type config for taxonomy rules
-		foreach ( $this->current_settings['postTypeConfig'] as $post_type_config ) {
+		foreach ( $this->get_settings()['postTypeConfig'] as $post_type_config ) {
 			if ( empty( $post_type_config['taxonomies'] ) ) {
 				return true;
 			}
@@ -495,7 +491,7 @@ class Settings {
 		}
 
 		// if post meta is set to include, return true
-		if ( ! empty( $this->current_settings['fieldsIndexingInclude'] ) ) {
+		if ( ! empty( $this->get_settings()['fieldsIndexingInclude'] ) ) {
 			$has_include_rules = true;
 		}
 
@@ -508,7 +504,7 @@ class Settings {
 	 * @return int
 	 */
 	public function get_chunk_size() {
-		return $this->current_settings['chunkSize'] ?? 100;
+		return $this->get_settings()['chunkSize'] ?? 100;
 	}
 
 	/**
@@ -517,6 +513,6 @@ class Settings {
 	 * @return int
 	 */
 	public function get_chunk_overlap() {
-		return $this->current_settings['chunkOverlap'] ?? 50;
+		return $this->get_settings()['chunkOverlap'] ?? 50;
 	}
 }
