@@ -17,7 +17,7 @@ use ElasticPressLabs\Feature\ExternalContent;
 class TestExternalContent extends \WP_UnitTestCase {
 
 	/**
-	 * The body reponse for HTTP requests
+	 * The body response for HTTP requests
 	 *
 	 * @var string
 	 */

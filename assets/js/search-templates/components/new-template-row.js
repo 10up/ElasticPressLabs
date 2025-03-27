@@ -2,7 +2,7 @@
  * WordPress Dependencies.
  */
 import { Button, Flex, Notice, PanelBody, PanelRow, TextControl } from '@wordpress/components';
-import { useState, WPElement } from '@wordpress/element';
+import { useEffect, useState, WPElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -20,7 +20,7 @@ import TemplateField from './template-field';
 export default () => {
 	const [name, setName] = useState('');
 	const [template, setTemplate] = useState('');
-	const [disabled, setDisabled] = useState(false);
+	const [disabled, setDisabled] = useState(true);
 
 	const { templates } = useSearchTemplate();
 	const { saveTemplate } = useSearchTemplateDispatch();
@@ -45,15 +45,21 @@ export default () => {
 	};
 
 	const onChangeName = (newName) => {
-		setName(newName);
-		setDisabled(Object.keys(templates).includes(newName));
+		const sanitizedName = newName.toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
+		setName(sanitizedName);
 	};
+
+	const updateSaveButtonState = () => {
+		setDisabled(name === '' || Object.keys(templates).includes(name) || template === '');
+	};
+
+	useEffect(updateSaveButtonState, [name, templates, template]);
 
 	return (
 		<PanelBody title={__('Add New Template', 'elasticpress-labs')} initialOpen>
 			<PanelRow>
 				<Flex direction="column" style={{ width: '100%' }}>
-					{name && disabled && (
+					{name && Object.keys(templates).includes(name) && (
 						<Notice status="error" isDismissible={false}>
 							{__(
 								'This name is already in use. You can change the existing template instead.',
@@ -64,11 +70,13 @@ export default () => {
 					<TextControl
 						label={__('Name', 'elasticpress-labs')}
 						help={__(
-							'Template names are not editable. Double-check your template name before saving it.',
+							'Template names are not editable and only accept lowercase letters, numbers, -, and _. Double-check your template name before saving it.',
 							'elasticpress-labs',
 						)}
 						value={name}
 						onChange={onChangeName}
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 					/>
 					<TemplateField value={template} onChange={setTemplate} />
 					<Flex justify="flex-start">

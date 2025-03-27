@@ -2,7 +2,7 @@
   "plugins": [
     "cypress"
   ],
-	"extends": ["plugin:cypress/recommended", "../../.eslintrc.json"],
+	"extends": ["plugin:cypress/recommended", "../../.eslintrc.js"],
   "rules": {
     "jest/expect-expect": "off",
     "jest/valid-expect": "off"
