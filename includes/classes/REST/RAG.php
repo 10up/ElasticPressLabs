@@ -8,7 +8,6 @@
 
 namespace ElasticPressLabs\REST;
 
-use ElasticPress\Utils;
 use ElasticPressLabs\Feature\RAG as RAGFeature;
 
 /**
@@ -83,7 +82,20 @@ class RAG {
 	 * @return object|\WP_Error
 	 */
 	public function get_rag_response( \WP_REST_Request $request ) {
-		return [ 'html' => $this->feature->get_ai_response( $request['search_query'], $request['search_vectors'] ?? null ) ];
+		$ai_response = $this->feature->get_ai_response( $request['search_query'], $request['search_vectors'] ?? null );
+
+		if ( ! is_wp_error( $ai_response ) ) {
+			$class = 'ep-rag-success';
+			$html  = $this->format_response( $ai_response );
+		} else {
+			$class = str_replace( '_', '-', $ai_response->get_error_code() );
+			$html  = $ai_response->get_error_message();
+		}
+
+		return [
+			'class' => $class,
+			'html'  => $html,
+		];
 	}
 
 	/**
@@ -103,5 +115,46 @@ class RAG {
 	 */
 	protected function get_embed_method(): string {
 		return (string) $this->feature->get_setting( 'ep_rag_search_term_embed_method' );
+	}
+
+	/**
+	 * Formats the AI response into a string.
+	 *
+	 * @param mixed $ai_response The AI response data to be formatted.
+	 * @return string The formatted response as a string.
+	 */
+	protected function format_response( $ai_response ): string {
+		$ai_response       = trim( $ai_response, "'" );
+		$ai_response_array = json_decode( $ai_response, true );
+
+		$html = '';
+		if ( json_last_error() === JSON_ERROR_NONE && isset( $ai_response_array['response'] ) ) {
+			$html = wp_kses_post( str_replace( '\\\\', '\\', $ai_response_array['response'] ) );
+			if ( ! empty( $ai_response_array['references'] ) ) {
+				$html .= '<div class="ep-rag--references">';
+				$html .= '<p>' . esc_html__( 'Sources:', 'elasticpress-labs' ) . '</p>';
+				$html .= '<ul>';
+				foreach ( $ai_response_array['references'] as $reference ) {
+					$html .= '<li>';
+					$html .= '<a href="' . esc_url( $reference['url'] ) . '" target="_blank" rel="noopener noreferrer">';
+					$html .= esc_html( $reference['title'] );
+					$html .= '</a>';
+					$html .= '</li>';
+				}
+				$html .= '</ul>';
+				$html .= '</div>';
+			}
+		}
+
+		/**
+		 * Filters the formatted HTML response generated from the AI response.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_rag_formatted_response
+		 * @param {string} $html        The formatted HTML response.
+		 * @param {mixed}  $ai_response The raw AI response data.
+		 * @return {string} Filtered HTML response.
+		 */
+		return apply_filters( 'ep_rag_formatted_response', $html, $ai_response );
 	}
 }

@@ -25,6 +25,7 @@ if (modelUrl) {
  * @returns {WPElement} App component.
  */
 const App = () => {
+	const [className, setClassName] = useState('');
 	const [message, setMessage] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -41,6 +42,7 @@ const App = () => {
 						},
 					})
 						.then((response) => {
+							setClassName(response.class);
 							setMessage(response.html);
 						})
 						.finally(() => {
@@ -53,6 +55,7 @@ const App = () => {
 				path: `${restApiEndpoint}?search_query=${searchQuery}`,
 			})
 				.then((response) => {
+					setClassName(response.class);
 					setMessage(response.html);
 				})
 				.finally(() => {
@@ -66,8 +69,11 @@ const App = () => {
 			<Skeleton count={5} />
 		</Placeholder>
 	) : (
-		// eslint-disable-next-line react/no-danger
-		<div className="ep-rag-generated" dangerouslySetInnerHTML={{ __html: message }} />
+		<div
+			className={`ep-rag-generated ${className}`}
+			// eslint-disable-next-line react/no-danger
+			dangerouslySetInnerHTML={{ __html: message }}
+		/>
 	);
 };
 

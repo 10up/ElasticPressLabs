@@ -2,7 +2,7 @@
 /**
  * RAG Feature
  *
- * @since 2.4.0
+ * @since 2.5.0
  * @package ElasticPressLabs
  */
 
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * RAG feature
  *
- * @since 2.4.0
+ * @since 2.5.0
  */
 class RAG extends Feature {
 	/**
@@ -213,11 +213,39 @@ The following JSON object contains the URL and the page content. You should use 
 	 *
 	 * @param string     $search_term    Search term
 	 * @param null|array $search_vectors Search term vectors
-	 * @return string
+	 * @return string|\WP_Error
 	 */
 	public function get_ai_response( $search_term, $search_vectors = null ) {
 		if ( ! $search_term ) {
 			return '';
+		}
+
+		$is_valid_search_term = $this->validate_search_term( $search_term );
+
+		/**
+		 * Filter to determine if a search term is valid for RAG feature.
+		 *
+		 * This filter allows customization of the validation logic for search terms
+		 * used in the RAG feature. Developers can use this filter to override the
+		 * default validation behavior.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_rag_is_valid_search_term
+		 * @param {bool}   $is_valid_search_term Whether the search term is valid. Default is determined by internal logic.
+		 * @param {string} $search_term          The search term being validated.
+		 * @return {bool} Whether the search term is valid.
+		 */
+		if ( ! apply_filters( 'ep_rag_is_valid_search_term', $is_valid_search_term, $search_term ) ) {
+			/**
+			 * Filter the response for an invalid search term in the RAG feature.
+			 *
+			 * @since 2.5.0
+			 * @hook ep_rag_invalid_search_term_response
+			 * @param {string} $response    The response to return for an invalid search term. Default is an empty string.
+			 * @param {string} $search_term The invalid search term that triggered the response.
+			 * @return {\WP_Error} Response.
+			 */
+			return apply_filters( 'ep_rag_invalid_search_term_response', new \WP_Error( 'ep-rag-invalid-search-term', '' ), $search_term );
 		}
 
 		/**
@@ -258,10 +286,11 @@ The following JSON object contains the URL and the page content. You should use 
 		 * Fires after receiving the response for a RAG (Retrieval-Augmented Generation) post request.
 		 *
 		 * @since 2.5.0
-		 * @param array  $response       The response from the RAG post request.
-		 * @param string $search_term    The search term.
-		 * @param array  $search_vectors The search vectors used for the RAG request.
-		 * @param string $prompt         The prompt.
+		 * @hook ep_rag_post_response
+		 * @param array|\WP_error $response       The response from the RAG post request.
+		 * @param string          $search_term    The search term.
+		 * @param array           $search_vectors The search vectors used for the RAG request.
+		 * @param string          $prompt         The prompt.
 		 */
 		do_action( 'ep_rag_post_response', $response, $search_term, $search_vectors, $prompt );
 
@@ -357,7 +386,7 @@ The following JSON object contains the URL and the page content. You should use 
 	 *
 	 * @param string $prompt      Prompt for the AI model
 	 * @param string $search_term Search query
-	 * @return string
+	 * @return string|\WP_Error
 	 */
 	public function ai_api_request( $prompt, $search_term ) {
 		$headers = [
@@ -371,6 +400,10 @@ The following JSON object contains the URL and the page content. You should use 
 				[
 					'role'    => 'system',
 					'content' => $prompt,
+				],
+				[
+					'role'    => 'system',
+					'content' => 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped.',
 				],
 				[
 					'role'    => 'user',
@@ -403,17 +436,20 @@ The following JSON object contains the URL and the page content. You should use 
 		);
 
 		$response = wp_remote_post( $url, $options );
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error( 'ep_rag_request_failed', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
+		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			return false;
+			return new \WP_Error( 'ep_rag_non_200_code_' . $code, __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$body = json_decode( $body, true );
 		return isset( $body['choices'], $body['choices'][0], $body['choices'][0]['message'], $body['choices'][0]['message']['content'] )
 			? $body['choices'][0]['message']['content']
-			: false;
+			: new \WP_Error( 'ep_rag_unformatted_response', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 	}
 
 	/**
@@ -502,5 +538,56 @@ The following JSON object contains the URL and the page content. You should use 
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Validates the provided search term.
+	 *
+	 * This function checks the validity of the given search term
+	 * to ensure it meets the required criteria for processing.
+	 *
+	 * @param string $search_term The search term to validate.
+	 * @return bool True if the search term is valid, false otherwise.
+	 */
+	protected function validate_search_term( string $search_term ): bool {
+		$attack_patterns = [
+			// Instruction override patterns
+			'/ignore previous (instructions|rule|prompt)/i',
+			'/disregard (your|all|previous) (instructions|prompt)/i',
+			'/forget (your|all) (instructions|prompt)/i',
+
+			// Delimiter exploitation patterns
+			'/\<\/?system\>/i',
+			'/\<\/?admin\>/i',
+			'/\<\/?prompt\>/i',
+			'/\<\/?instructions?\>/i',
+
+			// Jailbreak attempts
+			'/DAN|Do Anything Now/i',
+			'/you are a helpful assistant that only responds/i',
+			'/you are in developer mode/i',
+
+			// Role play exploitation
+			'/pretend to be/i',
+			'/act as if/i',
+			'/you are now/i',
+
+			// Payload embedding attempts
+			'/\{\{[^}]+\}\}/i',
+			'/\[\[[^]]+\]\]/i',
+			'/```(system|exec|prompt)/i',
+
+			// Coding context breaking
+			'/`\/\/ignore previous code`/i',
+			'/\/\*\s*ignore previous\s*\*\//i',
+		];
+
+		foreach ( $attack_patterns as $pattern ) {
+			if ( preg_match( $pattern, $search_term ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
