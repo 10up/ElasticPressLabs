@@ -11,6 +11,10 @@
 		"title": {
 			"default": "Title",
 			"type": "string"
+		},
+		"note": {
+			"default": "AI generated results",
+			"type": "string"
 		}
 	},
 	"supports": {
@@ -18,7 +22,7 @@
 		"color": {
 			"background": true,
 			"link": true,
-			"text": false
+			"text": true
 		},
 		"html": false,
 		"position": {

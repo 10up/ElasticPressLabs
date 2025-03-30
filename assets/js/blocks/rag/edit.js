@@ -2,6 +2,7 @@
  * WordPress dependencies.
  */
 import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { Placeholder } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -13,7 +14,7 @@ import { __ } from '@wordpress/i18n';
  * @returns {Function} Component.
  */
 export default ({ attributes, setAttributes }) => {
-	const { title } = attributes;
+	const { note, title } = attributes;
 
 	const blockProps = useBlockProps({
 		className: 'ep-rag',
@@ -27,6 +28,14 @@ export default ({ attributes, setAttributes }) => {
 				withoutInteractiveFormatting
 				value={title}
 				onChange={(html) => setAttributes({ title: html })}
+			/>
+			<Placeholder label={__('AI Response', 'elasticpress-labs')} />
+			<RichText
+				aria-label={__('Note', 'elasticpress-labs')}
+				placeholder={__('Add a note', 'elasticpress-labs')}
+				withoutInteractiveFormatting
+				value={note}
+				onChange={(html) => setAttributes({ note: html })}
 			/>
 		</div>
 	);
