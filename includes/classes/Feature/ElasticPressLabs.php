@@ -5,6 +5,10 @@
  * @package ElasticPressLabs
  */
 
+namespace ElasticPressLabs\Feature;
+
+use ElasticPress\Feature;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -12,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Your feature class.
  */
-class ElasticPressLabs extends \ElasticPress\Feature {
+class ElasticPressLabs extends Feature {
 
 	/**
 	 * Order of the feature in ElasticPress's Dashboard.
