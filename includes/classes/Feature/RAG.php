@@ -32,15 +32,15 @@ class RAG extends Feature {
 		'ep_rag_api_url'                  => 'https://api.openai.com/v1/chat/completions',
 		'ep_rag_chat_model'               => 'o1-mini',
 		'ep_rag_number_of_posts'          => 5,
-		'ep_rag_prompt'                   => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+		'ep_rag_prompt'                   => 'You are an assistant in a website and you need to reply to a user search. If you do not know the answer, reply saying any results were found. 
 
 The following JSON object contains the URL and the page content. You should use it as context:
 
-{posts}",
+{posts}',
 	];
 
 	/**
-	 * Initialize feature setting it's config
+	 * Initialize feature setting its config
 	 */
 	public function __construct() {
 		$this->slug = 'rag';
