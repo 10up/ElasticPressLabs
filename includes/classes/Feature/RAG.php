@@ -279,7 +279,24 @@ The following JSON object contains the URL and the page content. You should use 
 			];
 		}
 
-		$prompt   = $this->get_prompt( $posts_representations );
+		/**
+		 * Filters the AI prompt before it goes to the request.
+		 *
+		 * This filter allows developers to short-circuit the AI prompt set in the plugin settings.
+		 * Use this if you want to conditionally manipulate the prompt or implement more sophisticated logic.
+		 *
+		 * @param {string} $prompt                The prompt as set in the plugin settings.
+		 * @param {array}  $posts_representations The posts to be used as context.
+		 *
+		 * @return {string} TRhe prompt for the AI model.
+		 * @since 2.5.0
+		 * @hook ep_rag_prompt
+		 */
+		$prompt   = apply_filters(
+			'ep_rag_prompt',
+			$this->get_prompt( $posts_representations ),
+			$posts_representations
+		);
 		$response = $this->ai_api_request( $prompt, $search_term );
 
 		/**
