@@ -403,7 +403,7 @@ The following JSON object contains the URL and the page content. You should use 
 				],
 				[
 					'role'    => 'system',
-					'content' => 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped.',
+					'content' => __( 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the "response" value, as it will be displayed using the values in "references".', 'elasticpress-labs' ),
 				],
 				[
 					'role'    => 'user',

@@ -63,10 +63,13 @@ class Hybrid extends SearchAlgorithm {
 			return $formatted_args;
 		}
 
+		$knn_search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'knn_search' );
+
 		return [
 			'from'        => $formatted_args['from'],
 			'size'        => $formatted_args['size'],
 			'post_filter' => $formatted_args['post_filter'],
+			'min_score'   => $knn_search_feature->get_min_score(),
 			'query'       => $formatted_args['query'],
 			'knn'         => [
 				'field'          => 'chunks.vector',
