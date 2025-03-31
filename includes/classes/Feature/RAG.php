@@ -582,6 +582,18 @@ The following JSON object contains the URL and the page content. You should use 
 			'/\/\*\s*ignore previous\s*\*\//i',
 		];
 
+		/**
+		 * Filter the attack patterns used in the RAG feature.
+		 *
+		 * This filter allows modification of the attack patterns array used by the RAG feature.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_rag_attack_patterns
+		 * @param {array} $attack_patterns The array of attack patterns.
+		 * @return {array} The modified array of attack patterns.
+		 */
+		$attack_patterns = apply_filters( 'ep_rag_attack_patterns', $attack_patterns );
+
 		foreach ( $attack_patterns as $pattern ) {
 			if ( preg_match( $pattern, $search_term ) ) {
 				return false;
