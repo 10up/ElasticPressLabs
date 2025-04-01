@@ -376,7 +376,20 @@ The following JSON object contains the URL and the page content. You should use 
 	public function get_prompt( $posts_representations ) {
 		$posts_representations_str = wp_json_encode( $posts_representations );
 
-		$prompt = $this->get_setting( 'prompt' );
+		$default_prompt = $this->get_setting( 'prompt' );
+
+		/**
+		 * Filters the AI system prompt before it goes to the request.
+		 *
+		 * This filter allows developers to change the AI prompt set in the plugin settings.
+		 * Use this if you want to conditionally manipulate the prompt or implement more sophisticated logic.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_ai_search_summary_prompt
+		 * @param {string} $prompt The prompt as set in the plugin settings.
+		 * @return {string} The prompt for the AI model.
+		 */
+		$prompt = apply_filters( 'ep_ai_search_summary_prompt', $default_prompt );
 
 		return str_replace( '{posts}', $posts_representations_str, $prompt );
 	}
@@ -403,11 +416,36 @@ The following JSON object contains the URL and the page content. You should use 
 				],
 				[
 					'role'    => 'system',
-					'content' => __( 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the "response" value, as it will be displayed using the values in "references".', 'elasticpress-labs' ),
+					/**
+					 * Filters the system prompt formatting for AI search summary.
+					 *
+					 * This filter allows customization of the system prompt that formats the AI response.
+					 *
+					 * @since 2.5.0
+					 * @hook ep_ai_search_summary_system_prompt_formatting
+					 * @param {string} $system_prompt The default system prompt formatting string.
+					 * @param {string} $prompt        The main system prompt being processed. By default, the one set in the plugin settings.
+					 * @param {string} $search_term   The search term used in the query.
+					 * @return {string} The modified system prompt formatting string.
+					 */
+					'content' => apply_filters(
+						'ep_ai_search_summary_system_prompt_formatting',
+						__( 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the "response" value, as it will be displayed using the values in "references".', 'elasticpress-labs' ),
+						$prompt,
+						$search_term
+					),
 				],
 				[
 					'role'    => 'user',
-					'content' => $search_term,
+					/**
+					 * Filters the user prompt for the AI search summary.
+					 *
+					 * @since 2.5.0
+					 * @hook ep_ai_search_summary_user_prompt
+					 * @param {string} $search_term The search term to be used as the user prompt.
+					 * @return {string} The filtered search term.
+					 */
+					'content' => apply_filters( 'ep_ai_search_summary_user_prompt', $search_term ),
 				],
 			],
 		];
