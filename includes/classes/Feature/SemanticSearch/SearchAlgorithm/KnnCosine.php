@@ -1,12 +1,12 @@
 <?php
 /**
- * Hybrid search algorithm
+ * kNN search algorithm
  *
  * @since 2.4.0
  * @package elasticpress
  */
 
-namespace ElasticPressLabs\Feature\KnnSearch\SearchAlgorithm;
+namespace ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	// @codeCoverageIgnoreStart
@@ -15,16 +15,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Hybrid search algorithm class.
+ * kNN search algorithm class.
  */
-class Hybrid extends SearchAlgorithm {
+class KnnCosine extends SearchAlgorithm {
 	/**
 	 * Search algorithm slug.
 	 *
 	 * @return string
 	 */
 	public function get_slug(): string {
-		return 'hybrid_knn';
+		return 'knn_cosine';
 	}
 
 	/**
@@ -33,7 +33,7 @@ class Hybrid extends SearchAlgorithm {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return esc_html__( 'Hybrid (kNN + Regular ES)', 'elasticpress-labs' );
+		return esc_html__( 'kNN Cosine', 'elasticpress-labs' );
 	}
 
 	/**
@@ -42,7 +42,7 @@ class Hybrid extends SearchAlgorithm {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return esc_html__( 'Search using a mix of Elasticsearch kNN and a regular query.', 'elasticpress-labs' );
+		return esc_html__( 'Search using Elasticsearch kNN Cosine.', 'elasticpress-labs' );
 	}
 
 	/**
@@ -63,19 +63,36 @@ class Hybrid extends SearchAlgorithm {
 			return $formatted_args;
 		}
 
-		$knn_search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'knn_search' );
+		$semantic_search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'semantic_search' );
 
 		return [
 			'from'        => $formatted_args['from'],
 			'size'        => $formatted_args['size'],
 			'post_filter' => $formatted_args['post_filter'],
-			'min_score'   => $knn_search_feature->get_min_score(),
-			'query'       => $formatted_args['query'],
-			'knn'         => [
-				'field'          => 'chunks.vector',
-				'query_vector'   => array_map( 'floatval', $query_embedding ),
-				'num_candidates' => 200,
-				'k'              => (int) $formatted_args['size'],
+			'min_score'   => $semantic_search_feature->get_min_score(),
+			'query'       => [
+				'bool' => [
+					'must' => [
+						[
+							'nested' => [
+								'path'  => 'chunks',
+								'query' => [
+									'script_score' => [
+										'query'  => [
+											'match_all' => (object) [],
+										],
+										'script' => [
+											'source' => 'cosineSimilarity(params.query_vector, "chunks.vector") + 1.0',
+											'params' => [
+												'query_vector' => array_map( 'floatval', $query_embedding ),
+											],
+										],
+									],
+								],
+							],
+						],
+					],
+				],
 			],
 		];
 	}

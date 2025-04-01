@@ -219,12 +219,18 @@ function maybe_load_features() {
 	$sep          = DIRECTORY_SEPARATOR;
 	$features_dir = ELASTICPRESS_LABS_PATH . "includes{$sep}classes{$sep}Feature{$sep}";
 
+	$manually_added_features = [
+		'AISearchSummary',
+		'ElasticPressLabs',
+	];
+
 	foreach ( glob( "{$features_dir}*.php" ) as $filename ) {
-		if ( realpath( $filename ) === __FILE__ ) {
+		$basename = basename( $filename, '.php' );
+		if ( realpath( $filename ) === __FILE__ || in_array( $basename, $manually_added_features, true ) ) {
 			continue;
 		}
 
-		$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
+		$class_name = 'ElasticPressLabs\Feature\\' . $basename;
 
 		if ( class_exists( $class_name ) ) {
 			$subfeature = new $class_name();
@@ -236,8 +242,11 @@ function maybe_load_features() {
 	$vector_embeddings = new \ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings();
 	\ElasticPress\Features::factory()->register_feature( $vector_embeddings );
 
-	$knn_search = new \ElasticPressLabs\Feature\KnnSearch\KnnSearch();
-	\ElasticPress\Features::factory()->register_feature( $knn_search );
+	$semantic_search = new \ElasticPressLabs\Feature\SemanticSearch\SemanticSearch();
+	\ElasticPress\Features::factory()->register_feature( $semantic_search );
+
+	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
+	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
 }
 
 /**

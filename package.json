@@ -53,12 +53,12 @@
   "10up-toolkit": {
     "entry": {
       "admin": "./assets/js/admin/admin.js",
+      "ai-search-summary-block-script": "./assets/js/blocks/ai-search-summary/index.js",
+      "ai-search-summary-block-frontend-script": "./assets/js/blocks/ai-search-summary/frontend.js",
       "embeddings-editor-script": "./assets/js/embeddings-editor/index.js",
       "embeddings-script": "./assets/js/embeddings/index.js",
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
-      "rag-block-script": "./assets/js/blocks/rag/index.js",
-      "rag-block-frontend-script": "./assets/js/blocks/rag/frontend.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
       
       "blocks-styles": "./assets/css/blocks.css"

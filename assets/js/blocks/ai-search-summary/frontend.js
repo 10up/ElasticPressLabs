@@ -10,7 +10,8 @@ import { createRoot, render, useEffect, useState, WPElement } from '@wordpress/e
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
-const { modelUrl, restApiEndpoint, searchQuery, searchTermEmbeddingMethod } = window.epRag;
+const { modelUrl, restApiEndpoint, searchQuery, searchTermEmbeddingMethod } =
+	window.epAISearchSummary;
 
 let finalModelUrl = 'Xenova/all-MiniLM-L6-v2';
 if (modelUrl) {
@@ -70,7 +71,7 @@ const App = () => {
 		</Placeholder>
 	) : (
 		<div
-			className={`ep-rag-generated ${className}`}
+			className={`ep-ai-search-summary-generated ${className}`}
 			// eslint-disable-next-line react/no-danger
 			dangerouslySetInnerHTML={{ __html: message }}
 		/>
@@ -78,15 +79,15 @@ const App = () => {
 };
 
 domReady(() => {
-	const ragBlocks = document.querySelectorAll('.ep-rag-response');
+	const blocks = document.querySelectorAll('.ep-ai-search-summary-response');
 
-	ragBlocks.forEach((ragBlock) => {
+	blocks.forEach((block) => {
 		if (typeof createRoot === 'function') {
-			const root = createRoot(ragBlock);
+			const root = createRoot(block);
 
 			root.render(<App />);
 		} else {
-			render(<App />, ragBlock);
+			render(<App />, block);
 		}
 	});
 });

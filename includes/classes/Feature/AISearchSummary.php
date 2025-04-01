@@ -1,6 +1,6 @@
 <?php
 /**
- * RAG Feature
+ * AI Search Summary Feature
  *
  * @since 2.5.0
  * @package ElasticPressLabs
@@ -16,34 +16,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * RAG feature
+ * AI Search Summary feature
  *
  * @since 2.5.0
  */
-class RAG extends Feature {
+class AISearchSummary extends Feature {
 	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'ep_rag_search_term_embed_method' => 'client-side',
-		'ep_rag_api_key'                  => '',
-		'ep_rag_api_url'                  => 'https://api.openai.com/v1/chat/completions',
-		'ep_rag_chat_model'               => 'o1-mini',
-		'ep_rag_number_of_posts'          => 5,
-		'ep_rag_prompt'                   => 'You are an assistant in a website and you need to reply to a user search. If you do not know the answer, reply saying any results were found. 
+		'search_term_embed_method' => 'client-side',
+		'api_key'                  => '',
+		'api_url'                  => 'https://api.openai.com/v1/chat/completions',
+		'chat_model'               => 'o1-mini',
+		'number_of_posts'          => 5,
+		'prompt'                   => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
 The following JSON object contains the URL and the page content. You should use it as context:
 
-{posts}',
+{posts}",
 	];
 
 	/**
-	 * Initialize feature setting its config
+	 * Initialize feature setting it's config
 	 */
 	public function __construct() {
-		$this->slug = 'rag';
+		$this->slug = 'ai_search_summary';
 
 		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
 			$this->set_i18n_strings();
@@ -56,9 +56,9 @@ The following JSON object contains the URL and the page content. You should use 
 	 * Sets i18n strings.
 	 */
 	public function set_i18n_strings(): void {
-		$this->title = esc_html__( 'RAG', 'elasticpress-labs' );
+		$this->title = esc_html__( 'AI Search Summary', 'elasticpress-labs' );
 
-		$this->summary = '<p>' . __( 'RAG Description', 'elasticpress-labs' ) . '</p>';
+		$this->summary = '<p>' . __( 'AI Search Summary Description', 'elasticpress-labs' ) . '</p>';
 
 		$this->requires_feature = 'vector_embeddings';
 	}
@@ -83,48 +83,48 @@ The following JSON object contains the URL and the page content. You should use 
 		 * @see https://core.trac.wordpress.org/ticket/54797#comment:20
 		 */
 		wp_register_script(
-			'ep-rag-block-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/rag-block-script.js',
-			Utils\get_asset_info( 'rag-block-script.js', 'dependencies' ),
-			Utils\get_asset_info( 'rag-block-script.js', 'version' ),
+			'ep-ai-search-summary-block-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/ai-search-summary-block-script.js',
+			Utils\get_asset_info( 'ai-search-summary-block-script.js', 'dependencies' ),
+			Utils\get_asset_info( 'ai-search-summary-block-script.js', 'version' ),
 			true
 		);
 
-		wp_set_script_translations( 'ep-rag-block-script', 'elasticpress' );
+		wp_set_script_translations( 'ep-ai-search-summary-block-script', 'elasticpress' );
 
 		register_block_type_from_metadata(
-			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/rag',
+			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/ai-search-summary',
 			[
 				'render_callback' => [ $this, 'render_block' ],
 			]
 		);
 
 		wp_register_script(
-			'ep-rag-block-frontend-script',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/rag-block-frontend-script.js',
-			Utils\get_asset_info( 'rag-block-frontend-script', 'dependencies' ),
-			Utils\get_asset_info( 'rag-block-frontend-script', 'version' ),
+			'ep-ai-search-summary-block-frontend-script',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/ai-search-summary-block-frontend-script.js',
+			Utils\get_asset_info( 'ai-search-summary-block-frontend-script', 'dependencies' ),
+			Utils\get_asset_info( 'ai-search-summary-block-frontend-script', 'version' ),
 			true
 		);
 
 		$models_url = str_replace( home_url(), '', ELASTICPRESS_LABS_URL . 'assets/models/our-model/' );
 
 		wp_localize_script(
-			'ep-rag-block-frontend-script',
-			'epRag',
+			'ep-ai-search-summary-block-frontend-script',
+			'epAISearchSummary',
 			[
 				'searchQuery'               => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'restApiEndpoint'           => 'elasticpress-labs/v1/rag',
-				'searchTermEmbeddingMethod' => $this->get_setting( 'ep_rag_search_term_embed_method' ),
+				'restApiEndpoint'           => 'elasticpress-labs/v1/ai-search-summary',
+				'searchTermEmbeddingMethod' => $this->get_setting( 'search_term_embed_method' ),
 				'modelUrl'                  => $models_url,
 			]
 		);
 
 		wp_enqueue_style(
-			'ep-rag-block-frontend-style',
-			ELASTICPRESS_LABS_URL . 'dist/blocks/rag-block-frontend-script.css',
+			'ep-ai-search-summary-block-frontend-style',
+			ELASTICPRESS_LABS_URL . 'dist/blocks/ai-search-summary-block-frontend-script.css',
 			[],
-			Utils\get_asset_info( 'rag-block-frontend-script', 'version' )
+			Utils\get_asset_info( 'ai-search-summary-block-frontend-script', 'version' )
 		);
 	}
 
@@ -136,17 +136,17 @@ The following JSON object contains the URL and the page content. You should use 
 	 */
 	public function render_block( $attributes ) {
 		/**
-		 * Filters whether the RAG block should be displayed.
+		 * Filters whether the AI Search Summary block should be displayed.
 		 *
-		 * This filter allows developers to control the visibility of the RAG block.
+		 * This filter allows developers to control the visibility of the AI Search Summary block.
 		 * By default, the block is displayed if there is a non-empty search query.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_should_display_block
-		 * @param {bool} $should_display Whether the RAG block should be displayed.
-		 * @return {bool} Filtered value indicating whether the RAG block should be displayed.
+		 * @hook ep_ai_search_summary_should_display_block
+		 * @param {bool} $should_display Whether the AI Search Summary block should be displayed.
+		 * @return {bool} Filtered value indicating whether the AI Search Summary block should be displayed.
 		 */
-		$should_display = apply_filters( 'ep_rag_should_display_block', ! empty( get_search_query() ), $attributes );
+		$should_display = apply_filters( 'ep_ai_search_summary_should_display_block', ! empty( get_search_query() ), $attributes );
 
 		if ( ! $should_display ) {
 			return '';
@@ -154,18 +154,18 @@ The following JSON object contains the URL and the page content. You should use 
 
 		$attributes = array_merge(
 			$attributes,
-			[ 'class' => 'wp-block-ep-labs-rag' ],
+			[ 'class' => 'wp-block-ep-labs-ai-search-summary' ],
 		);
 
 		/**
 		 * Filters the HTML tag to be used as the block title.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_block_title_tag
+		 * @hook ep_ai_search_summary_block_title_tag
 		 * @param {string} $content The content to be filtered.
 		 * @return {string} The filtered content.
 		 */
-		$title_tag = apply_filters( 'ep_rag_block_title_tag', 'h2', $attributes );
+		$title_tag = apply_filters( 'ep_ai_search_summary_block_title_tag', 'h2', $attributes );
 
 		/**
 		 * Filters the HTML tag to be used as the bottom text.
@@ -173,11 +173,11 @@ The following JSON object contains the URL and the page content. You should use 
 		 * This filter allows modification of the content before it is rendered.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_block_title_tag
+		 * @hook ep_ai_search_summary_block_title_tag
 		 * @param {string} $content The content to be filtered.
 		 * @return {string} The filtered content.
 		 */
-		$note_tag = apply_filters( 'ep_rag_block_note_tag', 'p', $attributes );
+		$note_tag = apply_filters( 'ep_ai_search_summary_block_note_tag', 'p', $attributes );
 
 		// Render block
 		ob_start();
@@ -186,11 +186,11 @@ The following JSON object contains the URL and the page content. You should use 
 		?>
 		<section <?php echo wp_kses_data( $wrapper_attributes ); ?>>
 			<?php if ( ! empty( $attributes['title'] ) ) : ?>
-				<<?php echo $title_tag; ?> class="ep-rag--title"><?php echo wp_kses_post( $attributes['title'] ); ?></<?php echo $title_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+				<<?php echo $title_tag; ?> class="ep-ai-search-summary--title"><?php echo wp_kses_post( $attributes['title'] ); ?></<?php echo $title_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<?php endif; ?>
-			<div class="ep-rag-response"></div>
+			<div class="ep-ai-search-summary-response"></div>
 			<?php if ( ! empty( $attributes['note'] ) ) : ?>
-				<<?php echo $note_tag; ?> class="ep-rag--note"><?php echo wp_kses_post( $attributes['note'] ); ?></<?php echo $note_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+				<<?php echo $note_tag; ?> class="ep-ai-search-summary--note"><?php echo wp_kses_post( $attributes['note'] ); ?></<?php echo $note_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<?php endif; ?>
 		</section>
 		<?php
@@ -204,7 +204,7 @@ The following JSON object contains the URL and the page content. You should use 
 	 * Setup REST endpoints
 	 */
 	public function setup_endpoint() {
-		$controller = new \ElasticPressLabs\REST\RAG( $this );
+		$controller = new \ElasticPressLabs\REST\AISearchSummary( $this );
 		$controller->register_routes();
 	}
 
@@ -223,45 +223,45 @@ The following JSON object contains the URL and the page content. You should use 
 		$is_valid_search_term = $this->validate_search_term( $search_term );
 
 		/**
-		 * Filter to determine if a search term is valid for RAG feature.
+		 * Filter to determine if a search term is valid for the AI Search Summary feature.
 		 *
 		 * This filter allows customization of the validation logic for search terms
-		 * used in the RAG feature. Developers can use this filter to override the
+		 * used in the AI Search Summary feature. Developers can use this filter to override the
 		 * default validation behavior.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_is_valid_search_term
+		 * @hook ep_ai_search_summary_is_valid_search_term
 		 * @param {bool}   $is_valid_search_term Whether the search term is valid. Default is determined by internal logic.
 		 * @param {string} $search_term          The search term being validated.
 		 * @return {bool} Whether the search term is valid.
 		 */
-		if ( ! apply_filters( 'ep_rag_is_valid_search_term', $is_valid_search_term, $search_term ) ) {
+		if ( ! apply_filters( 'ep_ai_search_summary_is_valid_search_term', $is_valid_search_term, $search_term ) ) {
 			/**
-			 * Filter the response for an invalid search term in the RAG feature.
+			 * Filter the response for an invalid search term in the AI Search Summary feature.
 			 *
 			 * @since 2.5.0
-			 * @hook ep_rag_invalid_search_term_response
+			 * @hook ep_ai_search_summary_invalid_search_term_response
 			 * @param {string} $response    The response to return for an invalid search term. Default is an empty string.
 			 * @param {string} $search_term The invalid search term that triggered the response.
 			 * @return {\WP_Error} Response.
 			 */
-			return apply_filters( 'ep_rag_invalid_search_term_response', new \WP_Error( 'ep-rag-invalid-search-term', '' ), $search_term );
+			return apply_filters( 'ep_ai_search_summary_invalid_search_term_response', new \WP_Error( 'ep-ai-search-summary-invalid-search-term', '' ), $search_term );
 		}
 
 		/**
 		 * Filters the AI response before it is returned.
 		 *
-		 * This filter allows developers to short-circuit the AI response generated by the RAG feature.
+		 * This filter allows developers to short-circuit the AI response generated by the AI Search Summary feature.
 		 * Use this if you want to cache responses based on search terms.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_pre_response
+		 * @hook ep_ai_search_summary_pre_response
 		 * @param {null}       $response The   AI response. Default null.
 		 * @param {string}     $search_term    The search term provided by the user.
 		 * @param {array|null} $search_vectors The search term vectors, if available.
 		 * @return {string|null} The filtered AI response.
 		 */
-		$response = apply_filters( 'ep_rag_pre_response', null, $search_term, $search_vectors );
+		$response = apply_filters( 'ep_ai_search_summary_pre_response', null, $search_term, $search_vectors );
 		if ( null !== $response ) {
 			return (string) $response;
 		}
@@ -286,13 +286,13 @@ The following JSON object contains the URL and the page content. You should use 
 		 * Fires after receiving the response for a RAG (Retrieval-Augmented Generation) post request.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_post_response
+		 * @hook ep_ai_search_summary_post_response
 		 * @param array|\WP_error $response       The response from the RAG post request.
 		 * @param string          $search_term    The search term.
 		 * @param array           $search_vectors The search vectors used for the RAG request.
 		 * @param string          $prompt         The prompt.
 		 */
-		do_action( 'ep_rag_post_response', $response, $search_term, $search_vectors, $prompt );
+		do_action( 'ep_ai_search_summary_post_response', $response, $search_term, $search_vectors, $prompt );
 
 		return $response;
 	}
@@ -311,7 +311,7 @@ The following JSON object contains the URL and the page content. You should use 
 
 		$query = [
 			'from'    => 0,
-			'size'    => (int) $this->get_setting( 'ep_rag_number_of_posts' ),
+			'size'    => (int) $this->get_setting( 'number_of_posts' ),
 			'_source' => [
 				'includes' => [ 'post_id' ],
 			],
@@ -376,7 +376,7 @@ The following JSON object contains the URL and the page content. You should use 
 	public function get_prompt( $posts_representations ) {
 		$posts_representations_str = wp_json_encode( $posts_representations );
 
-		$prompt = $this->get_setting( 'ep_rag_prompt' );
+		$prompt = $this->get_setting( 'prompt' );
 
 		return str_replace( '{posts}', $posts_representations_str, $prompt );
 	}
@@ -390,12 +390,12 @@ The following JSON object contains the URL and the page content. You should use 
 	 */
 	public function ai_api_request( $prompt, $search_term ) {
 		$headers = [
-			'Authorization' => 'Bearer ' . $this->get_setting( 'ep_rag_api_key' ),
+			'Authorization' => 'Bearer ' . $this->get_setting( 'api_key' ),
 			'Content-Type'  => 'application/json',
 		];
 
 		$body = [
-			'model'    => $this->get_setting( 'ep_rag_chat_model' ),
+			'model'    => $this->get_setting( 'chat_model' ),
 			'messages' => [
 				[
 					'role'    => 'system',
@@ -412,12 +412,12 @@ The following JSON object contains the URL and the page content. You should use 
 			],
 		];
 
-		$url = $this->get_setting( 'ep_rag_api_url' );
+		$url = $this->get_setting( 'api_url' );
 
 		/**
 		 * Filter the options for the post request.
 		 *
-		 * @hook ep_rag_request_options
+		 * @hook ep_ai_search_summary_request_options
 		 * @since 2.4.0
 		 *
 		 * @param {array} $options The options for the request.
@@ -426,7 +426,7 @@ The following JSON object contains the URL and the page content. You should use 
 		 * @return {array} The options for the request.
 		 */
 		$options = apply_filters(
-			'ep_rag_request_options',
+			'ep_ai_search_summary_request_options',
 			[
 				'headers' => $headers,
 				'body'    => wp_json_encode( $body ),
@@ -437,19 +437,19 @@ The following JSON object contains the URL and the page content. You should use 
 
 		$response = wp_remote_post( $url, $options );
 		if ( is_wp_error( $response ) ) {
-			return new \WP_Error( 'ep_rag_request_failed', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
+			return new \WP_Error( 'ep_ai_search_summary_request_failed', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			return new \WP_Error( 'ep_rag_non_200_code_' . $code, __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
+			return new \WP_Error( 'ep_ai_search_summary_non_200_code_' . $code, __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$body = json_decode( $body, true );
 		return isset( $body['choices'], $body['choices'][0], $body['choices'][0]['message'], $body['choices'][0]['message']['content'] )
 			? $body['choices'][0]['message']['content']
-			: new \WP_Error( 'ep_rag_unformatted_response', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
+			: new \WP_Error( 'ep_ai_search_summary_unformatted_response', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 	}
 
 	/**
@@ -458,7 +458,7 @@ The following JSON object contains the URL and the page content. You should use 
 	public function set_settings_schema() {
 		$this->settings_schema = [
 			[
-				'key'     => 'ep_rag_search_term_embed_method',
+				'key'     => 'search_term_embed_method',
 				'label'   => __( 'Search Term Embedding Method', 'elasticpress-labs' ),
 				'help'    => __( 'The method to use to vectorize the search term. The model used here should match the one used to vectorize your content.', 'elasticpress-labs' ),
 				'options' => [
@@ -474,7 +474,7 @@ The following JSON object contains the URL and the page content. You should use 
 				'type'    => 'radio',
 			],
 			[
-				'key'     => 'ep_rag_api_key',
+				'key'     => 'api_key',
 				'label'   => __( 'OpenAI API Key', 'elasticpress-labs' ),
 				'help'    => sprintf(
 					wp_kses(
@@ -490,35 +490,35 @@ The following JSON object contains the URL and the page content. You should use 
 					esc_url( 'https://platform.openai.com/signup' )
 				),
 				'type'    => 'text',
-				'default' => $this->default_settings['ep_rag_api_key'],
+				'default' => $this->default_settings['api_key'],
 			],
 			[
-				'key'     => 'ep_rag_api_url',
+				'key'     => 'api_url',
 				'help'    => __( 'OpenAI Chat Completion API Url', 'elasticpress-labs' ),
 				'label'   => __( 'OpenAI Chat Completion API Url', 'elasticpress-labs' ),
 				'type'    => 'text',
-				'default' => $this->default_settings['ep_rag_api_url'],
+				'default' => $this->default_settings['api_url'],
 			],
 			[
-				'key'     => 'ep_rag_chat_model',
+				'key'     => 'chat_model',
 				'help'    => __( 'OpenAI Chat model', 'elasticpress-labs' ),
 				'label'   => __( 'The name of the chat model to use', 'elasticpress-labs' ),
 				'type'    => 'text',
-				'default' => $this->default_settings['ep_rag_chat_model'],
+				'default' => $this->default_settings['chat_model'],
 			],
 			[
-				'key'     => 'ep_rag_number_of_posts',
+				'key'     => 'number_of_posts',
 				'label'   => __( 'Number of posts', 'elasticpress-labs' ),
 				'help'    => __( 'Number of posts to be used in the context building', 'elasticpress-labs' ),
 				'type'    => 'number',
-				'default' => $this->default_settings['ep_rag_number_of_posts'],
+				'default' => $this->default_settings['number_of_posts'],
 			],
 			[
-				'key'     => 'ep_rag_prompt',
+				'key'     => 'prompt',
 				'label'   => __( 'AI Prompt', 'elasticpress-labs' ),
 				'help'    => __( 'The <code>{posts}</code> string will be replaced.', 'elasticpress-labs' ),
 				'type'    => 'textarea',
-				'default' => $this->default_settings['ep_rag_prompt'],
+				'default' => $this->default_settings['prompt'],
 			],
 		];
 	}
@@ -583,16 +583,14 @@ The following JSON object contains the URL and the page content. You should use 
 		];
 
 		/**
-		 * Filter the attack patterns used in the RAG feature.
-		 *
-		 * This filter allows modification of the attack patterns array used by the RAG feature.
+		 * Filter the attack patterns used in the AI Search Summary feature.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_attack_patterns
+		 * @hook ep_ai_search_summary_attack_patterns
 		 * @param {array} $attack_patterns The array of attack patterns.
 		 * @return {array} The modified array of attack patterns.
 		 */
-		$attack_patterns = apply_filters( 'ep_rag_attack_patterns', $attack_patterns );
+		$attack_patterns = apply_filters( 'ep_ai_search_summary_attack_patterns', $attack_patterns );
 
 		foreach ( $attack_patterns as $pattern ) {
 			if ( preg_match( $pattern, $search_term ) ) {

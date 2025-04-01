@@ -1,11 +1,11 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "elasticpress-labs/rag",
-	"title": "RAG",
+	"name": "elasticpress-labs/ai-search-summary",
+	"title": "AI Search Summary",
 	"category": "elasticpress",
 	"icon": "superhero-alt",
-	"description": "RAG block description.",
+	"description": "AI Search Summary block description.",
 	"textdomain": "elasticpress-labs",
 	"attributes": {
 		"title": {
@@ -37,6 +37,6 @@
 			"lineHeight": true
 		}
 	},
-	"editorScript": "ep-rag-block-script",
-	"script": "ep-rag-block-frontend-script"
+	"editorScript": "ep-ai-search-summary-block-script",
+	"script": "ep-ai-search-summary-block-frontend-script"
 }

@@ -17,7 +17,7 @@ export default ({ attributes, setAttributes }) => {
 	const { note, title } = attributes;
 
 	const blockProps = useBlockProps({
-		className: 'ep-rag',
+		className: 'ep-ai-search-summary',
 	});
 
 	return (

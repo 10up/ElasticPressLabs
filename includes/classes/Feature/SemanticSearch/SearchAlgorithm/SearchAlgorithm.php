@@ -6,7 +6,7 @@
  * @package elasticpress
  */
 
-namespace ElasticPressLabs\Feature\KnnSearch\SearchAlgorithm;
+namespace ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm;
 
 /**
  * Abstract knnSearch algorithm class
@@ -47,6 +47,11 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 	public function get_search_term_vector( $search_term ) {
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 
-		return $vector_embeddings->generate_embedding( $search_term );
+		$search_term_vector = $vector_embeddings->generate_embedding( $search_term );
+		if ( is_wp_error( $search_term_vector ) ) {
+			return [];
+		}
+
+		return $search_term_vector;
 	}
 }

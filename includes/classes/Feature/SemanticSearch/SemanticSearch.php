@@ -1,12 +1,12 @@
 <?php
 /**
- * kNN Search Feature
+ * Semantic Search Feature
  *
  * @since 2.4.0
  * @package ElasticPressLabs
  */
 
-namespace ElasticPressLabs\Feature\KnnSearch;
+namespace ElasticPressLabs\Feature\SemanticSearch;
 
 use ElasticPress\Feature;
 
@@ -15,27 +15,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * kNN Search Feature
+ * Semantic Search Feature
  */
-class KnnSearch extends Feature {
+class SemanticSearch extends Feature {
 	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'ep_knn_search_min_score' => 0.7,
+		'search_min_score' => 0.7,
 	];
 
 	/**
 	 * Initialize feature setting it's config
 	 */
 	public function __construct() {
-		$this->slug = 'knn_search';
+		$this->slug = 'semantic_search';
 
-		$this->title = esc_html__( 'kNN Search', 'elasticpress-labs' );
+		$this->title = esc_html__( 'Semantic Search', 'elasticpress-labs' );
 
-		$this->summary = __( 'kNN Search.', 'elasticpress-labs' );
+		$this->summary = __( 'Enable kNN Search. To use a kNN search algorithm, enable the Search Algorithm Version feature and select one of the kNN variations.', 'elasticpress-labs' );
 
 		$this->requires_feature = 'vector_embeddings';
 
@@ -59,11 +59,11 @@ class KnnSearch extends Feature {
 	public function set_settings_schema() {
 		$this->settings_schema = [
 			[
-				'key'     => 'ep_knn_search_min_score',
+				'key'     => 'search_min_score',
 				'label'   => __( 'Minimum score', 'elasticpress-labs' ),
 				'help'    => __( 'The minimum score to be used by kNN searches. Input a number between 0 and 1.', 'elasticpress-labs' ),
 				'type'    => 'number',
-				'default' => $this->default_settings['ep_knn_search_min_score'],
+				'default' => $this->default_settings['search_min_score'],
 			],
 		];
 	}
@@ -78,9 +78,9 @@ class KnnSearch extends Feature {
 		 * Filters the minimum score for KNN (k-Nearest Neighbors) search.
 		 *
 		 * @since 2.5.0
-		 * @param {float} $min_score The minimum score for KNN search. Default is retrieved from the 'ep_knn_search_min_score' setting.
+		 * @param {float} $min_score The minimum score for KNN search. Default is retrieved from the 'search_min_score' setting.
 		 * @return {float} The minimum score for KNN search.
 		 */
-		return (float) apply_filters( 'ep_knn_search_min_score', $this->get_setting( 'ep_knn_search_min_score' ) );
+		return (float) apply_filters( 'ep_semantic_search_min_score', $this->get_setting( 'search_min_score' ) );
 	}
 }

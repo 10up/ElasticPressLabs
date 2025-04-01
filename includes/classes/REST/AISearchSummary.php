@@ -1,6 +1,6 @@
 <?php
 /**
- * RAG REST API Controller.
+ * AI Search Summary REST API Controller.
  *
  * @since 2.4.0
  * @package ElasticPressLabs
@@ -8,25 +8,25 @@
 
 namespace ElasticPressLabs\REST;
 
-use ElasticPressLabs\Feature\RAG as RAGFeature;
+use ElasticPressLabs\Feature\AISearchSummary as AISearchSummaryFeature;
 
 /**
- * RAG REST API controller class.
+ * AI Search Summary REST API controller class.
  */
-class RAG {
+class AISearchSummary {
 	/**
-	 * The RAGFeature instance.
+	 * The AISearchSummaryFeature instance.
 	 *
-	 * @var RAGFeature
+	 * @var AISearchSummaryFeature
 	 */
 	protected $feature;
 
 	/**
 	 * Class constructor
 	 *
-	 * @param RAGFeature $feature The feature instance.
+	 * @param AISearchSummaryFeature $feature The feature instance.
 	 */
-	public function __construct( RAGFeature $feature ) {
+	public function __construct( AISearchSummaryFeature $feature ) {
 		$this->feature = $feature;
 	}
 
@@ -38,7 +38,7 @@ class RAG {
 	public function register_routes() {
 		$routes = [
 			'client-side' => [
-				'callback'            => [ $this, 'get_rag_response' ],
+				'callback'            => [ $this, 'get_ai_search_summary_response' ],
 				'methods'             => 'POST',
 				'permission_callback' => '__return_true',
 				'args'                => [
@@ -55,7 +55,7 @@ class RAG {
 				],
 			],
 			'server-side' => [
-				'callback'            => [ $this, 'get_rag_response' ],
+				'callback'            => [ $this, 'get_ai_search_summary_response' ],
 				'methods'             => 'GET',
 				'permission_callback' => '__return_true',
 				'args'                => [
@@ -70,7 +70,7 @@ class RAG {
 
 		register_rest_route(
 			'elasticpress-labs/v1',
-			'rag',
+			'ai-search-summary',
 			$routes[ $this->get_embed_method() ],
 		);
 	}
@@ -81,11 +81,11 @@ class RAG {
 	 * @param \WP_REST_Request $request Full details about the request.
 	 * @return object|\WP_Error
 	 */
-	public function get_rag_response( \WP_REST_Request $request ) {
+	public function get_ai_search_summary_response( \WP_REST_Request $request ) {
 		$ai_response = $this->feature->get_ai_response( $request['search_query'], $request['search_vectors'] ?? null );
 
 		if ( ! is_wp_error( $ai_response ) ) {
-			$class = 'ep-rag-success';
+			$class = 'ep-ai-search-summary-success';
 			$html  = $this->format_response( $ai_response );
 		} else {
 			$class = str_replace( '_', '-', $ai_response->get_error_code() );
@@ -114,7 +114,7 @@ class RAG {
 	 * @return string
 	 */
 	protected function get_embed_method(): string {
-		return (string) $this->feature->get_setting( 'ep_rag_search_term_embed_method' );
+		return (string) $this->feature->get_setting( 'search_term_embed_method' );
 	}
 
 	/**
@@ -131,7 +131,7 @@ class RAG {
 		if ( json_last_error() === JSON_ERROR_NONE && isset( $ai_response_array['response'] ) ) {
 			$html = wp_kses_post( str_replace( '\\\\', '\\', $ai_response_array['response'] ) );
 			if ( ! empty( $ai_response_array['references'] ) ) {
-				$html .= '<div class="ep-rag--references">';
+				$html .= '<div class="ep-ai-search-summary--references">';
 				$html .= '<p>' . esc_html__( 'Sources:', 'elasticpress-labs' ) . '</p>';
 				$html .= '<ul>';
 				foreach ( $ai_response_array['references'] as $reference ) {
@@ -150,11 +150,11 @@ class RAG {
 		 * Filters the formatted HTML response generated from the AI response.
 		 *
 		 * @since 2.5.0
-		 * @hook ep_rag_formatted_response
+		 * @hook ep_ai_search_summary_formatted_response
 		 * @param {string} $html        The formatted HTML response.
 		 * @param {mixed}  $ai_response The raw AI response data.
 		 * @return {string} Filtered HTML response.
 		 */
-		return apply_filters( 'ep_rag_formatted_response', $html, $ai_response );
+		return apply_filters( 'ep_ai_search_summary_formatted_response', $html, $ai_response );
 	}
 }
