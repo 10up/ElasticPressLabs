@@ -8,7 +8,6 @@
 
 namespace ElasticPressLabs\REST;
 
-use ElasticPress\Utils;
 use ElasticPressLabs\Feature\VectorEmbeddings\Settings;
 
 /**
@@ -37,10 +36,9 @@ class VectorEmbeddingSettings {
 	/**
 	 * Get the endpoint arguments for the item schema.
 	 *
-	 * @param bool $is_create_item Optional. Whether the endpoint is for creating an item. Default false.
 	 * @return array
 	 */
-	protected function get_endpoint_args_for_item_schema( $is_create_item = false ) {
+	protected function get_endpoint_args_for_item_schema() {
 		$schema = $this->get_item_schema();
 
 		$args = [];
@@ -70,25 +68,25 @@ class VectorEmbeddingSettings {
 			'type'       => 'object',
 			'properties' => [
 				'chunking'       => [
-					'description' => 'Chunking settings.',
+					'description' => __( 'Chunking settings.', 'elasticpress-labs' ),
 					'type'        => 'object',
 				],
 				'mode'           => [
-					'description' => 'Mode of the embeddings.',
+					'description' => __( 'Mode of the embeddings.', 'elasticpress-labs' ),
 					'type'        => 'string',
 				],
 				'postTypeConfig' => [
-					'description' => 'Post type configurations.',
+					'description' => __( 'Post type configurations.', 'elasticpress-labs' ),
 					'type'        => 'array',
 					'items'       => [
 						'type'       => 'object',
 						'properties' => [
 							'key'        => [
-								'description' => 'Post type key.',
+								'description' => __( 'Post type key.', 'elasticpress-labs' ),
 								'type'        => 'string',
 							],
 							'taxonomies' => [
-								'description' => 'Taxonomies settings.',
+								'description' => __( 'Taxonomies settings.', 'elasticpress-labs' ),
 								'type'        => 'object',
 							],
 						],
