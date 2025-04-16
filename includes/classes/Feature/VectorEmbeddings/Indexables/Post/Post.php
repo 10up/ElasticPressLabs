@@ -32,24 +32,26 @@ class Post extends Indexable {
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
 
-		// Only trigger embeddings when external embeddings are turned off
-		if ( ! $this->feature->get_setting( 'ep_embeddings_external_embedding' ) ) {
-			add_action( 'init', [ $this, 'register_meta' ], 20 );
-			add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
+		$generator = $this->feature->get_setting( 'ep_embeddings_generator' );
+		if ( 'external' === $generator ) {
+			return;
+		}
 
-			add_action( 'post_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ] );
-			add_action( 'attachment_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ], 15 );
+		add_action( 'init', [ $this, 'register_meta' ], 20 );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
 
-			add_action( 'edit_post', [ $this, 'save_embedding_exclude_meta' ] );
-			add_action( 'edit_attachment', [ $this, 'save_embedding_exclude_meta' ] );
+		add_action( 'post_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ] );
+		add_action( 'attachment_submitbox_misc_actions', [ $this, 'output_embedding_exclude_setting' ], 15 );
 
-			if ( $this->feature->get_setting( 'ep_embeddings_use_epio' ) ) {
-				add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
-				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
-				add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
-			} else {
-				add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
-			}
+		add_action( 'edit_post', [ $this, 'save_embedding_exclude_meta' ] );
+		add_action( 'edit_attachment', [ $this, 'save_embedding_exclude_meta' ] );
+
+		if ( 'epio' === $generator ) {
+			add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
+			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
+			add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
+		} else {
+			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
 		}
 	}
 
