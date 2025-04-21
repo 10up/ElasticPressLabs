@@ -631,6 +631,20 @@ class User extends Indexable {
 			$args['order'] = 'desc';
 		}
 
+		/**
+		 * Filter to short-circuit user DB query.
+		 *
+		 * @hook ep_user_pre_query_db_results
+		 * @param {null|array} $results Return null to run the default query, or an array with results to short-circuit
+		 * @param {array} $args Query arguments
+		 * @since 2.5.0
+		 * @return {null|array} Query results or null
+		 */
+		$results = apply_filters( 'ep_user_pre_query_db_results', null, $args );
+		if ( null !== $results ) {
+			return $results;
+		}
+
 		$orderby_args = sanitize_sql_orderby( "{$args['orderby']} {$args['order']}" );
 		$orderby      = $orderby_args ? sprintf( 'ORDER BY %s', $orderby_args ) : '';
 
@@ -639,18 +653,30 @@ class User extends Indexable {
 		 * way to do that.
 		 */
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$objects = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d",
-				(int) $args['offset'],
-				(int) $args['number']
-			)
+		$sql = $wpdb->prepare(
+			"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d",
+			(int) $args['offset'],
+			(int) $args['number']
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		/**
+		 * Filter user indexable DB query SQL.
+		 *
+		 * @hook ep_user_query_db_sql
+		 * @param {string} $sql The SQL query to be executed
+		 * @param {array} $args Query arguments
+		 * @since 2.5.0
+		 * @return {string} Modified SQL query
+		 */
+		$sql = apply_filters( 'ep_user_query_db_sql', $sql, $args );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		$objects = $wpdb->get_results( $sql );
 		return [
 			'objects'       => $objects,
 			'total_objects' => ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' ),
 		];
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
