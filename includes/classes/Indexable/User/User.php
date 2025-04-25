@@ -677,6 +677,7 @@ class User extends Indexable {
 			'objects'       => $objects,
 			'total_objects' => ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' ),
 		];
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

@@ -1598,27 +1598,27 @@ class TestUser extends BaseTestCase {
 	 * @group user
 	 */
 	public function test_ep_user_query_db_sql_filter() {
-			global $wpdb;
+		global $wpdb;
 
-			$user_id = $this->ep_factory->user->create();
+		$user_id = $this->ep_factory->user->create();
 
-			add_filter(
-				'ep_user_query_db_sql',
-				function () use ( $wpdb, $user_id ) {
-						return $wpdb->prepare(
-							"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} WHERE ID = %d",
-							$user_id
-						);
-				},
-				10,
-				2
-			);
+		add_filter(
+			'ep_user_query_db_sql',
+			function () use ( $wpdb, $user_id ) {
+				return $wpdb->prepare(
+					"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} WHERE ID = %d",
+					$user_id
+				);
+			},
+			10,
+			2
+		);
 
-			$user    = new \ElasticPressLabs\Indexable\User\User();
-			$results = $user->query_db( [] );
+		$user    = new \ElasticPressLabs\Indexable\User\User();
+		$results = $user->query_db( [] );
 
-			$this->assertCount( 1, $results['objects'] );
-			$this->assertEquals( $user_id, $results['objects'][0]->ID );
-			$this->assertEquals( 1, $results['total_objects'] );
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( $user_id, $results['objects'][0]->ID );
+		$this->assertEquals( 1, $results['total_objects'] );
 	}
 }
