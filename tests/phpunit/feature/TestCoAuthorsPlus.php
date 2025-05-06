@@ -154,7 +154,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 			],
 			[
 				'key'   => 'instructions',
-				'label' => '<p>If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.</p>',
+				'label' => '<p>When enabled, this feature integrates ElasticPress with Co-Authors Plus to enhance author-related queries on the frontend. If "Protected Content" is activated, visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.</p>',
 				'type'  => 'markup',
 			],
 		];

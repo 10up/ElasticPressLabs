@@ -242,7 +242,7 @@ class CoAuthorsPlus extends Feature {
 		$this->settings_schema = [
 			[
 				'key'   => 'instructions',
-				'label' => '<p>' . __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) . '</p>',
+				'label' => '<p>' . __( 'When enabled, this feature integrates ElasticPress with Co-Authors Plus to enhance author-related queries on the frontend. If "Protected Content" is activated, visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) . '</p>',
 				'type'  => 'markup',
 			],
 		];
