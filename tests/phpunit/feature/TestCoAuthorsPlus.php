@@ -9,19 +9,22 @@
 namespace ElasticPressLabsTest;
 
 use ElasticPressLabs;
+use ElasticPress;
 
 /**
  * CoAuthors Plus test class
  *
  * @since  1.1.0
  */
-class TestCoAuthorsPlus extends \WP_UnitTestCase {
+class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Setup each test.
 	 *
 	 * @since  1.1.0
 	 */
 	public function set_up() {
+		parent::set_up();
+
 		$instance = new ElasticPressLabs\Feature\CoAuthorsPlus();
 		\ElasticPress\Features::factory()->register_feature( $instance );
 	}
@@ -132,5 +135,105 @@ class TestCoAuthorsPlus extends \WP_UnitTestCase {
 		$this->assertNotEmpty( $filtered_formatted_args );
 		$this->assertCount( 1, $filtered_formatted_args );
 		$this->assertArrayHasKey( 'terms', $filtered_formatted_args[0] );
+	}
+
+	/**
+	 * Test settings schema.
+	 *
+	 * @since  2.5.0
+	 */
+	public function test_settings_schema() {
+		$expected = [
+			[
+				'default'          => false,
+				'key'              => 'active',
+				'label'            => 'Enable',
+				'requires_feature' => 'search',
+				'requires_sync'    => true,
+				'type'             => 'toggle',
+			],
+			[
+				'key'   => 'instructions',
+				'label' => '<p>If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.</p>',
+				'type'  => 'markup',
+			],
+		];
+
+		$this->assertSame( $expected, $this->get_feature()->get_settings_schema() );
+	}
+
+	/**
+	 * Test attribute add in weight dashboard.
+	 *
+	 * @since  2.5.0
+	 */
+	public function test_attribute_add_in_weight_dashboard() {
+		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
+		ElasticPress\Features::factory()->setup_features();
+
+		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$fields = $search->weighting->get_weightable_fields_for_post_type( 'post' );
+
+		$this->assertArrayHasKey( 'terms.author.name', $fields['attributes']['children'] );
+		$this->assertEquals( 'Guest Author', $fields['attributes']['children']['terms.author.name']['label'] );
+		$this->assertEquals( 'terms.author.name', $fields['attributes']['children']['terms.author.name']['key'] );
+	}
+
+	/**
+	 * Test add author default weight.
+	 *
+	 * @since  2.5.0
+	 */
+	public function test_add_author_default_weight() {
+		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
+		ElasticPress\Features::factory()->setup_features();
+
+		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$fields = $search->weighting->get_post_type_default_settings( 'post' );
+
+		$this->assertArrayHasKey( 'terms.author.name', $fields );
+		$this->assertEquals( 1, $fields['terms.author.name']['weight'] );
+		$this->assertTrue( $fields['terms.author.name']['enabled'] );
+	}
+
+	/**
+	 * Test search query returns the posts if search query is a co-author.
+	 *
+	 * @since  2.5.0
+	 */
+	public function test_search_query_with_co_authors_plus() {
+		global $coauthors_plus;
+
+		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
+		ElasticPress\Features::factory()->setup_features();
+
+		$post_id = $this->ep_factory->post->create();
+
+		$user_login        = 'guest-author';
+		$user_display_name = 'Guest Author';
+
+		$coauthors_plus->guest_authors->create(
+			[
+				'display_name' => $user_display_name,
+				'user_login'   => $user_login,
+			]
+		);
+
+		$coauthors_plus->add_coauthors( $post_id, [ $user_login ], true, 'user_login' );
+
+		ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		ElasticPress\Indexables::factory()->get( 'post' )->index( $post_id, true );
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+
+		$query = new \WP_Query(
+			[
+
+				's' => $user_display_name,
+			]
+		);
+
+		$this->assertTrue( $query->elasticsearch_success );
+		$this->assertEquals( 1, $query->found_posts );
+		$this->assertEquals( $post_id, $query->posts[0]->ID );
 	}
 }

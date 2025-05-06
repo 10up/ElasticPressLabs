@@ -56,7 +56,7 @@ class CoAuthorsPlus extends Feature {
 
 		$this->is_protected_content_feature_active = $protected_content_feature && $protected_content_feature->is_active();
 
-		$this->requires_feature = 'protected_content';
+		$this->requires_feature = 'search';
 
 		parent::__construct();
 	}
@@ -79,15 +79,18 @@ class CoAuthorsPlus extends Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( empty( $settings['active'] ) || ! $this->is_protected_content_feature_active ) {
+		if ( empty( $settings['active'] ) ) {
 			return;
 		}
 
 		add_filter( 'ep_sync_taxonomies', array( $this, 'include_author_term' ) );
 
-		if ( is_admin() ) {
+		if ( is_admin() && $this->is_protected_content_feature_active ) {
 			add_filter( 'ep_post_formatted_args', [ $this, 'include_author_in_es_query' ], 10, 3 );
 		}
+
+		add_filter( 'ep_weighting_fields_for_post_type', [ $this, 'add_author_attributes_to_weighting' ], 10, 2 );
+		add_filter( 'ep_weighting_default_post_type_weights', [ $this, 'add_author_default_weight' ], 10, 2 );
 	}
 
 	/**
@@ -264,5 +267,51 @@ class CoAuthorsPlus extends Feature {
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Add Co-Authors attributes to the Weighting Dashboard.
+	 *
+	 * @since 2.5.0
+	 * @param array  $fields    The array of weighting fields.
+	 * @param string $post_type Current post type.
+	 * @return array Modified array of weighting fields.
+	 */
+	public function add_author_attributes_to_weighting( $fields, $post_type ) {
+		global $coauthors_plus;
+
+		if ( ! in_array( $post_type, $coauthors_plus->supported_post_types, true ) ) {
+			return $fields;
+		}
+
+		$fields['attributes']['children'][ 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name' ] = [
+			'key'   => 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name',
+			'label' => $coauthors_plus->guest_authors->labels['singular'],
+		];
+
+		return $fields;
+	}
+
+	/**
+	 * Add default weight for Co-Authors field.
+	 *
+	 * @since 2.5.0
+	 * @param array  $defaults  The default weight configuration.
+	 * @param string $post_type Current post type.
+	 * @return array Modified weight configuration.
+	 */
+	public function add_author_default_weight( $defaults, $post_type ) {
+		global $coauthors_plus;
+
+		if ( ! in_array( $post_type, $coauthors_plus->supported_post_types, true ) ) {
+			return $defaults;
+		}
+
+		$defaults[ 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name' ] = [
+			'enabled' => true,
+			'weight'  => 1,
+		];
+
+		return $defaults;
 	}
 }
