@@ -25,6 +25,11 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	public function set_up() {
 		parent::set_up();
 
+		ElasticPress\Elasticsearch::factory()->delete_all_indices();
+		ElasticPress\Indexables::factory()->get( 'post' )->put_mapping();
+
+		ElasticPress\Indexables::factory()->get( 'post' )->sync_manager->reset_sync_queue();
+
 		$instance = new ElasticPressLabs\Feature\CoAuthorsPlus();
 		\ElasticPress\Features::factory()->register_feature( $instance );
 	}
