@@ -13,7 +13,6 @@ use ElasticPress;
  * Test user indexable class
  */
 class TestUser extends BaseTestCase {
-
 	/**
 	 * Checking if HTTP request returns 404 status code.
 	 *
