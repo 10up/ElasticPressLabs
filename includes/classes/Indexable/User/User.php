@@ -1,5 +1,4 @@
 <?php
-
 /**
  * User indexable
  *
@@ -22,7 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * User indexable class
  */
 class User extends Indexable {
-
 
 	/**
 	 * We only need one user index
@@ -700,50 +698,84 @@ class User extends Indexable {
 				'lower_limit' => "{$wpdb->users}.ID >= {$requested_lower_limit_post_id}",
 			];
 
-			// Skip the end range if it's unnecessary.
-			// Add range conditions to WHERE clause correctly
 			$where        = array_merge( $where, $range );
 			$where_clause = 'WHERE ' . implode( ' AND ', $where );
-			// $where[] = $wpdb->prepare( 'ID >= %d', (int) $upper_limit_range_post_id );
-			// $where[] = $wpdb->prepare( 'ID <= %d', (int) $requested_upper_limit_id );
 
 			/**
 			 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
 			 * way to do that.
 			 */
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-			$objects = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
-					(int) $args['offset'],
-					(int) $args['number']
-				)
+			$sql = $wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
+				(int) $args['offset'],
+				(int) $args['number']
 			);
-			// $total_objects = $wpdb->get_var(
-			// "SELECT COUNT(ID) FROM {$wpdb->users} {$where_clause}"
-			// );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			/**
+			 * Filter user indexable DB query SQL.
+			 *
+			 * @hook ep_user_query_db_sql
+			 * @param {string} $sql The SQL query to be executed
+			 * @param {array} $args Query arguments
+			 * @since 2.5.0
+			 * @return {string} Modified SQL query
+			 */
+			$sql = apply_filters( 'ep_user_query_db_sql', $sql, $args );
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$objects = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 
 			$total_objects = $this->get_total_objects_for_query( $args );
 		} else {
 
-			$objects = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
-					(int) $args['offset'],
-					(int) $args['number']
-				)
+			/**
+			 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
+			 * way to do that.
+			 */
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$sql = $wpdb->prepare(
+				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
+				(int) $args['offset'],
+				(int) $args['number']
 			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 
+			/**
+			 * Filter user indexable DB query SQL.
+			 *
+			 * @hook ep_user_query_db_sql
+			 * @param {string} $sql The SQL query to be executed
+			 * @param {array} $args Query arguments
+			 * @since 2.5.0
+			 * @return {string} Modified SQL query
+			 */
+			$sql = apply_filters( 'ep_user_query_db_sql', $sql, $args );
+
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+			$objects = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$total_objects = ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 
 		return [
 			'objects'       => $objects,
 			'total_objects' => $total_objects,
 		];
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
+	/**
+	 * Get total number of objects for a query
+	 *
+	 * @param array $query_args Query arguments
+	 * @return int Total number of objects
+	 * @since 2.5.0
+	 */
 	protected function get_total_objects_for_query( $query_args ) {
 		global $wpdb;
 
@@ -765,13 +797,25 @@ class User extends Indexable {
 
 		$where_clause = 'WHERE ' . implode( ' AND ', $where );
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$total_objects = $wpdb->get_var(
 			"SELECT COUNT(ID) FROM {$wpdb->users} {$where_clause}"
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		/**
+		 * Filter the total number of user objects for a query.
+		 *
+		 * @hook ep_user_total_objects_for_query
+		 * @param {int}   $total_objects         The total number of user objects found.
+		 * @param {array} $normalized_query_args The normalized query arguments used.
+		 * @since 2.5.0
+		 * @return {int}  The (possibly modified) total number of user objects.
+		 */
+		$total_objects = apply_filters( 'ep_user_total_objects_for_query', $total_objects, $normalized_query_args );
 
 		return $total_objects;
 	}
-
 
 	/**
 	 * Generate the mapping array
