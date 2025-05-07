@@ -1,4 +1,5 @@
 <?php
+
 /**
  * User indexable
  *
@@ -22,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class User extends Indexable {
 
+
 	/**
 	 * We only need one user index
 	 *
@@ -44,15 +46,7 @@ class User extends Indexable {
 	 * @since 2.5.0
 	 */
 	public $support_indexing_advanced_pagination = true;
-	/**
-	 * Create indexable and setup dependencies
-	 */
-	public function __construct() {
-		$this->labels = [
-			'plural'   => esc_html__( 'Users', 'elasticpress-labs' ),
-			'singular' => esc_html__( 'User', 'elasticpress-labs' ),
-		];
-	}
+
 
 	/**
 	 * Instantiate the indexable SyncManager and QueryIntegration, the main responsibles for the WP integration.
@@ -60,6 +54,11 @@ class User extends Indexable {
 	 * @return void
 	 */
 	public function setup() {
+		$this->labels = [
+			'plural'   => esc_html__( 'Users', 'elasticpress-labs' ),
+			'singular' => esc_html__( 'User', 'elasticpress-labs' ),
+		];
+
 		$this->sync_manager      = new SyncManager( $this->slug );
 		$this->query_integration = new QueryIntegration( $this->slug );
 	}
@@ -67,7 +66,7 @@ class User extends Indexable {
 	/**
 	 * Format query vars into ES query
 	 *
-	 * @param  array         $query_vars WP_User_Query args.
+	 * @param  array          $query_vars WP_User_Query args.
 	 * @param  \WP_User_Query $query      User query object
 	 * @return array
 	 */
@@ -646,6 +645,20 @@ class User extends Indexable {
 			$args['order'] = 'desc';
 		}
 
+		/**
+		 * Filter to short-circuit user DB query.
+		 *
+		 * @hook ep_user_pre_query_db_results
+		 * @param {null|array} $results Return null to run the default query, or an array with results to short-circuit
+		 * @param {array} $args Query arguments
+		 * @since 2.5.0
+		 * @return {null|array} Query results or null
+		 */
+		$results = apply_filters( 'ep_user_pre_query_db_results', null, $args );
+		if ( null !== $results ) {
+			return $results;
+		}
+
 		$orderby_args = sanitize_sql_orderby( "{$args['orderby']} {$args['order']}" );
 		$orderby      = $orderby_args ? sprintf( 'ORDER BY %s', $orderby_args ) : '';
 
@@ -662,15 +675,14 @@ class User extends Indexable {
 			$where[]     = "ID NOT IN ($exclude_ids)";
 		}
 
-
-		if ( isset( $args['include'] ) || 0 < $args['offset']  || isset( $args['exclude'] ) ) {
+		if ( isset( $args['include'] ) || 0 < $args['offset'] || isset( $args['exclude'] ) ) {
 			// Disable advanced pagination. Not useful if only indexing specific IDs.
 			$args['ep_indexing_advanced_pagination'] = false;
 		}
 
 		$where_clause = ! empty( $where )
-		? 'WHERE ' . implode( ' AND ', $where )
-		: '';
+			? 'WHERE ' . implode( ' AND ', $where )
+			: '';
 
 		if ( $args['ep_indexing_advanced_pagination'] ) {
 			$requested_lower_limit_post_id = $args['ep_indexing_lower_limit_object_id'] ?? 0;
@@ -712,33 +724,19 @@ class User extends Indexable {
 			// );
 
 			$total_objects = $this->get_total_objects_for_query( $args );
-
 		} else {
 
-
-				$objects   = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
-						(int) $args['offset'],
-						(int) $args['number']
-					)
-				);
-
+			$objects = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
+					(int) $args['offset'],
+					(int) $args['number']
+				)
+			);
 
 			$total_objects = ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' );
-
 		}
 
-		// $total_objects = 5;
-
-		// var_dump( $total_objects );
-		// var_dump(
-		// $wpdb->prepare(
-		// "SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
-		// (int) $args['offset'],
-		// (int) $args['number']
-		// )
-		// );
 		return [
 			'objects'       => $objects,
 			'total_objects' => $total_objects,
@@ -757,19 +755,19 @@ class User extends Indexable {
 			]
 		);
 
-			$requested_lower_limit_post_id = $normalized_query_args['ep_indexing_lower_limit_object_id'] ?? 0;
-			$requested_upper_limit_id      = $normalized_query_args['ep_indexing_upper_limit_object_id'] ?? PHP_INT_MAX;
+		$requested_lower_limit_post_id = $normalized_query_args['ep_indexing_lower_limit_object_id'] ?? 0;
+		$requested_upper_limit_id      = $normalized_query_args['ep_indexing_upper_limit_object_id'] ?? PHP_INT_MAX;
 
-					$where = [
-						'upper_limit' => "{$wpdb->users}.ID <= {$requested_upper_limit_id}",
-						'lower_limit' => "{$wpdb->users}.ID >= {$requested_lower_limit_post_id}",
-					];
+		$where = [
+			'upper_limit' => "{$wpdb->users}.ID <= {$requested_upper_limit_id}",
+			'lower_limit' => "{$wpdb->users}.ID >= {$requested_lower_limit_post_id}",
+		];
 
-					$where_clause = 'WHERE ' . implode( ' AND ', $where );
+		$where_clause = 'WHERE ' . implode( ' AND ', $where );
 
-						$total_objects = $wpdb->get_var(
-							"SELECT COUNT(ID) FROM {$wpdb->users} {$where_clause}"
-						);
+		$total_objects = $wpdb->get_var(
+			"SELECT COUNT(ID) FROM {$wpdb->users} {$where_clause}"
+		);
 
 		return $total_objects;
 	}
@@ -971,7 +969,7 @@ class User extends Indexable {
 				}
 			} elseif ( true !== $excluded_public_keys && ! in_array( $key, $excluded_public_keys, true ) ) {
 
-					$allow_index = true;
+				$allow_index = true;
 			}
 
 			/**

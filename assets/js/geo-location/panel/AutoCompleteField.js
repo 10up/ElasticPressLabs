@@ -32,6 +32,9 @@ export default ({ onPlaceSelected, value }) => {
 			placeholder={__('Enter an address', 'elasticpress-labs')}
 			value={location}
 			onChange={(value) => setLocation(value)}
+			style={{ marginBottom: '8px' }}
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
 		/>
 	);
 };
