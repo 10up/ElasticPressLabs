@@ -1727,6 +1727,18 @@ class TestUser extends BaseTestCase {
 			2
 		);
 
+		add_filter(
+			'ep_user_query_db_count_objects_sql',
+			function () use ( $wpdb, $user_id ) {
+				return $wpdb->prepare(
+					"SELECT COUNT(ID) FROM {$wpdb->users} WHERE ID = %d",
+					$user_id
+				);
+			},
+			10,
+			2
+		);
+
 		$user    = new \ElasticPressLabs\Indexable\User\User();
 		$results = $user->query_db( [] );
 
