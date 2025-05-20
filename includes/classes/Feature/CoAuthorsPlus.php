@@ -89,6 +89,19 @@ class CoAuthorsPlus extends Feature {
 			add_filter( 'ep_post_formatted_args', [ $this, 'include_author_in_es_query' ], 10, 3 );
 		}
 
+		/**
+		 * Filter to skip coauthor plus query integration for frontend searches.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_coauthors_plus_skip_frontend_integration
+		 * @param {bool} $skip Whether to skip coauthor plus query integration. Default false.
+		 * @return {bool} Whether to skip coauthor plus query integration
+		 */
+		if ( apply_filters( 'ep_coauthors_plus_skip_frontend_integration', false ) ) {
+			add_filter( 'ep_weighting_configuration', [ $this, 'remove_author_weighting' ] );
+			return;
+		}
+
 		add_filter( 'ep_weighting_fields_for_post_type', [ $this, 'add_author_attributes_to_weighting' ], 10, 2 );
 		add_filter( 'ep_weighting_default_post_type_weights', [ $this, 'add_author_default_weight' ], 10, 2 );
 	}
@@ -313,5 +326,25 @@ class CoAuthorsPlus extends Feature {
 		];
 
 		return $defaults;
+	}
+
+	/**
+	 * Remove author weighting from the weighting configuration.
+	 *
+	 * @since 2.5.0
+	 * @param array $weighting_configuration The weighting configuration.
+	 * @return array Modified weighting configuration.
+	 */
+	public function remove_author_weighting( $weighting_configuration ) {
+		global $coauthors_plus;
+
+		$supported_post_types = $coauthors_plus->supported_post_types;
+		$author_taxonomy_key  = 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name';
+
+		foreach ( $supported_post_types as $post_type ) {
+			unset( $weighting_configuration[ $post_type ][ $author_taxonomy_key ] );
+		}
+
+		return $weighting_configuration;
 	}
 }

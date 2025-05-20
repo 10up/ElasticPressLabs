@@ -241,4 +241,21 @@ class TestCoAuthorsPlus extends BaseTestCase {
 		$this->assertEquals( 1, $query->found_posts );
 		$this->assertEquals( $post_id, $query->posts[0]->ID );
 	}
+
+	/**
+	 * Test ep_coauthors_plus_skip_frontend_integration filter removes author weighting.
+	 *
+	 * @since  2.5.0
+	 */
+	public function test_ep_coauthors_plus_skip_frontend_integration() {
+		add_filter( 'ep_coauthors_plus_skip_frontend_integration', '__return_true' );
+
+		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
+		ElasticPress\Features::factory()->setup_features();
+
+		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$fields = $search->weighting->get_post_type_default_settings( 'post' );
+
+		$this->assertArrayNotHasKey( 'terms.author.name', $fields );
+	}
 }
