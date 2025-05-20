@@ -145,7 +145,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Test settings schema.
 	 *
-	 * @since  2.5.0
+	 * @since 2.5.0
 	 */
 	public function test_settings_schema() {
 		$expected = [
@@ -170,7 +170,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Test attribute add in weight dashboard.
 	 *
-	 * @since  2.5.0
+	 * @since 2.5.0
 	 */
 	public function test_attribute_add_in_weight_dashboard() {
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
@@ -187,7 +187,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Test add author default weight.
 	 *
-	 * @since  2.5.0
+	 * @since 2.5.0
 	 */
 	public function test_add_author_default_weight() {
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
@@ -204,7 +204,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Test search query returns the posts if search query is a co-author.
 	 *
-	 * @since  2.5.0
+	 * @since 2.5.0
 	 */
 	public function test_search_query_with_co_authors_plus() {
 		global $coauthors_plus;
@@ -245,7 +245,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	/**
 	 * Test ep_coauthors_plus_skip_frontend_integration filter removes author weighting.
 	 *
-	 * @since  2.5.0
+	 * @since 2.5.0
 	 */
 	public function test_ep_coauthors_plus_skip_frontend_integration() {
 		add_filter( 'ep_coauthors_plus_skip_frontend_integration', '__return_true' );
