@@ -331,6 +331,9 @@ class CoAuthorsPlus extends Feature {
 	/**
 	 * Remove author weighting from the weighting configuration.
 	 *
+	 * This is necessary because the value of the author field is stored in the options,
+	 * and we need to ensure it is excluded from the weighting configuration.
+	 *
 	 * @since 2.5.0
 	 * @param array $weighting_configuration The weighting configuration.
 	 * @return array Modified weighting configuration.
