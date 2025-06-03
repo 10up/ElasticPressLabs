@@ -144,6 +144,8 @@ class AISearchSummary {
 				$html .= '</ul>';
 				$html .= '</div>';
 			}
+		} elseif ( is_string( $ai_response ) ) {
+			$html = $ai_response;
 		}
 
 		/**
