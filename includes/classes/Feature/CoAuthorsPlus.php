@@ -56,7 +56,7 @@ class CoAuthorsPlus extends Feature {
 
 		$this->is_protected_content_feature_active = $protected_content_feature && $protected_content_feature->is_active();
 
-		$this->requires_feature = 'protected_content';
+		$this->requires_feature = 'search';
 
 		parent::__construct();
 	}
@@ -79,15 +79,31 @@ class CoAuthorsPlus extends Feature {
 	public function setup() {
 		$settings = $this->get_settings();
 
-		if ( empty( $settings['active'] ) || ! $this->is_protected_content_feature_active ) {
+		if ( empty( $settings['active'] ) ) {
 			return;
 		}
 
 		add_filter( 'ep_sync_taxonomies', array( $this, 'include_author_term' ) );
 
-		if ( is_admin() ) {
+		if ( is_admin() && $this->is_protected_content_feature_active ) {
 			add_filter( 'ep_post_formatted_args', [ $this, 'include_author_in_es_query' ], 10, 3 );
 		}
+
+		/**
+		 * Filter to skip coauthor plus query integration for frontend searches.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_coauthors_plus_skip_frontend_integration
+		 * @param {bool} $skip Whether to skip coauthor plus query integration. Default false.
+		 * @return {bool} Whether to skip coauthor plus query integration
+		 */
+		if ( apply_filters( 'ep_coauthors_plus_skip_frontend_integration', false ) ) {
+			add_filter( 'ep_weighting_configuration', [ $this, 'remove_author_weighting' ] );
+			return;
+		}
+
+		add_filter( 'ep_weighting_fields_for_post_type', [ $this, 'add_author_attributes_to_weighting' ], 10, 2 );
+		add_filter( 'ep_weighting_default_post_type_weights', [ $this, 'add_author_default_weight' ], 10, 2 );
 	}
 
 	/**
@@ -239,7 +255,7 @@ class CoAuthorsPlus extends Feature {
 		$this->settings_schema = [
 			[
 				'key'   => 'instructions',
-				'label' => '<p>' . __( 'If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) . '</p>',
+				'label' => '<p>' . __( 'When enabled, this feature integrates ElasticPress with Co-Authors Plus to enhance author-related queries on the frontend. If "Protected Content" is activated, visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results.', 'elasticpress-labs' ) . '</p>',
 				'type'  => 'markup',
 			],
 		];
@@ -264,5 +280,74 @@ class CoAuthorsPlus extends Feature {
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Add Co-Authors attributes to the Weighting Dashboard.
+	 *
+	 * @since 2.5.0
+	 * @param array  $fields    The array of weighting fields.
+	 * @param string $post_type Current post type.
+	 * @return array Modified array of weighting fields.
+	 */
+	public function add_author_attributes_to_weighting( $fields, $post_type ) {
+		global $coauthors_plus;
+
+		if ( ! in_array( $post_type, $coauthors_plus->supported_post_types, true ) ) {
+			return $fields;
+		}
+
+		$fields['attributes']['children'][ 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name' ] = [
+			'key'   => 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name',
+			'label' => $coauthors_plus->guest_authors->labels['singular'],
+		];
+
+		return $fields;
+	}
+
+	/**
+	 * Add default weight for Co-Authors field.
+	 *
+	 * @since 2.5.0
+	 * @param array  $defaults  The default weight configuration.
+	 * @param string $post_type Current post type.
+	 * @return array Modified weight configuration.
+	 */
+	public function add_author_default_weight( $defaults, $post_type ) {
+		global $coauthors_plus;
+
+		if ( ! in_array( $post_type, $coauthors_plus->supported_post_types, true ) ) {
+			return $defaults;
+		}
+
+		$defaults[ 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name' ] = [
+			'enabled' => true,
+			'weight'  => 1,
+		];
+
+		return $defaults;
+	}
+
+	/**
+	 * Remove author weighting from the weighting configuration.
+	 *
+	 * This is necessary because the value of the author field is stored in the options,
+	 * and we need to ensure it is excluded from the weighting configuration.
+	 *
+	 * @since 2.5.0
+	 * @param array $weighting_configuration The weighting configuration.
+	 * @return array Modified weighting configuration.
+	 */
+	public function remove_author_weighting( $weighting_configuration ) {
+		global $coauthors_plus;
+
+		$supported_post_types = $coauthors_plus->supported_post_types;
+		$author_taxonomy_key  = 'terms.' . $coauthors_plus->coauthor_taxonomy . '.name';
+
+		foreach ( $supported_post_types as $post_type ) {
+			unset( $weighting_configuration[ $post_type ][ $author_taxonomy_key ] );
+		}
+
+		return $weighting_configuration;
 	}
 }
