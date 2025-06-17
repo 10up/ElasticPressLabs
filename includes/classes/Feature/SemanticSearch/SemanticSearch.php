@@ -19,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SemanticSearch extends Feature {
 	/**
+	 * Group
+	 *
+	 * @var string $group.
+	 */
+	public $group = 'ai';
+
+	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
@@ -33,13 +40,25 @@ class SemanticSearch extends Feature {
 	public function __construct() {
 		$this->slug = 'semantic_search';
 
-		$this->title = esc_html__( 'Semantic Search', 'elasticpress-labs' );
-
-		$this->summary = __( 'Enable kNN Search. To use a kNN search algorithm, enable the Search Algorithm Version feature and select one of the kNN variations.', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_feature = 'vector_embeddings';
 
 		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.5.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Semantic Search', 'elasticpress-labs' );
+
+		$this->summary = __( 'Enable kNN Search. To use a kNN search algorithm, enable the Search Algorithm Version feature and select one of the kNN variations.', 'elasticpress-labs' );
 	}
 
 	/**

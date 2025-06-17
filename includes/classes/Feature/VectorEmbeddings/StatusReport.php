@@ -80,7 +80,7 @@ class StatusReport extends Report {
 	 */
 	protected function get_content_with_errors(): string {
 		$es_query = [
-			'size'             => 0,
+			'size'             => 10,
 			'track_total_hits' => true,
 			'_source'          => [
 				'includes' => [ 'post_id' ],

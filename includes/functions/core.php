@@ -33,6 +33,8 @@ function setup() {
 
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
+	add_filter( 'ep_feature_groups', $n( 'add_feature_groups' ) );
+
 	do_action( 'elasticpress_labs_loaded' );
 
 	setup_updater();
@@ -247,6 +249,20 @@ function maybe_load_features() {
 
 	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
 	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
+}
+
+/**
+ * Add feature groups
+ *
+ * @since 2.5.0
+ * @param array $groups Current groups
+ * @return array
+ */
+function add_feature_groups( $groups ) {
+	$groups['ai'] = [
+		'label' => esc_html__( 'AI', 'elasticpress-labs' ),
+	];
+	return $groups;
 }
 
 /**

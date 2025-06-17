@@ -22,6 +22,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class AISearchSummary extends Feature {
 	/**
+	 * Group
+	 *
+	 * @var string $group.
+	 */
+	public $group = 'ai';
+
+	/**
 	 * Default settings
 	 *
 	 * @var array $default_settings.
@@ -49,6 +56,8 @@ The following JSON object contains the URL and the page content. You should use 
 			$this->set_i18n_strings();
 		}
 
+		$this->requires_feature = 'vector_embeddings';
+
 		parent::__construct();
 	}
 
@@ -59,8 +68,6 @@ The following JSON object contains the URL and the page content. You should use 
 		$this->title = esc_html__( 'AI Search Summary', 'elasticpress-labs' );
 
 		$this->summary = '<p>' . __( 'AI Search Summary Description', 'elasticpress-labs' ) . '</p>';
-
-		$this->requires_feature = 'vector_embeddings';
 	}
 
 	/**

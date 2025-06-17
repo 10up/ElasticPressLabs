@@ -27,6 +27,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class VectorEmbeddings extends Feature {
 	/**
+	 * Group
+	 *
+	 * @var string $group.
+	 */
+	public $group = 'ai';
+
+	/**
 	 * Array of VectorEmbeddings\Indexable objects
 	 *
 	 * @var array
@@ -59,16 +66,28 @@ class VectorEmbeddings extends Feature {
 	public function __construct() {
 		$this->slug = 'vector_embeddings';
 
-		$this->title = esc_html__( 'Vector Embeddings', 'elasticpress-labs' );
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
+			$this->set_i18n_strings();
+		}
 
 		$this->requires_install_reindex = true;
+
+		parent::__construct();
+	}
+
+	/**
+	 * Sets i18n strings.
+	 *
+	 * @return void
+	 * @since 2.5.0
+	 */
+	public function set_i18n_strings(): void {
+		$this->title = esc_html__( 'Vector Embeddings', 'elasticpress-labs' );
 
 		$this->summary = __(
 			'This feature enables storage of vector embeddings, a numerical representation of the indexed content that can capture semantic relationships and similarities between data points. These embeddings are often used by AI models to process and understand complex information more efficiently and are used for features like natural language processing, recommendations and computer vision.',
 			'elasticpress-labs'
 		);
-
-		parent::__construct();
 	}
 
 	/**
