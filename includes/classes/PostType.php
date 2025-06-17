@@ -59,6 +59,14 @@ abstract class PostType {
 	public $name_singular;
 
 	/**
+	 * The order in the WordPress admin bar
+	 *
+	 * @var int
+	 * @since 5.3.0
+	 */
+	public $classic_editor_only;
+
+	/**
 	 * Settings description
 	 *
 	 * @since 5.3.0

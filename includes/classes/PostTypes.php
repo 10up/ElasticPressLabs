@@ -32,6 +32,7 @@ class PostTypes {
 	 */
 	public function setup() {
 		add_action( 'init', array( $this, 'setup_post_types' ), 0 );
+		add_filter( 'use_block_editor_for_post_type', array( $this, 'maybe_disable_gutenberg' ), 10, 2 );
 	}
 
 	/**
@@ -93,6 +94,25 @@ class PostTypes {
 	public function register_post_type( PostType $post_type ) {
 		$this->registered_post_types[ $post_type->slug ] = $post_type;
 		return true;
+	}
+
+	/**
+	 * Determines whether to disable the Gutenberg block editor for specific post types.
+	 *
+	 * @since 5.3.0
+	 *
+	 * @param bool   $use_block_editor Whether the block editor is enabled for this post type.
+	 * @param string $current_post_type        The post type being checked.
+	 * @return bool  False if the block editor should be disabled for the post type, otherwise the original value.
+	 */
+	public function maybe_disable_gutenberg( $use_block_editor, $current_post_type ) {
+		$disabled_post_types = [];
+		foreach ( $this->registered_post_types as $post_type_slug => $post_type ) {
+			if ( $post_type->classic_editor_only ) {
+				$disabled_post_types[] = $post_type_slug;
+			}
+		}
+		return in_array( $current_post_type, $disabled_post_types, true ) ? false : $use_block_editor;
 	}
 
 	/**

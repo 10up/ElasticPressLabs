@@ -26,6 +26,8 @@ class Bot extends PostType {
 		$this->icon  = 'dashicons-nametag';
 		$this->order = 20;
 
+		$this->classic_editor_only = true;
+
 		parent::__construct();
 	}
 
