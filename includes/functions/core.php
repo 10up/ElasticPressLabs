@@ -35,6 +35,8 @@ function setup() {
 
 	do_action( 'elasticpress_labs_loaded' );
 
+	add_action( 'elasticpress_loaded', $n( 'setup_post_types' ) );
+
 	setup_updater();
 }
 
@@ -284,5 +286,21 @@ function setup_updater() {
 			);
 			return $plugin_info;
 		}
+	);
+}
+
+
+/**
+ * Setup the post types
+ *
+ * @since 2.1.1
+ * @return void
+ */
+function setup_post_types() {
+	/**
+	 * Handle Bots Post Type
+	 */
+	\ElasticPressLabs\PostTypes::factory()->register_post_type(
+		new \ElasticPressLabs\PostType\Bot()
 	);
 }
