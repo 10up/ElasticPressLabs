@@ -8,6 +8,9 @@
 
 namespace ElasticPressLabs;
 
+use ElasticPress\PostTypes as FeaturesStore;
+use ElasticPress\Screen;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -32,7 +35,61 @@ class PostTypes {
 	 */
 	public function setup() {
 		add_action( 'init', array( $this, 'setup_post_types' ), 0 );
+		add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_scripts' ] );
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'maybe_disable_gutenberg' ), 10, 2 );
+		add_action( 'add_meta_boxes', array( $this, 'setup_meta_fields' ) );
+		add_action( 'init', array( $this, 'register_meta_fields' ) );
+		add_action( 'save_post', array( $this, 'save_meta_fields' ) );
+	}
+
+	/**
+	 * Enqueue script.
+	 *
+	 * @since 5.3.0
+	 * @return void
+	 */
+	public function admin_enqueue_scripts() {
+
+		if ( ! in_array( get_post_type(), array_keys( $this->registered_post_types ), true ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ep_post_types_script',
+			ELASTICPRESS_LABS_URL . 'dist/js/post-types-script.js',
+			Utils\get_asset_info( 'post-types-script', 'dependencies' ),
+			Utils\get_asset_info( 'post-types-script', 'version' ),
+			true
+		);
+
+		wp_set_script_translations( 'ep_post_types_script', 'elasticpress' );
+
+		wp_enqueue_style(
+			'ep_post_types_script',
+			ELASTICPRESS_LABS_URL . 'dist/css/post-types-script.css',
+			[ 'wp-components', 'wp-edit-post' ],
+			Utils\get_asset_info( 'features-script', 'version' )
+		);
+
+		$post_types = $this->registered_post_types;
+		$post_types = array_map( fn( $post_type ) => $post_type->get_json(), $post_types );
+		$post_types = array_values( $post_types );
+
+		$meta_fields = array_map(
+			function ( $value ) {
+				return is_array( $value ) && count( $value ) === 1 ? $value[0] : $value;
+			},
+			get_post_meta( get_the_ID() )
+		);
+
+		$data = [
+			'activePostType' => get_post_type(),
+			'postTypes'      => $post_types,
+			'metaFields'     => $meta_fields,
+			'nonce'          => wp_create_nonce( 'ep_post_type_save' ),
+		];
+
+		wp_localize_script( 'ep_post_types_script', 'epPostTypes', $data );
 	}
 
 	/**
@@ -76,11 +133,77 @@ class PostTypes {
 					'public'        => true,
 					'has_archive'   => true,
 					'show_in_rest'  => true,
-					'supports'      => [ 'title', 'editor', 'thumbnail' ],
+					'supports'      => [ 'title' ],
 					'menu_position' => $post_type->order ?? '',
 					'menu_icon'     => $post_type->icon ?? '',
 				]
 			);
+		}
+	}
+
+	/**
+	 * Registers meta fields
+	 */
+	public function register_meta_fields() {
+		foreach ( $this->registered_post_types as $slug => $post_type ) {
+			foreach ( $post_type->get_settings_schema() as $settings ) {
+				register_post_meta(
+					$slug,
+					$settings['key'],
+					[
+						'show_in_rest'  => true,
+						'type'          => 'string',
+						'single'        => true,
+						'auth_callback' => '__return_true',
+					]
+				);
+			}
+		}
+	}
+
+	/**
+	 * Registers a meta box for custom fields rendered by a React app.
+	 *
+	 * @since 5.3.0
+	 *
+	 * @return void
+	 */
+	public function setup_meta_fields() {
+		add_meta_box(
+			'custom_fields_app',
+			'Custom Fields (React)',
+			function ( $post ) {
+				include EP_PATH . '/includes/partials/header.php';
+				echo '<div id="ep-post-types-dashboard"></div>';
+			}
+		);
+	}
+
+	/**
+	 * Registers a meta box for custom fields rendered by a React app.
+	 *
+	 * @since 5.3.0
+	 * @param int $post_id - id of the current post
+	 *
+	 * @return void
+	 */
+	public function save_meta_fields( $post_id ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( ! isset( $_POST['ep_post_type_nonce'] ) || ! wp_verify_nonce( $_POST['ep_post_type_nonce'], 'ep_post_type_save' ) ) {
+			return;
+		}
+		$post_type = get_post_type( $post_id );
+		if ( isset( $this->registered_post_types[ $post_type ] ) ) {
+			$settings_schema = $this->registered_post_types[ $post_type ]->get_settings_schema();
+			foreach ( $settings_schema as $settings ) {
+				$key = $settings['key'];
+				if ( isset( $_POST[ $key ] ) ) {
+					update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+				}
+			}
 		}
 	}
 
