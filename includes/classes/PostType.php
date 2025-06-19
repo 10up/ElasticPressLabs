@@ -105,4 +105,52 @@ abstract class PostType {
 	 */
 	public function set_i18n_strings(): void {
 	}
+
+	/**
+	 * Get a JSON representation of the feature
+	 *
+	 * @since 5.3.0
+	 * @return string
+	 */
+	public function get_json() {
+		$feature_desc = [
+			'slug'           => $this->slug,
+			'settingsSchema' => $this->get_settings_schema(),
+		];
+
+		return $feature_desc;
+	}
+
+	/**
+	 * Return the feature settings schema
+	 *
+	 * @since 5.3.0
+	 * @return array
+	 */
+	public function get_settings_schema() {
+		// Settings were not set yet.
+		if ( [] === $this->settings_schema ) {
+			$this->set_settings_schema();
+		}
+
+		/**
+		 * Filter the settings schema of a feature
+		 *
+		 * @hook ep_post_type_settings_schema
+		 * @since 5.3.0
+		 * @param {array}   $settings_schema True if the feature is available
+		 * @param {string}  $feature_slug    Feature slug
+		 * @param {Feature} $feature         Feature object
+		 * @return {array} New $settings_schema value
+		 */
+		return apply_filters( 'ep_post_type_settings_schema', $this->settings_schema, $this );
+	}
+
+	/**
+	 * Sets the settings_schema
+	 *
+	 * @since 5.3.0
+	 */
+	protected function set_settings_schema() {
+	}
 }
