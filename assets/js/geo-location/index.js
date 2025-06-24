@@ -32,13 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
 				const { latitude, longitude } = position.coords;
+				const cookieCurrentValue = `; ${document.cookie}`
+					.split(`; ep_coordinates=`)
+					.pop()
+					.split(';')[0];
 
 				setCookie('ep_coordinates', `${latitude},${longitude}`, {
 					secure: true,
 					'max-age': 3600,
 				});
 
-				window.location.reload();
+				if (!cookieCurrentValue) {
+					window.location.reload();
+				}
 			},
 			(error) => {
 				/**
