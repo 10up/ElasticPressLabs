@@ -75,12 +75,20 @@ class PostTypes {
 		$post_types = array_map( fn( $post_type ) => $post_type->get_json(), $post_types );
 		$post_types = array_values( $post_types );
 
-		$meta_fields = array_map(
-			function ( $value ) {
-				return is_array( $value ) && count( $value ) === 1 ? $value[0] : $value;
-			},
-			get_post_meta( get_the_ID() )
-		);
+		// Build meta_fields using get_post_meta( get_the_ID(), $key, true ) for each key in the settings schema
+		$meta_fields = [];
+		$current_post_type = get_post_type();
+		if ( isset( $this->registered_post_types[ $current_post_type ] ) ) {
+			$settings_schema = $this->registered_post_types[ $current_post_type ]->get_settings_schema();
+			foreach ( $settings_schema as $settings ) {
+				$key = $settings['key'];
+				$value = get_post_meta( get_the_ID(), $key, true );
+				if ( is_string( $value ) && is_serialized( $value ) ) {
+					$value = maybe_unserialize( $value );
+				}
+				$meta_fields[ $key ] = $value;
+			}
+		}
 
 		$data = [
 			'activePostType' => get_post_type(),
@@ -147,16 +155,28 @@ class PostTypes {
 	public function register_meta_fields() {
 		foreach ( $this->registered_post_types as $slug => $post_type ) {
 			foreach ( $post_type->get_settings_schema() as $settings ) {
-				register_post_meta(
-					$slug,
-					$settings['key'],
-					[
-						'show_in_rest'  => true,
-						'type'          => 'string',
-						'single'        => true,
-						'auth_callback' => '__return_true',
-					]
-				);
+				if ( 'field_group' === $settings['type'] ) {
+					register_post_meta(
+						$slug,
+						$settings['key'],
+						[
+							'show_in_rest'  => true,
+							'type'          => 'array',
+							'auth_callback' => '__return_true',
+						]
+					);
+				} else {
+					register_post_meta(
+						$slug,
+						$settings['key'],
+						[
+							'show_in_rest'  => true,
+							'type'          => 'string',
+							'single'        => true,
+							'auth_callback' => '__return_true',
+						]
+					);
+				}
 			}
 		}
 	}
@@ -200,8 +220,17 @@ class PostTypes {
 			$settings_schema = $this->registered_post_types[ $post_type ]->get_settings_schema();
 			foreach ( $settings_schema as $settings ) {
 				$key = $settings['key'];
-				if ( isset( $_POST[ $key ] ) ) {
-					update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+				if ( isset( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below
+					if ( 'field_group' === $settings['type'] ) {
+						$decoded = json_decode( wp_unslash( $_POST[ $key ] ), true ); // phpcs:ignore
+						if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded ) ) {
+							update_post_meta( $post_id, $key, $decoded );
+						} else {
+							update_post_meta( $post_id, $key, [] );
+						}
+					} else {
+						update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+					}
 				}
 			}
 		}

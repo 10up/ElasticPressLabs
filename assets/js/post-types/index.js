@@ -1,13 +1,14 @@
 /**
  * WordPress dependencies.
  */
-import { createRoot, WPElement, useState, useEffect } from '@wordpress/element';
+import { createRoot, WPElement, useState, useEffect, useMemo } from '@wordpress/element';
 
 /**
  * Internal dependencies.
  */
 import { activePostType, postTypes, metaFields } from './config';
 import Control from './components/control';
+import { PostTypeContext } from './provider';
 
 /**
  * Styles.
@@ -23,8 +24,9 @@ import '../../../../elasticpress/assets/css/dashboard.css';
  */
 const App = () => {
 	const [values, setValues] = useState(metaFields);
-
 	const currentPostType = postTypes.find((t) => t.slug === activePostType);
+
+	const contextValue = useMemo(() => ({ values, setValues }), [values]);
 
 	useEffect(() => {
 		const form = document.querySelector('form#post');
@@ -44,13 +46,55 @@ const App = () => {
 				const input = document.createElement('input');
 				input.type = 'hidden';
 				input.name = settings.key;
-				input.value = values[settings.key] || '';
+
+				if (settings.type === 'field_group') {
+					input.value = JSON.stringify(values[settings.key] || {});
+				} else {
+					input.value = values[settings.key] || '';
+				}
+
+				if (
+					input.value.length === 0 &&
+					currentPostType.defaultSettings[settings.key]?.length > 0
+				) {
+					input.value = currentPostType.defaultSettings[settings.key];
+				}
+
+				const defaults = currentPostType?.defaultSettings?.[settings.key];
+
+				if (
+					input.value === '{}' &&
+					defaults &&
+					typeof defaults === 'object' &&
+					Object.keys(defaults).length
+				) {
+					input.value = JSON.stringify(defaults);
+				}
+
+				if (
+					(input.value === '{}' ||
+						input.value === 'undefined' ||
+						input.value.length === 0) &&
+					settings?.type === 'field_group' &&
+					Array.isArray(settings?.fields) &&
+					settings.fields.some((f) => 'default' in f)
+				) {
+					const defaultMeta = settings.fields.reduce((acc, field) => {
+						if ('default' in field && 'key' in field) {
+							acc[field.key] = field.default;
+						}
+						return acc;
+					}, {});
+
+					input.value = JSON.stringify(defaultMeta);
+				}
+
 				form.appendChild(input);
 			});
 		};
 		form.addEventListener('submit', submit);
 		return () => form.removeEventListener('submit', submit);
-	}, [currentPostType.settingsSchema, values]);
+	}, [currentPostType.settingsSchema, values, currentPostType.defaultSettings]);
 
 	/**
 	 * Determines whether a control should be rendered based on its requirements.
@@ -99,26 +143,66 @@ const App = () => {
 
 	return (
 		<div>
-			{currentPostType.settingsSchema.map((schema) => {
-				/**
-				 * Skip rendering if the control should not be rendered based on requires_fields.
-				 */
-				if (!shouldRenderControl(schema.requires_fields)) {
-					return null;
-				}
+			<PostTypeContext.Provider value={contextValue}>
+				{currentPostType.settingsSchema.map((schema) => {
+					/**
+					 * Skip rendering if the control should not be rendered based on requires_fields.
+					 */
+					if (!shouldRenderControl(schema.requires_fields)) {
+						return null;
+					}
 
-				const value =
-					typeof values[schema.key] !== 'undefined' ? values[schema.key] : schema.default;
+					let value;
+					if (typeof values[schema.key] !== 'undefined') {
+						value = values[schema.key];
+						// For field_group, if value is a string, parse it
+						if (schema.type === 'field_group' && typeof value === 'string') {
+							try {
+								value = JSON.parse(value);
+							} catch (e) {
+								value = {};
+							}
+						}
+						// For field_group, if value is an object and has keys, use it
+						// For other types, if value is not empty, use it
+						if (
+							(schema.type === 'field_group' &&
+								value &&
+								typeof value === 'object' &&
+								Object.keys(value).length > 0) ||
+							(schema.type !== 'field_group' && value && value.length > 0)
+						) {
+							// use value as is
+						} else {
+							value =
+								currentPostType.defaultSettings[schema.key] ??
+								(schema.type === 'field_group' ? {} : '');
+						}
+					} else {
+						value =
+							currentPostType.defaultSettings[schema.key] ??
+							(schema.type === 'field_group' ? {} : '');
+					}
 
-				return (
-					<Control
-						type={schema.type}
-						settings={schema}
-						value={value}
-						onChange={(val) => setValues((prev) => ({ ...prev, [schema.key]: val }))}
-					/>
-				);
-			})}
+					return (
+						<Control
+							type={schema.type}
+							settings={schema}
+							value={value}
+							onChange={(val) => {
+								if (schema.type === 'field_group') {
+									setValues((prev) => ({
+										...prev,
+										[schema.key]: val,
+									}));
+								} else {
+									setValues((prev) => ({ ...prev, [schema.key]: val }));
+								}
+							}}
+						/>
+					);
+				})}
+			</PostTypeContext.Provider>
 		</div>
 	);
 };

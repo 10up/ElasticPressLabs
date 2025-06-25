@@ -9,8 +9,15 @@
 }
 
 /* stylelint-disable-next-line selector-id-pattern */
-#custom_fields_app .ep-header-menu {
-	margin-left: 0;
+#custom_fields_app {
+
+	& #message {
+		display: none;
+	}
+
+	& .ep-header-menu {
+		margin-left: 0;
+	}
 }
 
 #poststuff .inside {

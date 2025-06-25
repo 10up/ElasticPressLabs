@@ -118,6 +118,10 @@ abstract class PostType {
 			'settingsSchema' => $this->get_settings_schema(),
 		];
 
+		if ( property_exists( $this, 'default_settings' ) && ! empty( $this->default_settings ) ) {
+			$feature_desc['defaultSettings'] = $this->default_settings;
+		}
+
 		return $feature_desc;
 	}
 

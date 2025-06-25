@@ -9,9 +9,17 @@ import {
 	TextControl,
 	TextareaControl,
 	ToggleControl,
+	Card,
+	CardHeader,
+	CardBody,
 } from '@wordpress/components';
 import { safeHTML } from '@wordpress/dom';
 import { RawHTML } from '@wordpress/element';
+
+/**
+ * Internal dependencies
+ */
+import { usePostTypeSettings } from '../provider';
 
 const Control = ({ type, settings, value, onChange }) => {
 	/**
@@ -43,6 +51,8 @@ const Control = ({ type, settings, value, onChange }) => {
 		onChange(value);
 	};
 
+	const { values } = usePostTypeSettings();
+
 	return (
 		<div className="ep-post-types-control">
 			{(() => {
@@ -51,8 +61,8 @@ const Control = ({ type, settings, value, onChange }) => {
 						return (
 							<CheckboxControl
 								checked={value === '1'}
-								help={settings.help}
-								label={settings.label}
+								help={settings.help ?? false}
+								label={settings.label ?? false}
 								onChange={onChangeCheckbox}
 								// disabled={isDisabled}
 								__nextHasNoMarginBottom
@@ -134,6 +144,92 @@ const Control = ({ type, settings, value, onChange }) => {
 								value={value}
 								__nextHasNoMarginBottom
 							/>
+						);
+					}
+					case 'field_group': {
+						const shouldRenderField = (requires_fields) => {
+							if (!requires_fields || Object.keys(requires_fields).length === 0) {
+								return true;
+							}
+
+							// Get field requirements from 'conditions' key
+							let fieldRequirements;
+
+							if (requires_fields.conditions) {
+								fieldRequirements = Object.entries(requires_fields.conditions);
+							}
+
+							// If no actual field requirements, return true
+							if (fieldRequirements.length === 0) {
+								return true;
+							}
+
+							// Define the condition check function
+							const checkCondition = ([fieldKey, requiredValue]) => {
+								const actualValue = values[fieldKey];
+								// const defaultValue = defaultSettings[fieldKey] ?? false;
+								return actualValue === requiredValue;
+							};
+
+							// Extract relationship type, default to 'AND'
+							const relationship = (
+								requires_fields.relationship || 'AND'
+							).toUpperCase();
+
+							// Apply the appropriate logic based on relationship type
+							switch (relationship) {
+								case 'OR':
+									return fieldRequirements.some(checkCondition);
+								case 'AND':
+								default:
+									// Default to AND for any unexpected values
+									return fieldRequirements.every(checkCondition);
+							}
+						};
+
+						return (
+							<div className="ep-field-group">
+								<Card>
+									{settings.label && (
+										<CardHeader>
+											<strong>{settings.label}</strong>
+										</CardHeader>
+									)}
+									<CardBody>
+										{settings.fields.map((field) => {
+											const shouldRender = shouldRenderField(
+												field.requires_fields,
+											);
+
+											// Skip rendering if the field's requirements aren't met
+											if (!shouldRender) {
+												return null;
+											}
+											// Get the current value for this field
+											const fieldValue = value?.[field.key] ?? field.default;
+
+											return (
+												<Control
+													// key={field.key}
+													{...field}
+													value={fieldValue}
+													settings={field}
+													onChange={(newValue) => {
+														// Create a new object with the updated field value
+														const updatedValue = {
+															...value,
+															[field.key]: newValue,
+														};
+
+														// Call the parent onChange with the updated nested value
+														onChange(updatedValue);
+													}}
+												/>
+											);
+										})}
+									</CardBody>
+								</Card>
+							</div>
 						);
 					}
 					default: {
