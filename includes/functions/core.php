@@ -251,6 +251,9 @@ function maybe_load_features() {
 
 	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
 	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
+
+	$ai_bot = new \ElasticPressLabs\Feature\AIBot();
+	\ElasticPress\Features::factory()->register_feature( $ai_bot );
 }
 
 /**
@@ -328,10 +331,15 @@ function setup_updater() {
  * @return void
  */
 function setup_post_types() {
+	$settings = \ElasticPress\Features::factory()->get_feature_settings();
+
 	/**
 	 * Handle Bots Post Type
 	 */
-	\ElasticPressLabs\PostTypes::factory()->register_post_type(
-		new \ElasticPressLabs\PostType\Bot()
-	);
+	$ai_bot = $settings['ai_bot'];
+	if ( $ai_bot['active'] ) {
+		\ElasticPressLabs\PostTypes::factory()->register_post_type(
+			new \ElasticPressLabs\PostType\Bot()
+		);
+	}
 }
