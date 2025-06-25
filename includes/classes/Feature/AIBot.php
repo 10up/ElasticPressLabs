@@ -1,6 +1,6 @@
 <?php
 /**
- * Search Algorithm Feature
+ * AI Bot Feature
  *
  * @package ElasticPressLabs
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * SearchAlgorithm class.
+ * AIBot class.
  */
 class AIBot extends \ElasticPress\Feature {
 
