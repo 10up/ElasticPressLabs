@@ -41,7 +41,7 @@ class Bot extends PostType {
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'user_prompt' => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+		'user_prompt'       => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
 The following JSON object contains the URL and the page content. You should use it as context:
 
@@ -99,10 +99,10 @@ The following JSON object contains the URL and the page content. You should use 
 			$feature_settings = array_slice( $feature->get_settings_schema(), 1 );
 
 			$group = [
-				'type'   => 'field_group',
-				'key'    => $feature->slug . '_config',
-				'label'  => $feature->title,
-				'fields' => $feature_settings,
+				'type'            => 'field_group',
+				'key'             => $feature->slug . '_config',
+				'label'           => $feature->title,
+				'fields'          => $feature_settings,
 				'requires_fields' => [
 					'conditions' => [
 						'feature_selection' => $slug,
@@ -143,28 +143,6 @@ The following JSON object contains the URL and the page content. You should use 
 				'label'   => __( 'AI System Prompt', 'elasticpress-labs' ),
 				'help'    => __( 'The <code>{posts}</code> string will be replaced.', 'elasticpress-labs' ),
 				'type'    => 'textarea',
-				'default' => $this->default_settings['user_prompt'],
-			],
-			[
-				'type'   => 'field_group',
-				'key'    => 'ai_feature_config',
-				'label'  => __( 'AI Feature Configuration', 'elasticpress' ),
-				'fields' => [
-					[
-						'default' => '0',
-						'help'    => __( 'Enable to wrap search terms in HTML tags in results for custom styling. The wrapping HTML tag comes with the <code>ep-highlight</code> class for easy styling.' ),
-						'key'     => 'highlight_enabled',
-						'label'   => __( 'Highlight search terms', 'elasticpress' ),
-						'type'    => 'checkbox',
-					],
-					[
-						'default' => '0',
-						'help'    => __( 'By default, WordPress strips HTML from content excerpts. Enable when using <code>the_excerpt()</code> to display search results.', 'elasticpress' ),
-						'key'     => 'highlight_excerpt',
-						'label'   => __( 'Highlight search terms in excerpts', 'elasticpress' ),
-						'type'    => 'checkbox',
-					],
-				],
 			],
 		];
 		$this->set_overridable_features();

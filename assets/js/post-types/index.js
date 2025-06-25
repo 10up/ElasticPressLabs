@@ -50,43 +50,9 @@ const App = () => {
 				if (settings.type === 'field_group') {
 					input.value = JSON.stringify(values[settings.key] || {});
 				} else {
-					input.value = values[settings.key] || '';
-				}
-
-				if (
-					input.value.length === 0 &&
-					currentPostType.defaultSettings[settings.key]?.length > 0
-				) {
-					input.value = currentPostType.defaultSettings[settings.key];
-				}
-
-				const defaults = currentPostType?.defaultSettings?.[settings.key];
-
-				if (
-					input.value === '{}' &&
-					defaults &&
-					typeof defaults === 'object' &&
-					Object.keys(defaults).length
-				) {
-					input.value = JSON.stringify(defaults);
-				}
-
-				if (
-					(input.value === '{}' ||
-						input.value === 'undefined' ||
-						input.value.length === 0) &&
-					settings?.type === 'field_group' &&
-					Array.isArray(settings?.fields) &&
-					settings.fields.some((f) => 'default' in f)
-				) {
-					const defaultMeta = settings.fields.reduce((acc, field) => {
-						if ('default' in field && 'key' in field) {
-							acc[field.key] = field.default;
-						}
-						return acc;
-					}, {});
-
-					input.value = JSON.stringify(defaultMeta);
+					const defaultVal = settings.default ?? '';
+					input.value =
+						values[settings.key].length > 0 ? values[settings.key] : defaultVal;
 				}
 
 				form.appendChild(input);
@@ -145,43 +111,27 @@ const App = () => {
 		<div>
 			<PostTypeContext.Provider value={contextValue}>
 				{currentPostType.settingsSchema.map((schema) => {
-					/**
-					 * Skip rendering if the control should not be rendered based on requires_fields.
-					 */
+					// Handle conditional rendering
 					if (!shouldRenderControl(schema.requires_fields)) {
 						return null;
 					}
 
-					let value;
-					if (typeof values[schema.key] !== 'undefined') {
-						value = values[schema.key];
-						// For field_group, if value is a string, parse it
-						if (schema.type === 'field_group' && typeof value === 'string') {
-							try {
-								value = JSON.parse(value);
-							} catch (e) {
-								value = {};
+					// Handle default values
+					let value = values[schema.key];
+					if (
+						value.length === 0 &&
+						schema.type === 'field_group' &&
+						schema.fields.some((f) => 'default' in f)
+					) {
+						const defaultValues = schema.fields.reduce((acc, field) => {
+							if ('default' in field && 'key' in field) {
+								acc[field.key] = field.default;
 							}
-						}
-						// For field_group, if value is an object and has keys, use it
-						// For other types, if value is not empty, use it
-						if (
-							(schema.type === 'field_group' &&
-								value &&
-								typeof value === 'object' &&
-								Object.keys(value).length > 0) ||
-							(schema.type !== 'field_group' && value && value.length > 0)
-						) {
-							// use value as is
-						} else {
-							value =
-								currentPostType.defaultSettings[schema.key] ??
-								(schema.type === 'field_group' ? {} : '');
-						}
-					} else {
-						value =
-							currentPostType.defaultSettings[schema.key] ??
-							(schema.type === 'field_group' ? {} : '');
+							return acc;
+						}, {});
+						value = JSON.stringify(defaultValues);
+					} else if (value.length === 0 && schema.default?.length > 0) {
+						value = schema.default;
 					}
 
 					return (
