@@ -55,6 +55,7 @@
       "admin": "./assets/js/admin/admin.js",
       "ai-search-summary-block-script": "./assets/js/blocks/ai-search-summary/index.js",
       "ai-search-summary-block-frontend-script": "./assets/js/blocks/ai-search-summary/frontend.js",
+	  "ai-bot-block-script": "./assets/js/blocks/ai-bot/index.js",
       "embeddings-editor-script": "./assets/js/embeddings-editor/index.js",
       "embeddings-script": "./assets/js/embeddings/index.js",
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
