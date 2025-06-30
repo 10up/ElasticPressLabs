@@ -37,6 +37,8 @@ function setup() {
 
 	do_action( 'elasticpress_labs_loaded' );
 
+	add_action( 'elasticpress_loaded', $n( 'setup_post_types' ) );
+
 	setup_updater();
 }
 
@@ -249,6 +251,9 @@ function maybe_load_features() {
 
 	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
 	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
+
+	$ai_bot = new \ElasticPressLabs\Feature\AIBot();
+	\ElasticPress\Features::factory()->register_feature( $ai_bot );
 }
 
 /**
@@ -316,4 +321,25 @@ function setup_updater() {
 			return $plugin_info;
 		}
 	);
+}
+
+
+/**
+ * Setup the post types
+ *
+ * @since 2.1.1
+ * @return void
+ */
+function setup_post_types() {
+	$settings = \ElasticPress\Features::factory()->get_feature_settings();
+
+	/**
+	 * Handle Bots Post Type
+	 */
+	$ai_bot = $settings['ai_bot'];
+	if ( $ai_bot['active'] ) {
+		\ElasticPressLabs\PostTypes::factory()->register_post_type(
+			new \ElasticPressLabs\PostType\Bot()
+		);
+	}
 }

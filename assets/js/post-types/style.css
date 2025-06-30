@@ -1,0 +1,30 @@
+#ep-post-types-dashboard {
+
+	& > div {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		padding: 20px;
+	}
+}
+
+/* stylelint-disable-next-line selector-id-pattern */
+#custom_fields_app {
+
+	& #message {
+		display: none;
+	}
+
+	& .ep-header-menu {
+		margin-left: 0;
+	}
+}
+
+#poststuff .inside {
+	margin: 0;
+	padding: 0;
+}
+
+.postbox-header {
+	display: none;
+}
