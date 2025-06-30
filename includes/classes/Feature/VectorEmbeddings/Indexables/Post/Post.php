@@ -22,6 +22,7 @@ class Post extends Indexable {
 	 * @var Settings
 	 */
 	public $settings_page;
+
 	/**
 	 * Setup hooks
 	 */
@@ -50,6 +51,7 @@ class Post extends Indexable {
 			add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
 			add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
+			add_filter( 'ep_embeddings_dimensions', [ $this, 'set_epio_dimensions' ] );
 		} else {
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
 		}
@@ -270,6 +272,15 @@ class Post extends Indexable {
 	}
 
 	/**
+	 * Set the dimensions to -1 for EP.io.
+	 *
+	 * @return int
+	 */
+	public function set_epio_dimensions() {
+		return -1;
+	}
+
+	/**
 	 * Add the embedding data to the post vector sync args.
 	 *
 	 * @param array $args Current sync args.
@@ -371,7 +382,7 @@ class Post extends Indexable {
 		if ( $taxonomies ) {
 			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
 			if ( $post_terms_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str ) ];
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str, $chunk_size, $overlap_size ) ];
 			}
 		}
 
@@ -379,7 +390,7 @@ class Post extends Indexable {
 		if ( $meta_fields ) {
 			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
 			if ( $post_meta_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str ) ];
+				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str, $chunk_size, $overlap_size ) ];
 			}
 		}
 
