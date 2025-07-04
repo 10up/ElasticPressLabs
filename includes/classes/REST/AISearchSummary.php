@@ -36,25 +36,10 @@ class AISearchSummary {
 	 * @return void
 	 */
 	public function register_routes() {
-		$routes = [
-			'client-side' => [
-				'callback'            => [ $this, 'get_ai_search_summary_response' ],
-				'methods'             => 'POST',
-				'permission_callback' => '__return_true',
-				'args'                => [
-					'search_query'   => [
-						'description'       => __( 'The search query.', 'elasticpress-labs' ),
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'search_vectors' => [
-						'description'       => __( 'The search vectors.', 'elasticpress-labs' ),
-						'type'              => 'array',
-						'sanitize_callback' => [ $this, 'sanitize_vectors_array' ],
-					],
-				],
-			],
-			'server-side' => [
+		register_rest_route(
+			'elasticpress-labs/v1',
+			'ai-search-summary',
+			[
 				'callback'            => [ $this, 'get_ai_search_summary_response' ],
 				'methods'             => 'GET',
 				'permission_callback' => '__return_true',
@@ -66,12 +51,6 @@ class AISearchSummary {
 					],
 				],
 			],
-		];
-
-		register_rest_route(
-			'elasticpress-labs/v1',
-			'ai-search-summary',
-			$routes[ $this->get_embed_method() ],
 		);
 	}
 
@@ -106,15 +85,6 @@ class AISearchSummary {
 	 */
 	public function sanitize_vectors_array( array $array ): array {
 		return array_map( 'floatval', $array );
-	}
-
-	/**
-	 * Get the embedding method of the search term.
-	 *
-	 * @return string
-	 */
-	protected function get_embed_method(): string {
-		return (string) $this->feature->get_setting( 'search_term_embed_method' );
 	}
 
 	/**

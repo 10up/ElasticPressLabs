@@ -34,12 +34,11 @@ class AISearchSummary extends Feature {
 	 * @var array $default_settings.
 	 */
 	public $default_settings = [
-		'search_term_embed_method' => 'client-side',
-		'api_key'                  => '',
-		'api_url'                  => 'https://api.openai.com/v1/chat/completions',
-		'chat_model'               => 'o1-mini',
-		'number_of_posts'          => 5,
-		'prompt'                   => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+		'api_key'         => '',
+		'api_url'         => 'https://api.openai.com/v1/chat/completions',
+		'chat_model'      => 'o1-mini',
+		'number_of_posts' => 5,
+		'prompt'          => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
 The following JSON object contains the URL and the page content. You should use it as context:
 
@@ -114,16 +113,12 @@ The following JSON object contains the URL and the page content. You should use 
 			true
 		);
 
-		$models_url = str_replace( home_url(), '', ELASTICPRESS_LABS_URL . 'assets/models/our-model/' );
-
 		wp_localize_script(
 			'ep-ai-search-summary-block-frontend-script',
 			'epAISearchSummary',
 			[
-				'searchQuery'               => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'restApiEndpoint'           => 'elasticpress-labs/v1/ai-search-summary',
-				'searchTermEmbeddingMethod' => $this->get_setting( 'search_term_embed_method' ),
-				'modelUrl'                  => $models_url,
+				'searchQuery'     => ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'restApiEndpoint' => 'elasticpress-labs/v1/ai-search-summary',
 			]
 		);
 
@@ -502,22 +497,6 @@ The following JSON object contains the URL and the page content. You should use 
 	 */
 	public function set_settings_schema() {
 		$this->settings_schema = [
-			[
-				'key'     => 'search_term_embed_method',
-				'label'   => __( 'Search Term Embedding Method', 'elasticpress-labs' ),
-				'help'    => __( 'The method to use to vectorize the search term. The model used here should match the one used to vectorize your content.', 'elasticpress-labs' ),
-				'options' => [
-					[
-						'label' => __( 'Client side', 'elasticpress-labs' ),
-						'value' => 'client-side',
-					],
-					[
-						'label' => __( 'Server side', 'elasticpress-labs' ),
-						'value' => 'server-side',
-					],
-				],
-				'type'    => 'radio',
-			],
 			[
 				'key'     => 'api_key',
 				'label'   => __( 'OpenAI API Key', 'elasticpress-labs' ),
