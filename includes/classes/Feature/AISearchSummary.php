@@ -46,7 +46,7 @@ The following JSON object contains the URL and the page content. You should use 
 	];
 
 	/**
-	 * Initialize feature setting it's config
+	 * Initialize feature setting its config
 	 */
 	public function __construct() {
 		$this->slug = 'ai_search_summary';
