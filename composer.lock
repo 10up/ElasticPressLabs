@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc6f16e26ce19864343da23c81461efd",
+    "content-hash": "89f0b91fc96c56b84ff09b7c52d95ac5",
     "packages": [
         {
             "name": "yahnis-elsts/plugin-update-checker",
@@ -3085,6 +3085,24 @@
             "time": "2024-03-25T16:39:00+00:00"
         },
         {
+            "name": "wpackagist-plugin/co-authors-plus",
+            "version": "3.6.5",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/co-authors-plus/",
+                "reference": "tags/3.6.5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/co-authors-plus.3.6.5.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/co-authors-plus/"
+        },
+        {
             "name": "wpackagist-plugin/woocommerce",
             "version": "9.4.3",
             "source": {
@@ -3176,15 +3194,15 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "10up/elasticpress": 20,
         "10up/wp_mock": 20,
+        "10up/elasticpress": 20,
         "phpcompatibility/php-compatibility": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.0|^8.0"
+        "php": "^7.4|^8.0"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

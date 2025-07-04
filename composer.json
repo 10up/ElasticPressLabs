@@ -8,7 +8,7 @@
       "name": "10up",
       "email": "info@10up.com",
       "homepage": "https://10up.com",
-			"role": "Developer"
+      "role": "Developer"
     }
   ],
   "require": {
@@ -34,7 +34,8 @@
     "yoast/phpunit-polyfills": "^1.0",
     "wpackagist-plugin/woocommerce": "*",
     "phpcompatibility/phpcompatibility-wp": "*",
-    "phpcompatibility/php-compatibility": "dev-develop as 9.99.99"
+    "phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
+    "wpackagist-plugin/co-authors-plus": "*"
   },
   "scripts": {
     "lint": "phpcs . -s --runtime-set testVersion 7.4-",
