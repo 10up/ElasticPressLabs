@@ -224,7 +224,12 @@ function maybe_load_features() {
 			continue;
 		}
 
-		$class_name = 'ElasticPressLabs\Feature\\' . basename( $filename, '.php' );
+		$basename = basename( $filename, '.php' );
+		if ( 'ElasticPressLabs' === $basename ) {
+			continue;
+		}
+
+		$class_name = 'ElasticPressLabs\Feature\\' . $basename;
 
 		if ( class_exists( $class_name ) ) {
 			$subfeature = new $class_name();
