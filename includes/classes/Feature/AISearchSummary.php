@@ -38,7 +38,7 @@ class AISearchSummary extends Feature {
 		'api_url'         => 'https://api.openai.com/v1/chat/completions',
 		'chat_model'      => 'o1-mini',
 		'number_of_posts' => 5,
-		'prompt'          => "You are an assistent in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
+		'prompt'          => "You are an assistant in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
 The following JSON object contains the URL and the page content. You should use it as context:
 
