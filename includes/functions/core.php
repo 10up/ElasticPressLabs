@@ -232,6 +232,10 @@ function maybe_load_features() {
 			continue;
 		}
 
+		if ( 'ElasticPressLabs' === $basename ) {
+			continue;
+		}
+
 		$class_name = 'ElasticPressLabs\Feature\\' . $basename;
 
 		if ( class_exists( $class_name ) ) {
