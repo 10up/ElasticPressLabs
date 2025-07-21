@@ -73,7 +73,7 @@ class Hybrid extends SearchAlgorithm {
 			'query'       => $formatted_args['query'],
 			'knn'         => [
 				'field'          => 'chunks.vector',
-				'query_vector'   => array_map( 'floatval', $query_embedding ),
+				'query_vector'   => $query_embedding,
 				'num_candidates' => 200,
 				'k'              => (int) $formatted_args['size'],
 			],

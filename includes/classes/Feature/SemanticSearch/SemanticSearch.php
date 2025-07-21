@@ -67,9 +67,22 @@ class SemanticSearch extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		\ElasticPress\SearchAlgorithms::factory()->register( new SearchAlgorithm\Knn() );
-		\ElasticPress\SearchAlgorithms::factory()->register( new SearchAlgorithm\KnnCosine() );
-		\ElasticPress\SearchAlgorithms::factory()->register( new SearchAlgorithm\Hybrid() );
+		$algorithms = [
+			new SearchAlgorithm\Knn(),
+			new SearchAlgorithm\KnnCosine(),
+			new SearchAlgorithm\Hybrid(),
+		];
+		foreach ( $algorithms as $algorithm ) {
+			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
+		}
+
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
+		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
+
+		if ( $is_epio && in_array( $search_algorithm, $algorithms, true ) ) {
+			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
+		}
 	}
 
 	/**
@@ -101,5 +114,22 @@ class SemanticSearch extends Feature {
 		 * @return {float} The minimum score for KNN search.
 		 */
 		return (float) apply_filters( 'ep_semantic_search_min_score', $this->get_setting( 'search_min_score' ) );
+	}
+
+	/**
+	 * Add the vector embeddings header to the request arguments.
+	 *
+	 * @param array  $request_args The request arguments.
+	 * @param string $path The path of the request.
+	 * @param string $index The index of the request.
+	 * @param string $type The type of the request.
+	 * @param array  $query The query of the request.
+	 * @param array  $query_args The query arguments of the request.
+	 * @return array The request arguments.
+	 */
+	public function add_vector_embeddings_header( $request_args, $path, $index, $type, $query, $query_args ) {
+		$request_args['headers']['EP-Vector-Embeddings-Search-Term'] = rawurlencode( $query_args['s'] );
+
+		return $request_args;
 	}
 }

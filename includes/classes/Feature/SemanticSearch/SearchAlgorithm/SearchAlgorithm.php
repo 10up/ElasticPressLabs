@@ -47,11 +47,15 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 	public function get_search_term_vector( $search_term ) {
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 
+		if ( 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' ) ) {
+			return '{{ep_search_term_vectors_placeholder}}';
+		}
+
 		$search_term_vector = $vector_embeddings->generate_embedding( $search_term );
 		if ( is_wp_error( $search_term_vector ) ) {
 			return [];
 		}
 
-		return $search_term_vector;
+		return array_map( 'floatval', $search_term_vector );
 	}
 }

@@ -84,7 +84,7 @@ class KnnCosine extends SearchAlgorithm {
 										'script' => [
 											'source' => 'cosineSimilarity(params.query_vector, "chunks.vector") + 1.0',
 											'params' => [
-												'query_vector' => array_map( 'floatval', $query_embedding ),
+												'query_vector' => $query_embedding,
 											],
 										],
 									],
