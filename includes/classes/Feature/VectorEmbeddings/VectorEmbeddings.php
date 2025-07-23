@@ -381,6 +381,19 @@ class VectorEmbeddings extends Feature {
 		// Remove multiple new lines.
 		$content = preg_replace( '/[\n\v]{2,}/', "\n\n", $content );
 
+		// For ElasticPress.io, we chunk the content on the service side.
+		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			/**
+			 * Filter a chunk of text.
+			 *
+			 * @hook ep_embeddings_chunk
+			 * @since 2.4.0
+			 * @param {string} $chunk The chunk being processed.
+			 * @return {string} The modified chunk.
+			 */
+			return (array) apply_filters( 'ep_embeddings_chunk', $content );
+		}
+
 		// Split text by single whitespace.
 		$words = explode( ' ', $content );
 
@@ -399,15 +412,7 @@ class VectorEmbeddings extends Feature {
 				)
 			);
 
-			/**
-			 * Filter a chunk of text.
-			 *
-			 * @hook ep_embeddings_chunk
-			 * @since 2.4.0
-			 *
-			 * @param {string} $chunk The chunk being processed.
-			 * @return {string} The modified chunk.
-			 */
+			// This filter is documented above.
 			$chunk = apply_filters( 'ep_embeddings_chunk', $chunk );
 
 			array_push( $chunks, $chunk );

@@ -82,6 +82,7 @@ class SemanticSearch extends Feature {
 
 		if ( $is_epio && in_array( $search_algorithm, $algorithms, true ) ) {
 			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
+			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
 	}
 
@@ -131,5 +132,22 @@ class SemanticSearch extends Feature {
 		$request_args['headers']['EP-Vector-Embeddings-Search-Term'] = rawurlencode( $query_args['s'] );
 
 		return $request_args;
+	}
+
+	/**
+	 * Add the vector embeddings header to the request arguments.
+	 *
+	 * @return void
+	 */
+	public function add_autosuggest_http_header() {
+		wp_add_inline_script(
+			'elasticpress-autosuggest',
+			"const epAutosuggestFetchOptions = (fetchOptions) => {
+				fetchOptions.headers['EP-Vector-Embeddings-Search-Term'] = fetchOptions.headers['EP-Search-Term'];
+				return fetchOptions;
+			};
+			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
+			'before'
+		);
 	}
 }
