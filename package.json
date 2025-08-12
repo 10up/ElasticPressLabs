@@ -30,6 +30,8 @@
     "env:install-tests-cli": "./bin/install-wp-cli.sh tests-wordpress",
     "env:start": "wp-env start && npm run env:install-tests-cli && npm run es:start",
     "env:stop": "wp-env stop && npm run es:stop",
+    "playwright:test": "playwright test -c tests/e2e/playwright.config.ts",
+    "playwright:ui": "playwright test -c tests/e2e/playwright.config.ts --ui",
     "cypress:setup": "./bin/setup-cypress-env.sh",
     "cypress:open": "cypress open --config-file tests/cypress/config.js",
     "cypress:run": "cypress run --config-file tests/cypress/config.js"
@@ -43,6 +45,7 @@
     "@wordpress/env": "^10.15.0",
     "10up-toolkit": "^6.3.0",
     "cypress": "^13.17.0",
+    "elasticpress-playwright-utils": "^0.1.0",
     "eslint-plugin-cypress": "^3.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10"
@@ -50,13 +53,13 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "type": "module",
   "10up-toolkit": {
     "entry": {
       "admin": "./assets/js/admin/admin.js",
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
-
       "blocks-styles": "./assets/css/blocks.css"
     }
   },
