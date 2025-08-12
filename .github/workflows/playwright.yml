@@ -43,9 +43,6 @@ jobs:
       with:
         path: elasticpress-labs
 
-    - name: List files
-      run: ls -la
-
     - name: Prepare npm cache
       uses: actions/cache@v4
       with:
@@ -118,10 +115,6 @@ jobs:
         name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}-${{ matrix.testGroup }}
         retention-days: 2
         path: ${{ github.workspace }}/playwright-report/
-
-    - name: Stop Elasticsearch
-      if: matrix.esVersion != 'EP.io'
-      run: cd bin/es-docker/ && docker compose down
 
     - name: Delete Elasticsearch search templates
       if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
