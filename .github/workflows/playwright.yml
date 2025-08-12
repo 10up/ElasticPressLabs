@@ -102,6 +102,9 @@ jobs:
       if: matrix.esVersion != 'EP.io'
 
     - name: Set up database (EP.io)
+      env:
+        EPIO_HOST: ${{ vars.EPIO_HOST }}
+        EPIO_INDEX_PREFIX: ${{ vars.EPIO_INDEX_PREFIX }}
       run: npm run e2e:setup -- --ep-host="$EPIO_HOST" --es-shield='${{ secrets.EP_CREDENTIALS }}' --ep-index-prefix="$EPIO_INDEX_PREFIX" --wp-version=${{ matrix.core.version }}
       if: matrix.esVersion == 'EP.io'
 
