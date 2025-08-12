@@ -32,7 +32,7 @@
     "env:stop": "wp-env stop && npm run es:stop",
     "playwright:test": "playwright test -c tests/e2e/playwright.config.ts",
     "playwright:ui": "playwright test -c tests/e2e/playwright.config.ts --ui",
-    "cypress:setup": "./bin/setup-cypress-env.sh",
+    "e2e:setup": "./bin/setup-e2e-env.sh",
     "cypress:open": "cypress open --config-file tests/cypress/config.js",
     "cypress:run": "cypress run --config-file tests/cypress/config.js"
   },
