@@ -56,7 +56,9 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await expect(loggedInPage.locator('.components-notice:has-text("This does not seem to be a valid JSON object.")')).not.toBeVisible();
 
 		await addNewTemplatePanel.getByRole('button', { name: 'Save Template' }).click();
-		await expect(loggedInPage.locator('.components-notice:has-text("Template saved.")')).toBeVisible();
+		await expect(
+			loggedInPage.locator('.components-snackbar').filter({ hasText: 'Template saved.' }),
+		).toBeVisible();
 
 		const newTemplatePanel = loggedInPage.locator('.components-panel__body-title:has-text("new-template")')
 			.locator('..');
@@ -77,7 +79,9 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await newTemplateTextarea.clear();
 		await newTemplateTextarea.fill('{"a": "c"}');
 		await newTemplatePanel.getByRole('button', { name: 'Save changes' }).click();
-		await expect(loggedInPage.locator('.components-notice:has-text("Template saved.")')).toBeVisible();
+		await expect(
+			loggedInPage.locator('.components-snackbar').filter({ hasText: 'Template saved.' }),
+		).toBeVisible();
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-search-templates');
 		const newTemplatePanel2 = loggedInPage.locator('.components-panel__body-title:has-text("new-template")')
@@ -87,7 +91,9 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		const addNewTemplatePanel2 = loggedInPage.locator('.components-panel__body-title:has-text("Add New Template")')
 			.locator('..');
 		await addNewTemplatePanel2.locator('input[type="text"]').fill('new-template');
-		await expect(loggedInPage.locator('.components-notice:has-text("This name is already in use.")')).toBeVisible();
+		await expect(
+			loggedInPage.locator('.components-notice.is-error').filter({ hasText: 'This name is already in use.' }),
+		).toBeVisible();
 
 		// Wait for template load request
 		const loadTemplateRequestPromise = loggedInPage.waitForResponse(
@@ -108,7 +114,9 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await newTemplatePanel3.click();
 
 		await newTemplatePanel3.getByRole('button', { name: 'Delete template' }).click();
-		await expect(loggedInPage.locator('.components-notice:has-text("Template deleted.")')).toBeVisible();
+		await expect(
+			loggedInPage.locator('.components-snackbar').filter({ hasText: 'Template deleted.' }),
+		).toBeVisible();
 	});
 
 	test('Can see a message if above limits', async ({ loggedInPage }) => {
@@ -147,6 +155,8 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await addNewTemplatePanel.getByRole('button', { name: 'Save Template' }).click();
 		await loadTemplateRequestPromise;
 
-		await expect(loggedInPage.locator('.components-notice:has-text("It seems you have reached the limit of search")')).toBeVisible();
+		await expect(
+			loggedInPage.locator('.components-notice.is-error').filter({ hasText: 'It seems you have reached the limit of search' }),
+		).toBeVisible();
 	});
 });
