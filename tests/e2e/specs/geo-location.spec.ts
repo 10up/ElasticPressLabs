@@ -1,10 +1,11 @@
-import { 
-	test, expect,
-	goToAdminPage, 
+import {
+	test,
+	expect,
+	goToAdminPage,
 	wpCli,
 	wpCliEval,
-	activatePlugin, 
-	deactivatePlugin, 
+	activatePlugin,
+	deactivatePlugin,
 	getEditorFrame,
 	maybeDisableFeature,
 	maybeEnableFeature,
@@ -16,14 +17,14 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 		// Can see the warning if using custom proxy
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
-		
+
 		// Wait for API request
 		const apiResponsePromise = loggedInPage.waitForResponse(
 			'**/wp-json/elasticpress/v1/features*',
 		);
 
 		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
-		
+
 		await loggedInPage.getByLabel('Enable').click();
 
 		// Handle confirmation dialog
@@ -45,9 +46,11 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	test('Shows the address field when the Google Maps API exists', async ({ loggedInPage }) => {
 		await maybeEnableFeature('geo_location');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
-		
+
 		// Wait for API request
-		const apiRequestPromise = loggedInPage.waitForResponse('/wp-json/elasticpress/v1/features*');
+		const apiRequestPromise = loggedInPage.waitForResponse(
+			'/wp-json/elasticpress/v1/features*',
+		);
 
 		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
 
@@ -63,15 +66,17 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		await apiRequestPromise;
 
 		await goToAdminPage(loggedInPage, 'post-new.php');
-		
+
 		// Wait for Google Maps API request
 		const mapApiRequestPromise = loggedInPage.waitForResponse(
-			'https://maps.googleapis.com/maps/api/place/js/AutocompletionService*'
+			'https://maps.googleapis.com/maps/api/place/js/AutocompletionService*',
 		);
 
-		const geoLocationButton = loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' });
+		const geoLocationButton = loggedInPage.getByRole('button', {
+			name: 'ElasticPress Geo Location',
+		});
 		const isExpanded = await geoLocationButton.getAttribute('aria-expanded');
-		
+
 		if (isExpanded === 'false') {
 			await geoLocationButton.click();
 		}
@@ -134,15 +139,19 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			},
 		];
 
-		for (const post of posts) {
+		for await (const post of posts) {
 			// Create a post
 			await goToAdminPage(loggedInPage, 'post-new.php');
 			const editorFrame = await getEditorFrame(loggedInPage);
-			await editorFrame.locator('h1.editor-post-title__input, #post-title-0').fill(post.title);
+			await editorFrame
+				.locator('h1.editor-post-title__input, #post-title-0')
+				.fill(post.title);
 
-			const geoLocationButton = loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' });
+			const geoLocationButton = loggedInPage.getByRole('button', {
+				name: 'ElasticPress Geo Location',
+			});
 			const isExpanded = await geoLocationButton.getAttribute('aria-expanded');
-			
+
 			if (isExpanded === 'false') {
 				await geoLocationButton.click();
 			}
@@ -164,15 +173,19 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			// Publish post
 			await loggedInPage.locator('.editor-post-publish-panel__toggle').click();
 			await loggedInPage.locator('.editor-post-publish-button').click();
-			await expect(loggedInPage.locator('.components-snackbar, .components-notice.is-success')).toBeVisible();
+			await expect(
+				loggedInPage.locator('.components-snackbar, .components-notice.is-success'),
+			).toBeVisible();
 		}
 
 		// Verify coordinates persist after reload
 		await loggedInPage.reload();
 
-		const geoLocationButton = loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' });
+		const geoLocationButton = loggedInPage.getByRole('button', {
+			name: 'ElasticPress Geo Location',
+		});
 		const isExpanded = await geoLocationButton.getAttribute('aria-expanded');
-		
+
 		if (isExpanded === 'false') {
 			await geoLocationButton.click();
 		}
@@ -197,12 +210,20 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 		// Check if the posts are sorted by distance
 		await expect(loggedInPage.locator('article.post')).toHaveCount(3);
-		await expect(loggedInPage.locator('article.post:nth-of-type(1) h2')).toContainText('Jersey City');
-		await expect(loggedInPage.locator('article.post:nth-of-type(2) h2')).toContainText('Stamford');
-		await expect(loggedInPage.locator('article.post:nth-of-type(3) h2')).toContainText('Chicago');
+		await expect(loggedInPage.locator('article.post:nth-of-type(1) h2')).toContainText(
+			'Jersey City',
+		);
+		await expect(loggedInPage.locator('article.post:nth-of-type(2) h2')).toContainText(
+			'Stamford',
+		);
+		await expect(loggedInPage.locator('article.post:nth-of-type(3) h2')).toContainText(
+			'Chicago',
+		);
 	});
 
-	test('Does not display the field when coordinates are pre-set via a filter', async ({ loggedInPage }) => {
+	test('Does not display the field when coordinates are pre-set via a filter', async ({
+		loggedInPage,
+	}) => {
 		await maybeEnableFeature('geo_location');
 
 		// Activate plugin
@@ -210,19 +231,22 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		await activatePlugin(loggedInPage, 'geo-location-pre-geo-points', 'wpCli');
 
 		await goToAdminPage(loggedInPage, 'post-new.php');
-		await expect(loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' })).not.toBeVisible();
+		await expect(
+			loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' }),
+		).not.toBeVisible();
 
 		await deactivatePlugin(loggedInPage, 'geo-location-pre-geo-points', 'wpCli');
 	});
 
-	test('Display an error message using the `epLabs.GeoLocation.currentPositionError` action', async ({ context, loggedInPage }) => {
+	test('Display an error message using the `epLabs.GeoLocation.currentPositionError` action', async ({
+		loggedInPage,
+	}) => {
 		await maybeEnableFeature('geo_location');
 
 		// Activate plugin
 		await activatePlugin(loggedInPage, 'geo-location-js-action', 'wpCli');
 
 		await loggedInPage.addInitScript(() => {
-			console.log('test');
 			Object.defineProperty(window.navigator, 'geolocation', {
 				value: {
 					getCurrentPosition: (success: any, error: any) => {

@@ -1,5 +1,5 @@
-import { 
-	goToAdminPage, 
+import {
+	goToAdminPage,
 	wpCli,
 	maybeEnableFeature,
 	test,
@@ -18,7 +18,11 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
 		await loggedInPage.locator('button', { hasText: 'Search Templates' }).click();
-		await expect(loggedInPage.locator('.components-notice:has-text("You need an ElasticPress.io account")')).toBeVisible();
+		await expect(
+			loggedInPage.locator(
+				'.components-notice:has-text("You need an ElasticPress.io account")',
+			),
+		).toBeVisible();
 		await expect(loggedInPage.locator('.components-form-toggle__input')).toBeDisabled();
 	});
 
@@ -43,24 +47,34 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		/**
 		 * Can add a new template
 		 */
-		const addNewTemplatePanel = loggedInPage.locator('.components-panel__body-title:has-text("Add New Template")')
+		const addNewTemplatePanel = loggedInPage
+			.locator('.components-panel__body-title:has-text("Add New Template")')
 			.locator('..');
 
 		await addNewTemplatePanel.locator('input[type="text"]').fill('new-template');
 		await addNewTemplatePanel.locator('textarea').fill('{"a": "b"},');
-		await expect(loggedInPage.locator('.components-notice:has-text("This does not seem to be a valid JSON object.")')).toBeVisible();
+		await expect(
+			loggedInPage.locator(
+				'.components-notice:has-text("This does not seem to be a valid JSON object.")',
+			),
+		).toBeVisible();
 
 		const addNewTemplateTextarea = addNewTemplatePanel.locator('textarea');
 		await addNewTemplateTextarea.clear();
 		await addNewTemplateTextarea.fill('{"a": "b"}');
-		await expect(loggedInPage.locator('.components-notice:has-text("This does not seem to be a valid JSON object.")')).not.toBeVisible();
+		await expect(
+			loggedInPage.locator(
+				'.components-notice:has-text("This does not seem to be a valid JSON object.")',
+			),
+		).not.toBeVisible();
 
 		await addNewTemplatePanel.getByRole('button', { name: 'Save Template' }).click();
 		await expect(
 			loggedInPage.locator('.components-snackbar').filter({ hasText: 'Template saved.' }),
 		).toBeVisible();
 
-		const newTemplatePanel = loggedInPage.locator('.components-panel__body-title:has-text("new-template")')
+		const newTemplatePanel = loggedInPage
+			.locator('.components-panel__body-title:has-text("new-template")')
 			.locator('..');
 		await expect(newTemplatePanel).toBeVisible();
 
@@ -68,7 +82,7 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 
 		await expect(newTemplatePanel.locator('input[type="text"]')).toHaveValue('new-template');
 		await expect(newTemplatePanel.locator('input[type="text"]')).toBeDisabled();
-		
+
 		const textareaValue = await newTemplatePanel.locator('textarea').inputValue();
 		expect(JSON.stringify(JSON.parse(textareaValue))).toBe('{"a":"b"}');
 
@@ -84,20 +98,24 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		).toBeVisible();
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-search-templates');
-		const newTemplatePanel2 = loggedInPage.locator('.components-panel__body-title:has-text("new-template")')
+		const newTemplatePanel2 = loggedInPage
+			.locator('.components-panel__body-title:has-text("new-template")')
 			.locator('..');
 		await expect(newTemplatePanel2).toBeVisible();
 
-		const addNewTemplatePanel2 = loggedInPage.locator('.components-panel__body-title:has-text("Add New Template")')
+		const addNewTemplatePanel2 = loggedInPage
+			.locator('.components-panel__body-title:has-text("Add New Template")')
 			.locator('..');
 		await addNewTemplatePanel2.locator('input[type="text"]').fill('new-template');
 		await expect(
-			loggedInPage.locator('.components-notice.is-error').filter({ hasText: 'This name is already in use.' }),
+			loggedInPage
+				.locator('.components-notice.is-error')
+				.filter({ hasText: 'This name is already in use.' }),
 		).toBeVisible();
 
 		// Wait for template load request
 		const loadTemplateRequestPromise = loggedInPage.waitForResponse(
-			'**/wp-json/elasticpress-labs/v1/search-templates/new-template*'
+			'**/wp-json/elasticpress-labs/v1/search-templates/new-template*',
 		);
 		await newTemplatePanel2.click();
 		await loadTemplateRequestPromise;
@@ -109,7 +127,8 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		 * Can delete a template
 		 */
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-search-templates');
-		const newTemplatePanel3 = loggedInPage.locator('.components-panel__body-title:has-text("new-template")')
+		const newTemplatePanel3 = loggedInPage
+			.locator('.components-panel__body-title:has-text("new-template")')
 			.locator('..');
 		await newTemplatePanel3.click();
 
@@ -129,34 +148,47 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await wpCli('wp elasticpress-tests delete-all-search-templates');
 
 		// Get nonce and create templates via API
-		const nonceResponse = await loggedInPage.request.get('/wp-admin/admin-ajax.php?action=rest-nonce');
+		const nonceResponse = await loggedInPage.request.get(
+			'/wp-admin/admin-ajax.php?action=rest-nonce',
+		);
 		const nonce = await nonceResponse.text();
 
 		// The test account already has a template created under a different index prefix.
-		for (let index = 1; index <= 10; index++) {
-			await loggedInPage.request.put(`/wp-json/elasticpress-labs/v1/search-templates/template-${index}`, {
-				data: '{"a": "b"}',
-				headers: { 'x-wp-nonce': nonce },
-			});
+		const promises: Promise<void>[] = [];
+		const putRequest = async (index: number) => {
+			await loggedInPage.request.put(
+				`/wp-json/elasticpress-labs/v1/search-templates/template-${index}`,
+				{
+					data: '{"a": "b"}',
+					headers: { 'x-wp-nonce': nonce },
+				},
+			);
 			// Give the server a small break between requests
 			await loggedInPage.waitForTimeout(200);
+		};
+		for (let index = 1; index <= 10; index++) {
+			promises.push(putRequest(index));
 		}
+		await Promise.all(promises);
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-search-templates');
-		const addNewTemplatePanel = loggedInPage.locator('.components-panel__body-title:has-text("Add New Template")')
+		const addNewTemplatePanel = loggedInPage
+			.locator('.components-panel__body-title:has-text("Add New Template")')
 			.locator('..');
 		await addNewTemplatePanel.locator('input[type="text"]').fill('new-template');
 		await addNewTemplatePanel.locator('textarea').fill('{"a": "b"}');
 
 		// Wait for template load request
 		const loadTemplateRequestPromise = loggedInPage.waitForResponse(
-			'**/wp-json/elasticpress-labs/v1/search-templates/new-template*'
+			'**/wp-json/elasticpress-labs/v1/search-templates/new-template*',
 		);
 		await addNewTemplatePanel.getByRole('button', { name: 'Save Template' }).click();
 		await loadTemplateRequestPromise;
 
 		await expect(
-			loggedInPage.locator('.components-snackbar').filter({ hasText: 'It seems you have reached the limit of search' }),
+			loggedInPage
+				.locator('.components-snackbar')
+				.filter({ hasText: 'It seems you have reached the limit of search' }),
 		).toBeVisible();
 	});
 });
