@@ -156,7 +156,7 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 		await loadTemplateRequestPromise;
 
 		await expect(
-			loggedInPage.locator('.components-notice.is-error').filter({ hasText: 'It seems you have reached the limit of search' }),
+			loggedInPage.locator('.components-snackbar').filter({ hasText: 'It seems you have reached the limit of search' }),
 		).toBeVisible();
 	});
 });
