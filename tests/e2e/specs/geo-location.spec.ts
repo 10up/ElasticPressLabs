@@ -207,19 +207,19 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 		// Activate plugin
 		await goToAdminPage(loggedInPage, 'plugins.php');
-		await activatePlugin(loggedInPage, 'set-geo-location-coordinates', 'wpCli');
+		await activatePlugin(loggedInPage, 'geo-location-pre-geo-points', 'wpCli');
 
 		await goToAdminPage(loggedInPage, 'post-new.php');
 		await expect(loggedInPage.getByRole('button', { name: 'ElasticPress Geo Location' })).not.toBeVisible();
 
-		await deactivatePlugin(loggedInPage, 'set-geo-location-coordinates', 'wpCli');
+		await deactivatePlugin(loggedInPage, 'geo-location-pre-geo-points', 'wpCli');
 	});
 
 	test('Display an error message using the `epLabs.GeoLocation.currentPositionError` action', async ({ context, loggedInPage }) => {
 		await maybeEnableFeature('geo_location');
 
 		// Activate plugin
-		await activatePlugin(loggedInPage, 'geolocation-use-js-action', 'wpCli');
+		await activatePlugin(loggedInPage, 'geo-location-js-action', 'wpCli');
 
 		await loggedInPage.addInitScript(() => {
 			console.log('test');
@@ -238,6 +238,6 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 		await expect(loggedInPage.locator('.ep-geo-location-error')).toContainText('User denied');
 
-		await deactivatePlugin(loggedInPage, 'geolocation-use-js-action', 'wpCli');
+		await deactivatePlugin(loggedInPage, 'geo-location-js-action', 'wpCli');
 	});
 });
