@@ -37,7 +37,7 @@ done
 PLUGIN_NAME=$(basename "$PWD")
 
 if [ $DISPLAY_HELP -eq 1 ]; then
-	echo "This script will setup the environment for the Cypress tests"
+	echo "This script will setup the environment for the Playwright tests"
 	echo "Usage: ${0##*/} [OPTIONS...]"
 	echo
 	echo "Optional parameters:"
