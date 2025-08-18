@@ -1,21 +1,25 @@
 #!/bin/bash
 
+ACF_PRO_LICENSE_KEY=""
+DISPLAY_HELP=0
 EP_HOST=""
 EP_CREDENTIALS=""
 EP_INDEX_PREFIX=""
 WP_VERSION=""
 WC_VERSION=""
-DISPLAY_HELP=0
 
 for opt in "$@"; do
 	case $opt in
-    -h=*|--ep-host=*)
+    --acf-pro-license=*)
+      ACF_PRO_LICENSE_KEY="${opt#*=}"
+      ;;
+    -H=*|--ep-host=*)
       EP_HOST="${opt#*=}"
       ;;
-    -s=*|--es-shield=*)
+    -S=*|--es-shield=*)
       EP_CREDENTIALS="${opt#*=}"
       ;;
-    -u=*|--ep-index-prefix=*)
+    -p=*|--ep-index-prefix=*)
       EP_INDEX_PREFIX="${opt#*=}"
       ;;
     -wp=*|--wp-version=*)
@@ -33,21 +37,27 @@ done
 PLUGIN_NAME=$(basename "$PWD")
 
 if [ $DISPLAY_HELP -eq 1 ]; then
-	echo "This script will setup the environment for the Cypress tests"
+	echo "This script will setup the environment for the Playwright tests"
 	echo "Usage: ${0##*/} [OPTIONS...]"
 	echo
 	echo "Optional parameters:"
-	echo "-h=*, --ep-host=*             The remote Elasticsearch Host URL."
-	echo "-s=*, --es-shield=*           The Elasticsearch credentials, used in the ES_SHIELD constant."
-	echo "-u=*, --ep-index-prefix=*     The Elasticsearch credentials, used in the EP_INDEX_PREFIX constant."
-	echo "-W=*, --wp-version=*          WordPress Core version."
-	echo "-w=*, --wc-version=*          WooCommerce version."
-	echo "-h|--help                     Display this help screen"
+	echo "--acf-pro-license=*       ACF Pro License Key."
+	echo "-H=*, --ep-host=*         The remote Elasticsearch Host URL."
+	echo "-S=*, --es-shield=*       The Elasticsearch credentials, used in the ES_SHIELD constant."
+	echo "-p=*, --ep-index-prefix=* The Elasticsearch credentials, used in the EP_INDEX_PREFIX constant."
+	echo "-W=*, --wp-version=*      WordPress Core version."
+	echo "-w=*, --wc-version=*      WooCommerce version."
+	echo "-h|--help                 Display this help screen"
 	exit
 fi
 
-# Set twentytwentyone as the active theme here, as 2025 won't work with WP 6.0
+# Set twentytwentyone as the active theme here, as 2025 won't work with WP 6.2
 ./bin/wp-env-cli tests-wordpress "wp --allow-root theme activate twentytwentyone"
+
+# Fix the debug-bar-elasticpress dependency of ElasticPress
+./bin/wp-env-cli tests-wordpress "wp --allow-root plugin install debug-bar-elasticpress"
+./bin/wp-env-cli tests-wordpress "sed -i \"s/Requires Plugins:  elasticpress/Requires Plugins:  $PLUGIN_NAME/\" /var/www/html/wp-content/plugins/debug-bar-elasticpress/debug-bar-elasticpress.php"
+./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate debug-bar-elasticpress"
 
 if [ ! -z $WP_VERSION ]; then
 	./bin/wp-env-cli tests-wordpress "wp --allow-root core update --version=${WP_VERSION} --force"

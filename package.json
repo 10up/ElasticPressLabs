@@ -18,9 +18,9 @@
     "build:zip": "./bin/build-zip.sh",
     "lint-release": "npm install && composer install && npm run lint",
     "lint-style": "10up-toolkit lint-style",
-    "lint-js": "10up-toolkit lint-js assets/js tests/cypress",
+    "lint-js": "10up-toolkit lint-js assets/js tests/e2e",
     "lint-php": "composer run lint",
-    "format-js": "10up-toolkit format-js assets/js tests/cypress",
+    "format-js": "10up-toolkit format-js assets/js tests/e2e",
     "lint": "npm run lint-style && npm run lint-js && npm run lint-php",
     "format": "npm run format-js",
     "prepare": "husky",
@@ -30,20 +30,20 @@
     "env:install-tests-cli": "./bin/install-wp-cli.sh tests-wordpress",
     "env:start": "wp-env start && npm run env:install-tests-cli && npm run es:start",
     "env:stop": "wp-env stop && npm run es:stop",
-    "cypress:setup": "./bin/setup-cypress-env.sh",
-    "cypress:open": "cypress open --config-file tests/cypress/config.js",
-    "cypress:run": "cypress run --config-file tests/cypress/config.js"
+    "playwright:test": "playwright test -c tests/e2e/playwright.config.ts",
+    "playwright:ui": "playwright test -c tests/e2e/playwright.config.ts --ui",
+    "e2e:setup": "./bin/setup-e2e-env.sh"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/10up/ElasticPressLabs"
   },
+  "workspaces": [
+    "tests/e2e"
+  ],
   "devDependencies": {
-    "@10up/cypress-wp-utils": "^0.4.0",
     "@wordpress/env": "^10.15.0",
     "10up-toolkit": "^6.3.0",
-    "cypress": "^13.17.0",
-    "eslint-plugin-cypress": "^3.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10"
   },
@@ -56,7 +56,6 @@
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
-
       "blocks-styles": "./assets/css/blocks.css"
     }
   },
