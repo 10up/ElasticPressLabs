@@ -9,7 +9,7 @@
  */
 
 /**
- * Limit the Instant Results terms to only the "Classic" term.
+ * Use the epLabs.GeoLocation.currentPositionError action to display an error message.
  */
 add_action(
 	'wp_footer',
