@@ -80,11 +80,11 @@ class AISearchSummary {
 	/**
 	 * Sanitize vectors array.
 	 *
-	 * @param array $array Array to be sanitized
+	 * @param array $vectors_array Array to be sanitized
 	 * @return array
 	 */
-	public function sanitize_vectors_array( array $array ): array {
-		return array_map( 'floatval', $array );
+	public function sanitize_vectors_array( array $vectors_array ): array {
+		return array_map( 'floatval', $vectors_array );
 	}
 
 	/**
