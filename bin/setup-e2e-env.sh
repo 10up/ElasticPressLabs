@@ -5,8 +5,8 @@ DISPLAY_HELP=0
 EP_HOST=""
 EP_CREDENTIALS=""
 EP_INDEX_PREFIX=""
+EP_BRANCH=""
 WP_VERSION=""
-WC_VERSION=""
 
 for opt in "$@"; do
 	case $opt in
@@ -22,6 +22,9 @@ for opt in "$@"; do
     -p=*|--ep-index-prefix=*)
       EP_INDEX_PREFIX="${opt#*=}"
       ;;
+    -b=*|--ep-branch=*)
+      EP_BRANCH="${opt#*=}"
+      ;;
     -wp=*|--wp-version=*)
       WP_VERSION="${opt#*=}"
       ;;
@@ -34,8 +37,6 @@ for opt in "$@"; do
 	esac
 done
 
-PLUGIN_NAME=$(basename "$PWD")
-
 if [ $DISPLAY_HELP -eq 1 ]; then
 	echo "This script will setup the environment for the Playwright tests"
 	echo "Usage: ${0##*/} [OPTIONS...]"
@@ -45,6 +46,7 @@ if [ $DISPLAY_HELP -eq 1 ]; then
 	echo "-H=*, --ep-host=*         The remote Elasticsearch Host URL."
 	echo "-S=*, --es-shield=*       The Elasticsearch credentials, used in the ES_SHIELD constant."
 	echo "-p=*, --ep-index-prefix=* The Elasticsearch credentials, used in the EP_INDEX_PREFIX constant."
+	echo "-b=*, --ep-branch=*       The branch of ElasticPress to use. Defaults to the latest release."
 	echo "-W=*, --wp-version=*      WordPress Core version."
 	echo "-w=*, --wc-version=*      WooCommerce version."
 	echo "-h|--help                 Display this help screen"
@@ -54,14 +56,21 @@ fi
 # Set twentytwentyone as the active theme here, as 2025 won't work with WP 6.2
 ./bin/wp-env-cli tests-wordpress "wp --allow-root theme activate twentytwentyone"
 
-# Fix the debug-bar-elasticpress dependency of ElasticPress
-./bin/wp-env-cli tests-wordpress "wp --allow-root plugin install debug-bar-elasticpress"
-./bin/wp-env-cli tests-wordpress "sed -i \"s/Requires Plugins:  elasticpress/Requires Plugins:  $PLUGIN_NAME/\" /var/www/html/wp-content/plugins/debug-bar-elasticpress/debug-bar-elasticpress.php"
-./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate debug-bar-elasticpress"
-
 if [ ! -z $WP_VERSION ]; then
 	./bin/wp-env-cli tests-wordpress "wp --allow-root core update --version=${WP_VERSION} --force"
 	./bin/wp-env-cli tests-wordpress "wp --allow-root core update-db"
+fi
+
+if [ ! -z $EP_BRANCH ]; then
+	./bin/wp-env-cli tests-wordpress "rm -rf wp-content/plugins/elasticpress"
+	./bin/wp-env-cli tests-wordpress "git clone --depth 1 https://github.com/10up/ElasticPress.git --branch $EP_BRANCH wp-content/plugins/elasticpress"
+	./bin/wp-env-cli tests-wordpress "composer --working-dir=./wp-content/plugins/elasticpress install"
+	LOCAL_PATH=$(npm run env install-path --silent --no-progress)
+	pushd $LOCAL_PATH/elasticpress
+		sudo chmod -R 767 .
+		npm ci
+		npm run build
+	popd
 fi
 
 ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress-labs"
