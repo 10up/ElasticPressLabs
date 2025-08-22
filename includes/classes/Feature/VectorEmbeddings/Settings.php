@@ -153,7 +153,7 @@ class Settings {
 						'label'        => $taxonomy->label,
 						'termsInclude' => [],
 						'termsExclude' => [],
-						'enabled'      => false,
+						'enabled'      => true,
 					];
 				},
 				$public_taxonomies
@@ -161,12 +161,12 @@ class Settings {
 
 			// this is the shape of a post type configuration.
 			$return[] = [
-				'embeddable'            => false, // whether to allow embeddings for this post type.
+				'embeddable'            => true, // whether to allow embeddings for this post type.
 				'embeddingMode'         => 'automatic', // Whether to use auto or manual embedding.
 				'enablefieldsIndexing'  => false, // Whether to flagging content inclusion via post meta.
 				'fieldsIndexingInclude' => [], // Meta fields used to flag content for inclusion.
 				'fieldsIndexingExclude' => [], // Meta fields used to flag content for exclusion. A post with an exluded
-				'fieldsEmbedding'       => [], // Fields to use for embedding generation.
+				'fieldsEmbedding'       => [ 'post_title', 'post_content' ], // Fields to use for embedding generation.
 				'label'                 => $post_type_object->label, // Label used for settings panel.
 				'key'                   => $post_type, // post type name used for key in the settings object.
 				'taxonomies'            => $public_taxonomies, // Taxonomies to consider for vector embedding.
