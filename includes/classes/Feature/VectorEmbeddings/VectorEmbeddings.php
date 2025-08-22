@@ -143,7 +143,6 @@ class VectorEmbeddings extends Feature {
 		if ( Utils\is_epio() ) {
 			try {
 				if ( ! $this->is_epio_available() ) {
-					$status->code      = 2;
 					$status->message[] = wp_kses_post(
 						sprintf(
 							/* translators: %s: Upgrade URL */
@@ -155,7 +154,6 @@ class VectorEmbeddings extends Feature {
 			} catch ( \Exception $e ) {
 				$error_message = $e->getMessage();
 
-				$status->code      = 2;
 				$status->message[] = 'old_ep_version' === $error_message
 					? esc_html__( 'You need to update the ElasticPress plugin to use this feature.', 'elasticpress-labs' )
 					: $error_message;
