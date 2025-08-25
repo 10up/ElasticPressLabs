@@ -32,5 +32,18 @@ test.describe('Vector Embeddings Feature', () => {
 		await vectorEmbeddingsButton.click();
 		await expect(vectorEmbeddingsGroup).toContainText('Content in the queue');
 		await expect(vectorEmbeddingsGroup.locator('td').nth(1)).not.toContainText('0');
+
+		await goToAdminPage(loggedInPage, 'post.php?post=1&action=edit');
+		if (! await loggedInPage.locator('#wpadminbar').isVisible()) {
+			await loggedInPage.keyboard.press('Control+Shift+Alt+F'); // Disable fullscreen mode
+		}
+
+		await expect(loggedInPage.locator('.ep-status-indicator')).toContainText('[EP] Processing vector embeddings');
+
+		// Wait for the queue to be processed
+		await loggedInPage.waitForTimeout(10000);
+
+		await loggedInPage.reload();
+		expect(await loggedInPage.locator('.ep-status-indicator')).toContainText('[EP] Content in sync');
 	});
 });
