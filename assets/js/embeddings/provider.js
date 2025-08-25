@@ -19,6 +19,7 @@ const Context = createContext();
  * @param {object} props.indexablePostTypes Indexable Post Types.
  * @param {number} props.chunkSize Chunk Size.
  * @param {number} props.chunkOverlap Chunk Overlap.
+ * @param {boolean} props.embeddingsFiltered Whether embeddings are filtered.
  *
  * @returns {WPElement} Element.
  */

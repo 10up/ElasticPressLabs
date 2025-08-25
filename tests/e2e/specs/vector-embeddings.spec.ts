@@ -1,7 +1,6 @@
 import {
 	goToAdminPage,
 	wpCli,
-	maybeEnableFeature,
 	test,
 	expect,
 	maybeDisableFeature,
@@ -27,23 +26,31 @@ test.describe('Vector Embeddings Feature', () => {
 		expect(result.toString()).toContain('vector_embeddings');
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-status-report');
-		const vectorEmbeddingsButton = loggedInPage.getByRole('button', { name: 'Vector Embeddings', exact: true }).first();
-		const vectorEmbeddingsGroup = loggedInPage.locator('.components-panel__body', { has: vectorEmbeddingsButton }).first();
+		const vectorEmbeddingsButton = loggedInPage
+			.getByRole('button', { name: 'Vector Embeddings', exact: true })
+			.first();
+		const vectorEmbeddingsGroup = loggedInPage
+			.locator('.components-panel__body', { has: vectorEmbeddingsButton })
+			.first();
 		await vectorEmbeddingsButton.click();
 		await expect(vectorEmbeddingsGroup).toContainText('Content in the queue');
 		await expect(vectorEmbeddingsGroup.locator('td').nth(1)).not.toContainText('0');
 
 		await goToAdminPage(loggedInPage, 'post.php?post=1&action=edit');
-		if (! await loggedInPage.locator('#wpadminbar').isVisible()) {
+		if (!(await loggedInPage.locator('#wpadminbar').isVisible())) {
 			await loggedInPage.keyboard.press('Control+Shift+Alt+F'); // Disable fullscreen mode
 		}
 
-		await expect(loggedInPage.locator('.ep-status-indicator')).toContainText('[EP] Processing vector embeddings');
+		await expect(loggedInPage.locator('.ep-status-indicator')).toContainText(
+			'[EP] Processing vector embeddings',
+		);
 
 		// Wait for the queue to be processed
 		await loggedInPage.waitForTimeout(10000);
 
 		await loggedInPage.reload();
-		expect(await loggedInPage.locator('.ep-status-indicator')).toContainText('[EP] Content in sync');
+		expect(await loggedInPage.locator('.ep-status-indicator')).toContainText(
+			'[EP] Content in sync',
+		);
 	});
 });

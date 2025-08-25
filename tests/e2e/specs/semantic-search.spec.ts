@@ -8,7 +8,9 @@ import {
 } from 'elasticpress-playwright-utils';
 
 test.describe('Semantic Search Feature', () => {
-	test('Can not turn the feature on if vector embeddings is not enabled', async ({ loggedInPage }) => {
+	test('Can not turn the feature on if vector embeddings is not enabled', async ({
+		loggedInPage,
+	}) => {
 		await maybeDisableFeature('vector_embeddings');
 		await maybeDisableFeature('semantic_search');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
@@ -16,7 +18,7 @@ test.describe('Semantic Search Feature', () => {
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Semantic Search' }).click();
 
- 		await expect(
+		await expect(
 			loggedInPage.locator('.components-notice.is-error').filter({
 				hasText: 'The Vector Embeddings feature must be enabled to use this feature.',
 			}),
