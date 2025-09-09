@@ -307,7 +307,16 @@ The following JSON object contains the URL and the page content. You should use 
 	 * @return array
 	 */
 	protected function get_results( $search_term, $search_vectors = null ) {
-		$search_term_vectors = ( $search_vectors ) ? $search_vectors : $this->get_search_term_vectors( $search_term );
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+
+		if ( $search_vectors ) {
+			$search_term_vectors = array_map( 'floatval', $search_vectors );
+		} elseif ( 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' ) ) {
+			$search_term_vectors = '{{ep_search_term_vectors_placeholder}}';
+		} else {
+			$search_term_vectors = $this->get_search_term_vectors( $search_term );
+			$search_term_vectors = array_map( 'floatval', $search_term_vectors );
+		}
 
 		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
 
@@ -327,7 +336,7 @@ The following JSON object contains the URL and the page content. You should use 
 						],
 						[
 							'terms' => [
-								'post_status' => array_values( get_post_stati( array( 'public' => true ) ) ),
+								'post_status' => array_values( get_post_stati( [ 'public' => true ] ) ),
 							],
 						],
 						[
@@ -341,7 +350,7 @@ The following JSON object contains the URL and the page content. You should use 
 										'script' => [
 											'source' => 'cosineSimilarity(params.query_vector, "chunks.vector") + 1.0',
 											'params' => [
-												'query_vector' => array_map( 'floatval', $search_term_vectors ),
+												'query_vector' => $search_term_vectors,
 											],
 										],
 									],
@@ -353,7 +362,7 @@ The following JSON object contains the URL and the page content. You should use 
 			],
 		];
 
-		$query_es = \ElasticPress\Indexables::factory()->get( 'post' )->query_es( $query, [] );
+		$query_es = \ElasticPress\Indexables::factory()->get( 'post' )->query_es( $query, [ 's' => $search_term ] );
 		return isset( $query_es['documents'] ) ? wp_list_pluck( $query_es['documents'], 'post_id' ) : [];
 	}
 

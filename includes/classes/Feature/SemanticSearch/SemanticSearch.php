@@ -129,7 +129,7 @@ class SemanticSearch extends Feature {
 	 * @return array The request arguments.
 	 */
 	public function add_vector_embeddings_header( $request_args, $path, $index, $type, $query, $query_args ) {
-		$request_args['headers']['EP-Vector-Embeddings-Search-Term'] = rawurlencode( $query_args['s'] );
+		$request_args['headers']['EP-Vector-Embeddings-Search-Term'] = $query_args['s'] ? rawurlencode( $query_args['s'] ) : '';
 
 		return $request_args;
 	}
