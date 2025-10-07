@@ -10,6 +10,7 @@ namespace ElasticPressLabs\Feature;
 
 use ElasticPress\Feature;
 use ElasticPressLabs\Utils;
+use ElasticPressLabs\Traits\LogRequest;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -21,6 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.5.0
  */
 class AISearchSummary extends Feature {
+	use LogRequest;
+
 	/**
 	 * Group
 	 *
@@ -77,6 +80,8 @@ The following JSON object contains the URL and the page content. You should use 
 
 		// Register REST routes.
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
+
+		add_filter( 'ep_query_logger_allowed_log_types', [ $this, 'add_ai_search_summary_to_allowed_log_types' ] );
 	}
 
 	/**
@@ -318,52 +323,15 @@ The following JSON object contains the URL and the page content. You should use 
 			$search_term_vectors = array_map( 'floatval', $search_term_vectors );
 		}
 
-		$search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'search' );
+		$posts_query = new \WP_Query(
+			[
+				'ep_vectors'     => $search_term_vectors,
+				'posts_per_page' => (int) $this->get_setting( 'number_of_posts' ),
+				'fields'         => 'ids',
+			]
+		);
 
-		$query = [
-			'from'    => 0,
-			'size'    => (int) $this->get_setting( 'number_of_posts' ),
-			'_source' => [
-				'includes' => [ 'post_id' ],
-			],
-			'query'   => [
-				'bool' => [
-					'must' => [
-						[
-							'terms' => [
-								'post_type.raw' => array_values( $search_feature->get_searchable_post_types() ),
-							],
-						],
-						[
-							'terms' => [
-								'post_status' => array_values( get_post_stati( [ 'public' => true ] ) ),
-							],
-						],
-						[
-							'nested' => [
-								'path'  => 'chunks',
-								'query' => [
-									'script_score' => [
-										'query'  => [
-											'match_all' => (object) [],
-										],
-										'script' => [
-											'source' => 'cosineSimilarity(params.query_vector, "chunks.vector") + 1.0',
-											'params' => [
-												'query_vector' => $search_term_vectors,
-											],
-										],
-									],
-								],
-							],
-						],
-					],
-				],
-			],
-		];
-
-		$query_es = \ElasticPress\Indexables::factory()->get( 'post' )->query_es( $query, [ 's' => $search_term ] );
-		return isset( $query_es['documents'] ) ? wp_list_pluck( $query_es['documents'], 'post_id' ) : [];
+		return (array) $posts_query->posts;
 	}
 
 	/**
@@ -484,7 +452,7 @@ The following JSON object contains the URL and the page content. You should use 
 			$url
 		);
 
-		$response = wp_remote_post( $url, $options );
+		$response = $this->send_request_and_log( $url, $options, 'AI Search Summary', 'ai_search_summary' );
 		if ( is_wp_error( $response ) ) {
 			return new \WP_Error( 'ep_ai_search_summary_request_failed', __( 'An error occurred. Try again later.', 'elasticpress-labs' ) );
 		}
@@ -571,6 +539,34 @@ The following JSON object contains the URL and the page content. You should use 
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Add AI Search Summary to the allowed log types.
+	 *
+	 * @param array $allowed_log_types The allowed log types.
+	 * @return array The allowed log types.
+	 */
+	public function add_ai_search_summary_to_allowed_log_types( $allowed_log_types ) {
+		$allowed_log_types['ai_search_summary'] = [ $this, 'is_query_error' ];
+
+		return $allowed_log_types;
+	}
+
+	/**
+	 * Check if the request is an error.
+	 *
+	 * @param array $query The query.
+	 * @return boolean Whether the request is an error.
+	 */
+	public function is_query_error( $query ) {
+		if ( is_wp_error( $query['request'] ) ) {
+			return true;
+		}
+
+		$response_code = wp_remote_retrieve_response_code( $query['request'] );
+
+		return ( $response_code < 200 || $response_code > 299 );
 	}
 
 	/**

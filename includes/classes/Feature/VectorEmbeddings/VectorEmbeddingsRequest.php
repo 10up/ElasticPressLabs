@@ -11,6 +11,7 @@
 namespace ElasticPressLabs\Feature\VectorEmbeddings;
 
 use ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings;
+use ElasticPressLabs\Traits\LogRequest;
 
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,12 +22,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Vector Embeddings feature
  */
 class VectorEmbeddingsRequest {
+	use LogRequest;
+
 	/**
 	 * Vector Embeddings feature
 	 *
 	 * @var VectorEmbeddings
 	 */
-	private $vector_embeddings;
+	protected $vector_embeddings;
 
 	/**
 	 * Constructor
@@ -168,12 +171,8 @@ class VectorEmbeddingsRequest {
 
 		$this->add_headers( $options );
 
-		// Make our API request.
-		return $this->get_result(
-			wp_remote_post(
-				$url,
-				$options
-			)
-		);
+		$response = $this->send_request_and_log( $url, $options, 'Vector Embeddings', 'vector_embeddings' );
+
+		return $this->get_result( $response );
 	}
 }

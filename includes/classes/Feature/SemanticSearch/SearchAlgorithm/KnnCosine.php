@@ -58,7 +58,7 @@ class KnnCosine extends SearchAlgorithm {
 			return $formatted_args;
 		}
 
-		$query_embedding = $this->get_search_term_vector( $query->query_vars['s'] );
+		$query_embedding = $this->get_search_term_vector( $args, $query->query_vars['s'] );
 		if ( empty( $query_embedding ) ) {
 			return $formatted_args;
 		}

@@ -41,14 +41,30 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 	/**
 	 * Given a search term, gets its vector embedding
 	 *
+	 * @param array  $query_args  The query args
 	 * @param string $search_term The search term
 	 * @return array
 	 */
-	public function get_search_term_vector( $search_term ) {
-		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+	public function get_search_term_vector( $query_args, $search_term = '' ) {
+		if ( isset( $query_args['ep_vectors'] ) ) {
+			return $query_args['ep_vectors'];
+		}
 
+		if ( ! empty( $query_args['ep_facet_adding_agg_filters'] ) ) {
+			return '{{ep_search_term_vectors_placeholder}}';
+		}
+
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		if ( 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' ) ) {
 			return '{{ep_search_term_vectors_placeholder}}';
+		}
+
+		$autosuggest = \ElasticPress\Features::factory()->get_registered_feature( 'autosuggest' );
+		if ( $autosuggest->is_active() ) {
+			$autosuggest_placeholder = apply_filters( 'ep_autosuggest_query_placeholder', 'ep_autosuggest_placeholder' );
+			if ( $autosuggest_placeholder === $search_term ) {
+				return '{{ep_search_term_vectors_placeholder}}';
+			}
 		}
 
 		$search_term_vector = $vector_embeddings->generate_embedding( $search_term );

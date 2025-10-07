@@ -118,6 +118,8 @@ class VectorEmbeddings extends Feature {
 		$this->indexables['post'] = new Indexables\Post\Post( $this );
 		$this->indexables['post']->setup();
 
+		add_filter( 'ep_query_logger_allowed_log_types', [ $this, 'add_vector_embeddings_to_allowed_log_types' ] );
+
 		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
 			add_filter( 'ep_status_report_reports', [ $this, 'add_status_report' ] );
 		}
@@ -138,6 +140,30 @@ class VectorEmbeddings extends Feature {
 		if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<=' ) ) {
 			$status->code      = 2;
 			$status->message[] = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+			return $status;
+		}
+
+		$recommended_bulk_setting = 30;
+		if ( Utils\get_option( 'ep_bulk_setting', 350 ) > $recommended_bulk_setting ) {
+			if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
+				$url = admin_url( 'network/admin.php?page=elasticpress-settings' );
+			} else {
+				$url = admin_url( 'admin.php?page=elasticpress-settings' );
+			}
+
+			$status->message[] = wp_kses_post(
+				sprintf(
+					/* translators: 1: Settings URL, 2: Recommended bulk setting, 3: WP-CLI URL */
+					__( 'While using OpenAI, as each content piece is processed individually, consider using a low number of items per sync cycle in the <a href="%1$s">Settings page</a>, like %2$d. You can also try running it via <a href="%3$s">WP-CLI</a>.', 'elasticpress-labs' ),
+					esc_url( $url ),
+					absint( $recommended_bulk_setting ),
+					esc_url( 'https://10up.github.io/ElasticPress/tutorial-wp-cli.html' )
+				)
+			);
+		}
+
+		if ( ! $this->is_epio_beta_available() ) {
+			return $status;
 		}
 
 		if ( Utils\is_epio() ) {
@@ -249,6 +275,34 @@ class VectorEmbeddings extends Feature {
 				'field_group_slug' => 'ep_embeddings_openai',
 			],
 		];
+	}
+
+	/**
+	 * Add vector embeddings to the allowed log types.
+	 *
+	 * @param array $allowed_log_types The allowed log types.
+	 * @return array The allowed log types.
+	 */
+	public function add_vector_embeddings_to_allowed_log_types( $allowed_log_types ) {
+		$allowed_log_types['vector_embeddings'] = [ $this, 'is_query_error' ];
+
+		return $allowed_log_types;
+	}
+
+	/**
+	 * Check if the request is an error.
+	 *
+	 * @param array $query The query.
+	 * @return boolean Whether the request is an error.
+	 */
+	public function is_query_error( $query ) {
+		if ( is_wp_error( $query['request'] ) ) {
+			return true;
+		}
+
+		$response_code = wp_remote_retrieve_response_code( $query['request'] );
+
+		return ( $response_code < 200 || $response_code > 299 );
 	}
 
 	/**
@@ -457,12 +511,34 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * Check if the Beta version of the ElasticPress.io service is available.
+	 *
+	 * @return bool
+	 */
+	protected function is_epio_beta_available(): bool {
+		/**
+		 * Filter an initial check if the ElasticPress.io service is available.
+		 *
+		 * @hook ep_embeddings_is_epio_beta_available
+		 * @since 2.4.0
+		 *
+		 * @param {bool} $initial_check The check.
+		 * @return {bool} The check new value.
+		 */
+		return (bool) apply_filters( 'ep_embeddings_is_epio_beta_available', false );
+	}
+
+	/**
 	 * Check if the ElasticPress.io service is available and the vector embeddings service is enabled.
 	 *
 	 * @return bool
 	 * @throws \ElasticPress\Exception\NotFoundException If the ElasticPress.io service is not available.
 	 */
 	protected function is_epio_available(): bool {
+		if ( ! $this->is_epio_beta_available() ) {
+			return false;
+		}
+
 		if ( ! Utils\is_epio() ) {
 			return false;
 		}
