@@ -286,6 +286,7 @@ class Post extends Indexable {
 	 * @param array $args Current sync args.
 	 * @param int   $post_id Post ID being synced.
 	 * @return array
+	 * @throws \Exception If the embedding fails.
 	 */
 	public function add_vector_field_to_post_sync( array $args, int $post_id ): array {
 		if ( ! $this->should_add_vector_field_to_post( $post_id ) ) {
@@ -297,9 +298,7 @@ class Post extends Indexable {
 
 		if ( ! is_array( $embeddings ) ) {
 			if ( is_wp_error( $embeddings ) ) {
-				if ( defined( 'WP_CLI' ) && WP_CLI ) {
-					\WP_CLI::debug( __( 'Failed at generating embedding. Check your credentials.', 'elasticpress' ) );
-				}
+				throw new \Exception( wp_kses_post( $embeddings->get_error_message() ) );
 			}
 			return $args;
 		}
