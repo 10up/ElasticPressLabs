@@ -39,7 +39,7 @@ class AISearchSummary extends Feature {
 	public $default_settings = [
 		'api_key'         => '',
 		'api_url'         => 'https://api.openai.com/v1/chat/completions',
-		'chat_model'      => 'o1-mini',
+		'chat_model'      => 'gpt-5-mini',
 		'number_of_posts' => 5,
 		'prompt'          => "You are an assistant in a website and you need to reply to a user search. If you do not know the answer, reply saying you could not find any results. Your answer should come formatted in HTML, but not as a full HTML page, just wrap everything in a div with the 'epio-response' class. Also, do not wrap it with ```html``` tags.
 
@@ -312,24 +312,27 @@ The following JSON object contains the URL and the page content. You should use 
 	 * @return array
 	 */
 	protected function get_results( $search_term, $search_vectors = null ) {
-		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		$args = [
+			's'              => $search_term,
+			'posts_per_page' => (int) $this->get_setting( 'number_of_posts' ),
+			'fields'         => 'ids',
+		];
 
 		if ( $search_vectors ) {
-			$search_term_vectors = array_map( 'floatval', $search_vectors );
-		} elseif ( 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' ) ) {
-			$search_term_vectors = '{{ep_search_term_vectors_placeholder}}';
-		} else {
-			$search_term_vectors = $this->get_search_term_vectors( $search_term );
-			$search_term_vectors = array_map( 'floatval', $search_term_vectors );
+			$args['ep_vectors'] = array_map( 'floatval', $search_vectors );
 		}
 
-		$posts_query = new \WP_Query(
-			[
-				'ep_vectors'     => $search_term_vectors,
-				'posts_per_page' => (int) $this->get_setting( 'number_of_posts' ),
-				'fields'         => 'ids',
-			]
-		);
+		/**
+		 * Filters the query args for the AI search results.
+		 *
+		 * @since 2.5.0
+		 * @hook ep_ai_search_results_query_args
+		 * @param {array} $args The query args.
+		 * @return {array} The query args.
+		 */
+		$args = apply_filters( 'ep_ai_search_results_query_args', $args );
+
+		$posts_query = new \WP_Query( $args );
 
 		return (array) $posts_query->posts;
 	}
@@ -479,16 +482,18 @@ The following JSON object contains the URL and the page content. You should use 
 				'label'   => __( 'OpenAI API Key', 'elasticpress-labs' ),
 				'help'    => sprintf(
 					wp_kses(
-						/* translators: %1$s: OpenAI sign up URL */
-						__( 'Don\'t have an OpenAI account yet? <a title="Sign up for an OpenAI account" href="%1$s">Sign up for one</a> in order to get your API key.', 'elasticpress-labs' ),
+						/* translators: 1: OpenAI sign up URL, 2: OpenAI API keys URL */
+						__( 'Don\'t have an OpenAI account yet? <a title="Sign up for an OpenAI account" href="%1$s">Sign up for one</a> in order to get your API key.<br>If you already have an account, <a title="Get your API key from the OpenAI website" href="%2$s">generate an API key</a>.', 'elasticpress-labs' ),
 						[
 							'a' => [
 								'href'  => [],
 								'title' => [],
 							],
+							'br' => [],
 						]
 					),
-					esc_url( 'https://platform.openai.com/signup' )
+					esc_url( 'https://platform.openai.com/signup' ),
+					esc_url( 'https://platform.openai.com/api-keys' )
 				),
 				'type'    => 'text',
 				'default' => $this->default_settings['api_key'],
