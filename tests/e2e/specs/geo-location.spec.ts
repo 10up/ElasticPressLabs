@@ -23,7 +23,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			'**/wp-json/elasticpress/v1/features*',
 		);
 
-		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
 
 		await loggedInPage.getByLabel('Enable').click();
 
@@ -52,7 +53,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			'/wp-json/elasticpress/v1/features*',
 		);
 
-		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
 
 		// Add Google Maps API Key
 		const apiKeyLabel = loggedInPage.locator('label:has-text("Google Maps API Key")');
