@@ -115,9 +115,9 @@ jobs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}-${{ matrix.testGroup }}
+        name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}
         retention-days: 2
-        path: ${{ github.workspace }}/playwright-report/
+        path: ${{ github.workspace }}/elasticpress-labs/playwright-report/
 
     - name: Delete Elasticsearch search templates
       if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
