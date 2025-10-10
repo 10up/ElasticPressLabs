@@ -485,7 +485,7 @@ The following JSON object contains the URL and the page content. You should use 
 						/* translators: 1: OpenAI sign up URL, 2: OpenAI API keys URL */
 						__( 'Don\'t have an OpenAI account yet? <a title="Sign up for an OpenAI account" href="%1$s">Sign up for one</a> in order to get your API key.<br>If you already have an account, <a title="Get your API key from the OpenAI website" href="%2$s">generate an API key</a>.', 'elasticpress-labs' ),
 						[
-							'a' => [
+							'a'  => [
 								'href'  => [],
 								'title' => [],
 							],
