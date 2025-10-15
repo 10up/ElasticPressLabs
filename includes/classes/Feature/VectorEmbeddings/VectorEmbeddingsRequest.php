@@ -77,7 +77,7 @@ class VectorEmbeddingsRequest {
 		} elseif ( $content_type && false !== strpos( $content_type, 'audio/mpeg' ) ) {
 			return $response;
 		} else {
-			return new \WP_Error( 'Invalid content type', $response );
+			return new \WP_Error( 'Invalid content type', $body, [ 'full_response' => $response ] );
 		}
 	}
 

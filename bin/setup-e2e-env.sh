@@ -1,6 +1,8 @@
 #!/bin/bash
 
 ACF_PRO_LICENSE_KEY=""
+CF_ACCESS_CLIENT_ID=""
+CF_ACCESS_CLIENT_SECRET=""
 DISPLAY_HELP=0
 EP_HOST=""
 EP_CREDENTIALS=""
@@ -12,6 +14,12 @@ for opt in "$@"; do
 	case $opt in
     --acf-pro-license=*)
       ACF_PRO_LICENSE_KEY="${opt#*=}"
+      ;;
+    --cf-access-client-id=*)
+      CF_ACCESS_CLIENT_ID="${opt#*=}"
+      ;;
+    --cf-access-client-secret=*)
+      CF_ACCESS_CLIENT_SECRET="${opt#*=}"
       ;;
     -H=*|--ep-host=*)
       EP_HOST="${opt#*=}"
@@ -42,14 +50,16 @@ if [ $DISPLAY_HELP -eq 1 ]; then
 	echo "Usage: ${0##*/} [OPTIONS...]"
 	echo
 	echo "Optional parameters:"
-	echo "--acf-pro-license=*       ACF Pro License Key."
-	echo "-H=*, --ep-host=*         The remote Elasticsearch Host URL."
-	echo "-S=*, --es-shield=*       The Elasticsearch credentials, used in the ES_SHIELD constant."
-	echo "-p=*, --ep-index-prefix=* The Elasticsearch credentials, used in the EP_INDEX_PREFIX constant."
-	echo "-b=*, --ep-branch=*       The branch of ElasticPress to use. Defaults to the latest release."
-	echo "-W=*, --wp-version=*      WordPress Core version."
-	echo "-w=*, --wc-version=*      WooCommerce version."
-	echo "-h|--help                 Display this help screen"
+	echo "--acf-pro-license=*         ACF Pro License Key."
+	echo "--cf-access-client-id=*     Cloudflare Access Client ID."
+	echo "--cf-access-client-secret=* Cloudflare Access Client Secret."
+	echo "-H=*, --ep-host=*           The remote Elasticsearch Host URL."
+	echo "-S=*, --es-shield=*         The Elasticsearch credentials, used in the ES_SHIELD constant."
+	echo "-p=*, --ep-index-prefix=*   The Elasticsearch credentials, used in the EP_INDEX_PREFIX constant."
+	echo "-b=*, --ep-branch=*         The branch of ElasticPress to use. Defaults to the latest release."
+	echo "-W=*, --wp-version=*        WordPress Core version."
+	echo "-w=*, --wc-version=*        WooCommerce version."
+	echo "-h|--help                   Display this help screen"
 	exit
 fi
 
@@ -99,6 +109,14 @@ fi
 
 if [ ! -z $EP_INDEX_PREFIX ]; then
 	./bin/wp-env-cli tests-wordpress "wp --allow-root config set EP_INDEX_PREFIX ${EP_INDEX_PREFIX}"
+fi
+
+if [ ! -z $CF_ACCESS_CLIENT_ID ]; then
+	./bin/wp-env-cli tests-wordpress "wp --allow-root config set CF_ACCESS_CLIENT_ID ${CF_ACCESS_CLIENT_ID}"
+fi
+
+if [ ! -z $CF_ACCESS_CLIENT_SECRET ]; then
+	./bin/wp-env-cli tests-wordpress "wp --allow-root config set CF_ACCESS_CLIENT_SECRET ${CF_ACCESS_CLIENT_SECRET}"
 fi
 
 ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress sync --setup --yes --show-errors"

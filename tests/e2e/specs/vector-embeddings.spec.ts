@@ -4,6 +4,7 @@ import {
 	test,
 	expect,
 	maybeDisableFeature,
+	wpCliEval,
 } from 'elasticpress-playwright-utils';
 
 test.describe('Vector Embeddings Feature', () => {
@@ -11,46 +12,74 @@ test.describe('Vector Embeddings Feature', () => {
 		await maybeDisableFeature('vector_embeddings');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
+		// Wait for API request
+		const apiResponsePromise = loggedInPage.waitForResponse(
+			'**/wp-json/elasticpress/v1/features*',
+		);
+
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Vector Embeddings' }).click();
-		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).click();
-		loggedInPage.on('dialog', (dialog) => dialog.accept());
-		await loggedInPage.getByRole('button', { name: 'Save and sync now' }).click();
+		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).check();
+		await loggedInPage
+			.getByLabel('OpenAI API Key')
+			.fill(process.env.VECTOR_EMBEDDINGS_API_KEY || '');
+		await loggedInPage
+			.getByLabel('OpenAI Embeddings API Url')
+			.fill(process.env.VECTOR_EMBEDDINGS_API_URL || '');
+		await loggedInPage
+			.getByLabel('The name of the embedding model to use')
+			.fill(process.env.VECTOR_EMBEDDINGS_MODEL || '');
 
-		await loggedInPage.getByRole('button', { name: 'Log' }).click();
-		const syncMessages = loggedInPage.locator('.ep-sync-messages');
-		await expect(syncMessages).toContainText('Mapping sent');
-		await expect(syncMessages).toContainText('Sync complete');
+		// Handle confirmation dialog
+		loggedInPage.on('dialog', (dialog) => dialog.accept());
+		await loggedInPage.getByRole('button', { name: 'Save and sync later' }).click();
+
+		await apiResponsePromise;
+
+		const wpCliEvalResult = await wpCliEval(`
+			$posts = new \\WP_Query(
+				[
+					'post_type'      => 'post',
+					'posts_per_page' => -1,
+					'meta_key'       => 'ep_test',
+					'meta_value'     => 'vector_embeddings',
+				]
+			);
+			foreach ( $posts->posts as $post ) {
+				wp_delete_post( $post->ID, true );
+			}
+
+			// wp_insert_post is not working here
+			$post_id = WP_CLI::runcommand( 'post create --post_title="Test Post" --post_content="Lorem ipsum veritas dolor" --post_author=1 --post_status="publish" --porcelain', [ 'return' => true ] );
+			$post_id = absint( $post_id );
+
+			$return = WP_CLI::runcommand( 'elasticpress sync --setup --yes --show-errors --include=' . $post_id, [ 'return' => true ] );
+
+			echo json_encode( [ 'return' => $return, 'post_id' => $post_id ] );
+		`);
+
+		const { post_id: postId, return: returnValue } = JSON.parse(wpCliEvalResult.toString());
+
+		expect(returnValue).not.toContain('Number of posts index errors');
 
 		const result = await wpCli('elasticpress list-features');
 		expect(result.toString()).toContain('vector_embeddings');
 
-		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-status-report');
-		const vectorEmbeddingsButton = loggedInPage
-			.getByRole('button', { name: 'Vector Embeddings', exact: true })
-			.first();
-		const vectorEmbeddingsGroup = loggedInPage
-			.locator('.components-panel__body', { has: vectorEmbeddingsButton })
-			.first();
-		await vectorEmbeddingsButton.click();
-		await expect(vectorEmbeddingsGroup).toContainText('Content in the queue');
-		await expect(vectorEmbeddingsGroup.locator('td').nth(1)).not.toContainText('0');
-
-		await goToAdminPage(loggedInPage, 'post.php?post=1&action=edit');
+		await goToAdminPage(loggedInPage, `post.php?post=${postId}&action=edit`);
 		if (!(await loggedInPage.locator('#wpadminbar').isVisible())) {
 			await loggedInPage.keyboard.press('Control+Shift+Alt+F'); // Disable fullscreen mode
 		}
 
-		await expect(loggedInPage.locator('.ep-status-indicator')).toContainText(
-			'[EP] Processing vector embeddings',
+		await expect(loggedInPage.locator('#wp-admin-bar-ep-basic-status-summary')).toContainText(
+			'Content in sync: WordPress and Elasticsearch content match.',
 		);
 
-		// Wait for the queue to be processed
-		await loggedInPage.waitForTimeout(10000);
+		const postInEs = await wpCliEval(`
+			echo WP_CLI::runcommand( 'elasticpress get post ${postId}', [ 'return' => true ] );
+		`);
 
-		await loggedInPage.reload();
-		expect(await loggedInPage.locator('.ep-status-indicator')).toContainText(
-			'[EP] Content in sync',
-		);
+		expect(postInEs.toString()).toContain('"chunks":[{"vector":[');
+
+		await maybeDisableFeature('vector_embeddings');
 	});
 });
