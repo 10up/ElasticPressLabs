@@ -8,8 +8,14 @@ import {
 } from 'elasticpress-playwright-utils';
 
 test.describe('Vector Embeddings Feature', () => {
-	test('Can turn the feature on', async ({ loggedInPage }) => {
+	test.afterAll('Disable feature', async () => {
 		await maybeDisableFeature('vector_embeddings');
+	});
+
+	test('Can enable and configure the feature', async ({ loggedInPage }) => {
+		await maybeDisableFeature('vector_embeddings');
+		await wpCli('option delete ep_vector_embeddings_settings', true);
+
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
 		// Wait for API request
@@ -39,7 +45,7 @@ test.describe('Vector Embeddings Feature', () => {
 		const wpCliEvalResult = await wpCliEval(`
 			$posts = new \\WP_Query(
 				[
-					'post_type'      => 'post',
+					'post_type'      => [ 'post', 'page' ],
 					'posts_per_page' => -1,
 					'meta_key'       => 'ep_test',
 					'meta_value'     => 'vector_embeddings',
@@ -50,15 +56,22 @@ test.describe('Vector Embeddings Feature', () => {
 			}
 
 			// wp_insert_post is not working here
-			$post_id = WP_CLI::runcommand( 'post create --post_title="Test Post" --post_content="Lorem ipsum veritas dolor" --post_author=1 --post_status="publish" --porcelain', [ 'return' => true ] );
+			$post_id = WP_CLI::runcommand( 'post create --post_title="Test Post" --post_content="Lorem ipsum veritas dolor" --post_author=1 --post_status="publish" --meta_input="{\\"ep_test\\":\\"vector_embeddings\\"}" --porcelain', [ 'return' => true ] );
+			$page_id = WP_CLI::runcommand( 'post create --post_title="Test Page" --post_content="Lorem ipsum veritas dolor" --post_author=1 --post_status="publish"  --post_type="page" --meta_input="{\\"ep_test\\":\\"vector_embeddings\\"}" --porcelain', [ 'return' => true ] );
+
 			$post_id = absint( $post_id );
+			$page_id = absint( $page_id );
 
-			$return = WP_CLI::runcommand( 'elasticpress sync --setup --yes --show-errors --include=' . $post_id, [ 'return' => true ] );
+			$return = WP_CLI::runcommand( 'elasticpress sync --setup --yes --show-errors --include=' . $post_id . ',' . $page_id, [ 'return' => true ] );
 
-			echo json_encode( [ 'return' => $return, 'post_id' => $post_id ] );
+			echo json_encode( [ 'return' => $return, 'post_id' => $post_id, 'page_id' => $page_id ] );
 		`);
 
-		const { post_id: postId, return: returnValue } = JSON.parse(wpCliEvalResult.toString());
+		const {
+			post_id: postId,
+			page_id: pageId,
+			return: returnValue,
+		} = JSON.parse(wpCliEvalResult.toString());
 
 		expect(returnValue).not.toContain('Number of posts index errors');
 
@@ -74,12 +87,28 @@ test.describe('Vector Embeddings Feature', () => {
 			'Content in sync: WordPress and Elasticsearch content match.',
 		);
 
-		const postInEs = await wpCliEval(`
-			echo WP_CLI::runcommand( 'elasticpress get post ${postId}', [ 'return' => true ] );
-		`);
-
+		const postInEs = await wpCli(`elasticpress get post ${postId}`);
 		expect(postInEs.toString()).toContain('"chunks":[{"vector":[');
 
-		await maybeDisableFeature('vector_embeddings');
+		const pageInEs = await wpCli(`elasticpress get post ${pageId}`);
+		expect(pageInEs.toString()).toContain('"chunks":[{"vector":[');
+
+		await goToAdminPage(loggedInPage, `admin.php?page=elasticpress-vector-embeddings`);
+		await loggedInPage.getByRole('tab', { name: 'Pages' }).click();
+		await loggedInPage
+			.getByRole('checkbox', { name: 'Allow Vector Embedding' })
+			.setChecked(false);
+		await loggedInPage.getByRole('button', { name: 'Save settings' }).click();
+
+		const syncResult = await wpCli(
+			`elasticpress sync --setup --yes --show-errors --include=${postId},${pageId}`,
+		);
+		expect(syncResult).not.toContain('Number of posts index errors');
+
+		const postInEsAfterSync = await wpCli(`elasticpress get post ${postId}`);
+		expect(postInEsAfterSync.toString()).toContain('"chunks":[{"vector":[');
+
+		const pageInEsAfterSync = await wpCli(`elasticpress get post ${pageId}`);
+		expect(pageInEsAfterSync.toString()).not.toContain('"chunks":[{"vector":[');
 	});
 });

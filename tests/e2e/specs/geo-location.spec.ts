@@ -45,6 +45,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	});
 
 	test('Shows the address field when the Google Maps API exists', async ({ loggedInPage }) => {
+		test.fixme(true, 'Google Maps API is missing.');
+
 		await maybeEnableFeature('geo_location');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
