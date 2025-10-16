@@ -6,15 +6,16 @@ import {
 	maybeDisableFeature,
 	wpCliEval,
 } from 'elasticpress-playwright-utils';
+import { setVectorEmbeddingsSettings } from './utils';
 
 test.describe('Vector Embeddings Feature', () => {
 	test.afterAll('Disable feature', async () => {
+		await wpCli('option delete ep_vector_embeddings_settings', true);
 		await maybeDisableFeature('vector_embeddings');
 	});
 
 	test('Can enable and configure the feature', async ({ loggedInPage }) => {
 		await maybeDisableFeature('vector_embeddings');
-		await wpCli('option delete ep_vector_embeddings_settings', true);
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
@@ -23,18 +24,7 @@ test.describe('Vector Embeddings Feature', () => {
 			'**/wp-json/elasticpress/v1/features*',
 		);
 
-		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
-		await loggedInPage.getByRole('button', { name: 'Vector Embeddings' }).click();
-		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).check();
-		await loggedInPage
-			.getByLabel('OpenAI API Key')
-			.fill(process.env.VECTOR_EMBEDDINGS_API_KEY || '');
-		await loggedInPage
-			.getByLabel('OpenAI Embeddings API Url')
-			.fill(process.env.VECTOR_EMBEDDINGS_API_URL || '');
-		await loggedInPage
-			.getByLabel('The name of the embedding model to use')
-			.fill(process.env.VECTOR_EMBEDDINGS_MODEL || '');
+		await setVectorEmbeddingsSettings(loggedInPage);
 
 		// Handle confirmation dialog
 		loggedInPage.on('dialog', (dialog) => dialog.accept());
