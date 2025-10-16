@@ -17,7 +17,8 @@ test.describe('Search Templates Feature', { tag: '@search-templates' }, () => {
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
-		await loggedInPage.locator('button', { hasText: 'Search Templates' }).click();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Templates' }).click();
 		await expect(
 			loggedInPage.locator(
 				'.components-notice:has-text("You need an ElasticPress.io account")',
