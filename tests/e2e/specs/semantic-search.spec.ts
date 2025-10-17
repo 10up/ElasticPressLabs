@@ -30,10 +30,19 @@ test.describe('Semantic Search Feature', () => {
 		await maybeDisableFeature('semantic_search');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
+		// Wait for API request
+		const apiRequestPromise = loggedInPage.waitForResponse(
+			'/wp-json/elasticpress/v1/features*',
+		);
+
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Semantic Search' }).click();
 		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).click();
 		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+
+		const apiRequestResponse = await apiRequestPromise;
+		const jsonResponse = await apiRequestResponse.json();
+		expect(JSON.stringify(jsonResponse)).toContain('"success":true');
 
 		const result = await wpCli('elasticpress list-features');
 		expect(result.toString()).toContain('semantic_search');
