@@ -198,7 +198,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @return array The new settings
 	 */
 	public function fix_search_algorithm_version( $new_settings, $feature ) {
-		if ( $this->slug !== $feature->slug || ! empty( $new_settings[ $this->slug ]['active'] ) ) {
+		if ( $this->slug !== $feature->slug ) {
 			return $new_settings;
 		}
 
