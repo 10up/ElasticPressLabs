@@ -198,10 +198,6 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @return array The new settings
 	 */
 	public function fix_search_algorithm_version( $new_settings, $feature ) {
-		if ( $this->slug !== $feature->slug ) {
-			return $new_settings;
-		}
-
 		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
 
 		if ( ! in_array( $new_settings['search_algorithm']['search_algorithm_version'], $available_search_algorithms, true ) ) {
