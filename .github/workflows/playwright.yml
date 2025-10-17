@@ -126,7 +126,7 @@ jobs:
       with:
         name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}
         retention-days: 2
-        path: ${{ env.WORKING_DIR }}/playwright-report/
+        path: ${{ env.WORKING_DIR }}/tests/e2e/playwright-report/
 
     - name: Delete Elasticsearch search templates
       if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
