@@ -35,6 +35,13 @@ class SemanticSearch extends Feature {
 	];
 
 	/**
+	 * The algorithms supported by the feature.
+	 *
+	 * @var array $algorithms.
+	 */
+	protected $algorithms = [];
+
+	/**
 	 * Initialize feature setting it's config
 	 */
 	public function __construct() {
@@ -67,20 +74,22 @@ class SemanticSearch extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$algorithms = [
+		$this->algorithms = [
 			new SearchAlgorithm\Knn(),
 			new SearchAlgorithm\KnnCosine(),
 			new SearchAlgorithm\Hybrid(),
 		];
-		foreach ( $algorithms as $algorithm ) {
+		foreach ( $this->algorithms as $algorithm ) {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
 		}
+
+		add_filter( 'ep_sanitize_feature_settings', [ $this, 'fix_search_algorithm_version' ], 10, 2 );
 
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
 		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
 
-		if ( $is_epio && in_array( $search_algorithm, $algorithms, true ) ) {
+		if ( $is_epio && in_array( $search_algorithm, $this->algorithms, true ) ) {
 			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
 			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
@@ -149,5 +158,31 @@ class SemanticSearch extends Feature {
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
 		);
+	}
+
+	/**
+	 * If the selected algorithm is a semantic search algorithm, when disabling this feature, set the search algorithm version to 4.0.
+	 *
+	 * @param array                 $new_settings The settings to be saved
+	 * @param \ElasticPress\Feature $feature      The feature object
+	 * @return array The new settings
+	 */
+	public function fix_search_algorithm_version( $new_settings, $feature ) {
+		if ( 'search_algorithm' !== $feature->slug || ! empty( $new_settings[ $this->slug ]['active'] ) ) {
+			return $new_settings;
+		}
+
+		$semantic_search_algorithm_slugs = array_map(
+			function ( $algorithm ) {
+				return $algorithm->get_slug();
+			},
+			$this->algorithms
+		);
+
+		if ( in_array( $new_settings['search_algorithm']['search_algorithm_version'], $semantic_search_algorithm_slugs, true ) ) {
+			$new_settings['search_algorithm']['search_algorithm_version'] = '4.0';
+		}
+
+		return $new_settings;
 	}
 }
