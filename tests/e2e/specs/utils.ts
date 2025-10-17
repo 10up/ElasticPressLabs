@@ -28,7 +28,7 @@ export const setEpLabsDefaultFeatures = async () => {
 
 	await wpCliEval(
 		`
-		update_option( 'ep_feature_settings', ${JSON.stringify(epLabsDefaultFeatures)} );
+		update_option( 'ep_feature_settings', json_decode( '${JSON.stringify(epLabsDefaultFeatures)}', true ) );
 		`,
 	);
 };
