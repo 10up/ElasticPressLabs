@@ -20,7 +20,7 @@ test.describe('Vector Embeddings Feature', () => {
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
 		// Wait for API request
-		const apiResponsePromise = loggedInPage.waitForResponse(
+		const apiRequestPromise = loggedInPage.waitForResponse(
 			'**/wp-json/elasticpress/v1/features*',
 		);
 
@@ -30,7 +30,9 @@ test.describe('Vector Embeddings Feature', () => {
 		loggedInPage.on('dialog', (dialog) => dialog.accept());
 		await loggedInPage.getByRole('button', { name: 'Save and sync later' }).click();
 
-		await apiResponsePromise;
+		const apiRequestResponse = await apiRequestPromise;
+		const jsonResponse = await apiRequestResponse.json();
+		expect(JSON.stringify(jsonResponse)).toContain('"success":true');
 
 		const wpCliEvalResult = await wpCliEval(`
 			$posts = new \\WP_Query(

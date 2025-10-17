@@ -83,8 +83,6 @@ class SemanticSearch extends Feature {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
 		}
 
-		add_filter( 'ep_sanitize_feature_settings', [ $this, 'fix_search_algorithm_version' ], 10, 2 );
-
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
 		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
@@ -158,31 +156,5 @@ class SemanticSearch extends Feature {
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
 		);
-	}
-
-	/**
-	 * If the selected algorithm is a semantic search algorithm, when disabling this feature, set the search algorithm version to 4.0.
-	 *
-	 * @param array                 $new_settings The settings to be saved
-	 * @param \ElasticPress\Feature $feature      The feature object
-	 * @return array The new settings
-	 */
-	public function fix_search_algorithm_version( $new_settings, $feature ) {
-		if ( 'search_algorithm' !== $feature->slug || ! empty( $new_settings[ $this->slug ]['active'] ) ) {
-			return $new_settings;
-		}
-
-		$semantic_search_algorithm_slugs = array_map(
-			function ( $algorithm ) {
-				return $algorithm->get_slug();
-			},
-			$this->algorithms
-		);
-
-		if ( in_array( $new_settings['search_algorithm']['search_algorithm_version'], $semantic_search_algorithm_slugs, true ) ) {
-			$new_settings['search_algorithm']['search_algorithm_version'] = '4.0';
-		}
-
-		return $new_settings;
 	}
 }

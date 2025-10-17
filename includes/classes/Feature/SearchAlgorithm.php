@@ -81,6 +81,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 		}
 
 		add_filter( 'ep_post_search_algorithm', [ $this, 'get_search_algorithm_version' ] );
+		add_filter( 'ep_sanitize_feature_settings', [ $this, 'fix_search_algorithm_version' ], 10, 2 );
 	}
 
 	/**
@@ -184,5 +185,29 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 		$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
 
 		return $status;
+	}
+
+	/**
+	 * Fixes the search algorithm version if it is not available.
+	 *
+	 * Some other features may provide their own search algorithm versions,
+	 * but when they are deactivated, we need to revert to the default version.
+	 *
+	 * @param array                 $new_settings The settings to be saved
+	 * @param \ElasticPress\Feature $feature      The feature object
+	 * @return array The new settings
+	 */
+	public function fix_search_algorithm_version( $new_settings, $feature ) {
+		if ( $this->slug !== $feature->slug || ! empty( $new_settings[ $this->slug ]['active'] ) ) {
+			return $new_settings;
+		}
+
+		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+
+		if ( ! in_array( $new_settings['search_algorithm']['search_algorithm_version'], $available_search_algorithms, true ) ) {
+			$new_settings['search_algorithm']['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
+		}
+
+		return $new_settings;
 	}
 }
