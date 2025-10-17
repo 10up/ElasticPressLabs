@@ -10,6 +10,7 @@ import {
 	maybeDisableFeature,
 	maybeEnableFeature,
 } from 'elasticpress-playwright-utils';
+import { setEpLabsDefaultFeatures } from './utils';
 
 test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	test('Can activate the feature and sync automatically', async ({ loggedInPage }) => {
@@ -109,6 +110,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	});
 
 	test("Can show posts that are near the user's location", async ({ context, loggedInPage }) => {
+		await setEpLabsDefaultFeatures();
+
 		await context.grantPermissions(['geolocation']);
 		await context.setGeolocation({ latitude: 40.712776, longitude: -74.005974 });
 

@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Page } from '@playwright/test';
+import { defaultFeatures, wpCliEval } from 'elasticpress-playwright-utils';
 
 export const setVectorEmbeddingsSettings = async (loggedInPage: Page) => {
 	await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
@@ -14,4 +15,20 @@ export const setVectorEmbeddingsSettings = async (loggedInPage: Page) => {
 	await loggedInPage
 		.getByLabel('The name of the embedding model to use')
 		.fill(process.env.VECTOR_EMBEDDINGS_MODEL || '');
+};
+
+export const setEpLabsDefaultFeatures = async () => {
+	const epLabsDefaultFeatures = {
+		...defaultFeatures,
+		search_algorithm: {
+			active: false,
+			search_algorithm_version: '4.0',
+		},
+	};
+
+	await wpCliEval(
+		`
+		update_option( 'ep_feature_settings', ${JSON.stringify(epLabsDefaultFeatures)} );
+		`,
+	);
 };
