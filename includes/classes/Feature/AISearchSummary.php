@@ -101,7 +101,7 @@ The following JSON object contains the URL and the page content. You should use 
 			true
 		);
 
-		wp_set_script_translations( 'ep-ai-search-summary-block-script', 'elasticpress' );
+		wp_set_script_translations( 'ep-ai-search-summary-block-script', 'elasticpress-labs' );
 
 		register_block_type_from_metadata(
 			ELASTICPRESS_LABS_PATH . 'assets/js/blocks/ai-search-summary',

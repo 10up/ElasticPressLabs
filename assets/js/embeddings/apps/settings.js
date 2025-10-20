@@ -28,7 +28,7 @@ export default () => {
 	}));
 
 	tabs.push({
-		title: __('Indexing', 'elasticpress'),
+		title: __('Indexing', 'elasticpress-labs'),
 		name: 'indexing',
 		postType: {},
 		Component: Indexing,
@@ -44,9 +44,12 @@ export default () => {
 
 		try {
 			await save();
-			createNotice('success', __('Settings saved.', 'elasticpress'));
+			createNotice('success', __('Settings saved.', 'elasticpress-labs'));
 		} catch (e) {
-			createNotice('error', __('Something went wrong. Please try again.', 'elasticpress'));
+			createNotice(
+				'error',
+				__('Something went wrong. Please try again.', 'elasticpress-labs'),
+			);
 		}
 	};
 
@@ -55,7 +58,7 @@ export default () => {
 			<p>
 				{__(
 					'Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data. Additionally, you can control',
-					'elasticpress',
+					'elasticpress-labs',
 				)}
 			</p>
 
@@ -65,7 +68,7 @@ export default () => {
 						<Notice status="warning" isDismissible={false}>
 							{__(
 								'This configuration is currently filtered via the `ep_embeddings_is_embeddable` filter. Changes made here will not be applied.',
-								'elasticpress',
+								'elasticpress-labs',
 							)}
 						</Notice>
 					)}
@@ -88,7 +91,7 @@ export default () => {
 							variant="primary"
 							onClick={onSubmit}
 						>
-							{__('Save settings', 'elasticpress')}
+							{__('Save settings', 'elasticpress-labs')}
 						</Button>
 					</Flex>
 				</PanelBody>

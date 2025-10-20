@@ -16,9 +16,9 @@ export default ({ postType, embeddingMode }) => {
 	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
 	return (
 		<>
-			<h4>{__('Post Meta', 'elasticpresslabs')}</h4>
+			<h4>{__('Post Meta', 'elasticpress-labs')}</h4>
 			<CheckboxControl
-				label={__('Post Meta Fields')}
+				label={__('Post Meta Fields', 'elasticpress-labs')}
 				checked={enablefieldsIndexing}
 				onChange={() => {
 					setEmbeddingForPostType(
@@ -36,7 +36,7 @@ export default ({ postType, embeddingMode }) => {
 							postType={postType}
 							label={__(
 								'Include posts that have any of these meta keys',
-								'elasticpresslabs',
+								'elasticpress-labs',
 							)}
 							updateKey="fieldsIndexingInclude"
 							value={fieldsIndexingInclude}
@@ -48,7 +48,7 @@ export default ({ postType, embeddingMode }) => {
 							updateKey="fieldsIndexingExclude"
 							label={__(
 								'Exclude posts that have any of these meta keys',
-								'elasticpresslabs',
+								'elasticpress-labs',
 							)}
 							value={fieldsIndexingExclude}
 						/>

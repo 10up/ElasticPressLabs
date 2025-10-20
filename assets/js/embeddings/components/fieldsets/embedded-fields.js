@@ -18,25 +18,31 @@ export default ({ postType }) => {
 
 	const coreFields = [
 		{
-			label: __('Post Title', 'elasticpress'),
+			label: __('Post Title', 'elasticpress-labs'),
 			value: 'post_title',
 		},
 		{
-			label: __('Post Content', 'elasticpress'),
+			label: __('Post Content', 'elasticpress-labs'),
 			value: 'post_content',
 		},
 		{
-			label: __('Post Excerpt', 'elasticpress'),
+			label: __('Post Excerpt', 'elasticpress-labs'),
 			value: 'post_excerpt',
 		},
 	];
 
 	return (
 		<>
-			<p>{__('This setting controls which fields will be used to create embedded data.')}</p>
+			<p>
+				{__(
+					'This setting controls which fields will be used to create embedded data.',
+					'elasticpress-labs',
+				)}
+			</p>
 			<p>
 				{__(
 					'Select from the post fields below. Additional meta keys can be added to the input below.',
+					'elasticpress-labs',
 				)}
 			</p>
 			<Group>
@@ -64,7 +70,7 @@ export default ({ postType }) => {
 			<Group>
 				<MetaSelect
 					postType={postType}
-					label={__('Add Custom Fields', 'elasticpress')}
+					label={__('Add Custom Fields', 'elasticpress-labs')}
 					value={fieldsEmbedding}
 					updateKey="fieldsEmbedding"
 				/>

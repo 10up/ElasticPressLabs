@@ -24,7 +24,7 @@ import './style.css';
  */
 const App = () => {
 	return (
-		<SettingsScreenProvider title={__('Manage Vector Embeddings', 'elasticpress')}>
+		<SettingsScreenProvider title={__('Manage Vector Embeddings', 'elasticpress-labs')}>
 			<VectorEmbeddingsProvider
 				{...{ apiUrl, postTypeConfig, chunkSize, chunkOverlap, embeddingsFiltered }}
 			>

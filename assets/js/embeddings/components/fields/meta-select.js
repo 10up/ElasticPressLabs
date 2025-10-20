@@ -18,7 +18,7 @@ export default (props) => {
 			value={value}
 			label={label}
 			onChange={(tokens) => setEmbeddingForPostType(postType, null, updateKey, tokens)}
-			placeholder={__('Add meta field...', 'elasticpress')}
+			placeholder={__('Add meta field...', 'elasticpress-labs')}
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
 		/>

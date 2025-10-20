@@ -39,7 +39,7 @@ export default ({ taxonomies, postType }) => {
 											taxonomy={taxonomy}
 											label={__(
 												'Include posts that have any of these terms',
-												'elasticpress',
+												'elasticpress-labs',
 											)}
 											value={termsInclude}
 											onChange={(terms) =>
@@ -58,7 +58,7 @@ export default ({ taxonomies, postType }) => {
 											taxonomy={taxonomy}
 											label={__(
 												'Exclude posts that have any of these terms',
-												'elasticpress',
+												'elasticpress-labs',
 											)}
 											onChange={(terms) =>
 												setEmbeddingForPostType(
@@ -78,7 +78,10 @@ export default ({ taxonomies, postType }) => {
 				})
 			) : (
 				<p>
-					{__('No public taxonomies are registered to this post type.', 'elasticpress')}
+					{__(
+						'No public taxonomies are registered to this post type.',
+						'elasticpress-labs',
+					)}
 				</p>
 			)}
 		</div>

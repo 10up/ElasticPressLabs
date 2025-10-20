@@ -249,7 +249,7 @@ class Post extends Indexable {
 			$status = [
 				'status'      => 'warning',
 				'message'     => esc_html__( 'Processing vector embeddings', 'elasticpress-labs' ),
-				'explanation' => esc_html__( 'Vector embeddings are still being processed.', 'elasticpress' ),
+				'explanation' => esc_html__( 'Vector embeddings are still being processed.', 'elasticpress-labs' ),
 			];
 		}
 

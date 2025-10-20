@@ -99,7 +99,7 @@ class VectorEmbeddings extends Feature {
 
 		$this->field_group_map = [
 			'ep_embeddings_openai' => [
-				'label'           => esc_html__( 'OpenAI Connection Details', 'elasticpress' ),
+				'label'           => esc_html__( 'OpenAI Connection Details', 'elasticpress-labs' ),
 				'requires_fields' => [
 					'conditions' => [
 						'ep_embeddings_generator' => 'openai',
@@ -198,11 +198,11 @@ class VectorEmbeddings extends Feature {
 			'label'   => __( 'Generator', 'elasticpress-labs' ),
 			'options' => [
 				[
-					'label' => __( 'External embedding processing', 'elasticpress' ),
+					'label' => __( 'External embedding processing', 'elasticpress-labs' ),
 					'value' => 'external',
 				],
 				[
-					'label' => __( 'OpenAI', 'elasticpress' ),
+					'label' => __( 'OpenAI', 'elasticpress-labs' ),
 					'value' => 'openai',
 				],
 			],
@@ -216,7 +216,7 @@ class VectorEmbeddings extends Feature {
 				array_unshift(
 					$generator['options'],
 					[
-						'label' => __( 'ElasticPress.io', 'elasticpress' ),
+						'label' => __( 'ElasticPress.io', 'elasticpress-labs' ),
 						'value' => 'epio',
 					]
 				);

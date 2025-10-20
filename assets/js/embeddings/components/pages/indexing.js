@@ -19,14 +19,14 @@ export default () => {
 			</PanelHeader>
 			<PanelBody>
 				<RangeControl
-					label="Chunk Size (in words)"
+					label={__('Chunk Size (in words)', 'elasticpress-labs')}
 					value={chunkSize}
 					onChange={setChunkSize}
 					min={1}
 					max={300}
 				/>
 				<RangeControl
-					label="Chunk Overlap (in words)"
+					label={__('Chunk Overlap (in words)', 'elasticpress-labs')}
 					value={chunkOverlap}
 					onChange={setChunkOverlap}
 					min={1}

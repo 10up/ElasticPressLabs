@@ -15,8 +15,8 @@ export default ({ postType }) => {
 	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
 
 	const options = [
-		{ label: __('Manual', 'elasticpress'), value: 'manual' },
-		{ label: __('Automatic', 'elasticpress'), value: 'automatic' },
+		{ label: __('Manual', 'elasticpress-labs'), value: 'manual' },
+		{ label: __('Automatic', 'elasticpress-labs'), value: 'automatic' },
 	];
 
 	return (
@@ -24,42 +24,42 @@ export default ({ postType }) => {
 			<p>
 				{__(
 					'This setting controls which posts will be indexed with vector embedding data.',
-					'elasticpress',
+					'elasticpress-labs',
 				)}
 			</p>
-			<h4>{__('Modes', 'elasticpress')}</h4>
+			<h4>{__('Modes', 'elasticpress-labs')}</h4>
 			<ul style={{ paddingLeft: '20px', listStyle: 'disc' }}>
 				<li>
 					{__(
 						'Automatic (Default): Posts are indexed based on taxonomy terms and post meta. Configure rules to include or exclude posts automatically.',
-						'elasticpress',
+						'elasticpress-labs',
 					)}
 				</li>
 				<li>
 					{__(
 						'Manual: Editors will manually select which posts will qualify for vector embedding.',
-						'elasticpress',
+						'elasticpress-labs',
 					)}
 				</li>
 			</ul>
 			<p>
 				{__(
 					'Choose the mode that best fits your needs. If unsure, the automatic mode ensures consistent indexing based on predefined rules',
-					'elasticpress',
+					'elasticpress-labs',
 				)}
 			</p>
 			<Group>
 				<RadioControl
-					label="Embedding Mode"
+					label={__('Embedding Mode', 'elasticpress-labs')}
 					help={
 						embeddingMode === 'automatic'
 							? __(
 									'Posts be will indexed according to the configuration below.',
-									'elasticpress',
+									'elasticpress-labs',
 								)
 							: __(
 									'Users will manually select which posts will qualify for vector embedding',
-									'elasticpress',
+									'elasticpress-labs',
 								)
 					}
 					selected={embeddingMode}

@@ -34,7 +34,7 @@ export default ({ value, onChange, disabled, taxonomy, label, placeholder = '' }
 			value={displayedTokens}
 			suggestions={terms.map((term) => term.name)}
 			onChange={handleChange}
-			placeholder={placeholder || __('Type to search for terms', 'elasticpress')}
+			placeholder={placeholder || __('Type to search for terms', 'elasticpress-labs')}
 			__experimentalShowHowTo={false}
 			__nextHasNoMarginBottom
 			__nextHasNoMarginTop

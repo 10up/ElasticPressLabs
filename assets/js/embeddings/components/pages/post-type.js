@@ -33,10 +33,10 @@ export default ({ postType }) => {
 			<PanelBody>
 				<PanelRow>
 					<CheckboxControl
-						label={__('Allow Vector Embedding', 'elasticpress')}
+						label={__('Allow Vector Embedding', 'elasticpress-labs')}
 						help={__(
 							'Enable or disable vector embeddings for this post type.',
-							'elasticpress',
+							'elasticpress-labs',
 						)}
 						checked={embeddable}
 						onChange={() =>
@@ -46,34 +46,34 @@ export default ({ postType }) => {
 				</PanelRow>
 			</PanelBody>
 			{embeddable && (
-				<PanelBody title={__('Indexing Criteria', 'elasticpress')}>
+				<PanelBody title={__('Indexing Criteria', 'elasticpress-labs')}>
 					<EmbeddingMode {...{ postType }} />
 					{embeddingMode === 'automatic' && (
 						<>
-							<h4>{__('Rules', 'elasticpress')}</h4>
+							<h4>{__('Rules', 'elasticpress-labs')}</h4>
 							<ul style={{ paddingLeft: '20px', listStyle: 'disc' }}>
 								<li>
 									{__(
 										'Include: If you specify terms or fields to include, only posts with those terms or fields will be included. All others will be excluded.',
-										'elasticpress',
+										'elasticpress-labs',
 									)}
 								</li>
 								<li>
 									{__(
 										'Exclude: If you specify terms or fields to exclude, posts with those terms and fields will be left out, while all others will be included.',
-										'elasticpress',
+										'elasticpress-labs',
 									)}
 								</li>
 								<li>
 									{__(
 										'Both Include & Exclude: If both are set, excluded terms and fields take priority — posts with those terms will always be left out, even if they match the included terms.',
-										'elasticpress',
+										'elasticpress-labs',
 									)}
 								</li>
 								<li>
 									{__(
 										'If no rules are set, all posts are included by default.',
-										'elasticpress',
+										'elasticpress-labs',
 									)}
 								</li>
 							</ul>
@@ -91,7 +91,7 @@ export default ({ postType }) => {
 				</PanelBody>
 			)}
 			{embeddable && (
-				<PanelBody initialOpen title={__('Content Fields', 'elasticpress')}>
+				<PanelBody initialOpen title={__('Content Fields', 'elasticpress-labs')}>
 					<EmbeddedFields postType={postType} />
 				</PanelBody>
 			)}

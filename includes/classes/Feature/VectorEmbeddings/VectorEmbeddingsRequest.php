@@ -68,7 +68,7 @@ class VectorEmbeddingsRequest {
 				if ( empty( $json['error'] ) ) {
 					return $json;
 				} else {
-					$message = $json['error']['message'] ?? esc_html__( 'An error occured', 'elasticpresslabs' );
+					$message = $json['error']['message'] ?? esc_html__( 'An error occured', 'elasticpress-labs' );
 					return new \WP_Error( $code, $message );
 				}
 			} else {
