@@ -22,6 +22,12 @@ Thank you to all the people who have already contributed to this repository via 
 [Mohammed Razzaq (@MARQAS)](https://github.com/MARQAS),
 [Eric Caron (@ecaron)](https://github.com/ecaron),
 [Dharmesh Patel (@iamdharmesh)](https://github.com/iamdharmesh),
+[Alexandr (@yarovikov)](https://github.com/yarovikov),
+[Giorgos Sarigiannidis (@gsarig)](https://github.com/gsarig),
+[Hugo Solar (@hugosolar)](https://github.com/hugosolar),
+[Peter Sorensen (@psorensen)](https://github.com/psorensen),
+[Zach (@ZacharyRener)](https://github.com/ZacharyRener),
+[Michael Phillips (@mphillips)](https://github.com/mphillips),
 and
 [Felipe Elia (@felipeelia)](https://github.com/felipeelia).
 
