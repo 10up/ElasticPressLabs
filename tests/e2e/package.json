@@ -1,0 +1,8 @@
+{
+	"type": "module",
+	"devDependencies": {
+		"@playwright/test": "^1.54.2",
+		"dotenv": "^17.2.3",
+		"elasticpress-playwright-utils": "^0.1.2"
+	}
+}

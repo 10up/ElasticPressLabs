@@ -153,7 +153,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 				'default'          => false,
 				'key'              => 'active',
 				'label'            => 'Enable',
-				'requires_feature' => 'search',
+				'requires_feature' => [ 'search' ],
 				'requires_sync'    => true,
 				'type'             => 'toggle',
 			],
@@ -174,7 +174,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	 */
 	public function test_attribute_add_in_weight_dashboard() {
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
-		ElasticPress\Features::factory()->setup_features();
+		ElasticPress\Features::factory()->get_registered_feature( 'co_authors_plus' )->setup();
 
 		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
 		$fields = $search->weighting->get_weightable_fields_for_post_type( 'post' );
@@ -191,7 +191,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	 */
 	public function test_add_author_default_weight() {
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
-		ElasticPress\Features::factory()->setup_features();
+		ElasticPress\Features::factory()->get_registered_feature( 'co_authors_plus' )->setup();
 
 		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
 		$fields = $search->weighting->get_post_type_default_settings( 'post' );
@@ -210,7 +210,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 		global $coauthors_plus;
 
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
-		ElasticPress\Features::factory()->setup_features();
+		ElasticPress\Features::factory()->get_registered_feature( 'co_authors_plus' )->setup();
 
 		$post_id = $this->ep_factory->post->create();
 
@@ -251,7 +251,7 @@ class TestCoAuthorsPlus extends BaseTestCase {
 		add_filter( 'ep_coauthors_plus_skip_frontend_integration', '__return_true' );
 
 		ElasticPress\Features::factory()->activate_feature( 'co_authors_plus' );
-		ElasticPress\Features::factory()->setup_features();
+		ElasticPress\Features::factory()->get_registered_feature( 'co_authors_plus' )->setup();
 
 		$search = ElasticPress\Features::factory()->get_registered_feature( 'search' );
 		$fields = $search->weighting->get_post_type_default_settings( 'post' );

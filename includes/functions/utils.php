@@ -232,6 +232,8 @@ function get_asset_info( $slug, $attribute = null ) {
 		$asset = require ELASTICPRESS_LABS_PATH . 'dist/js/' . $slug . '.asset.php';
 	} elseif ( file_exists( ELASTICPRESS_LABS_PATH . 'dist/css/' . $slug . '.asset.php' ) ) {
 		$asset = require ELASTICPRESS_LABS_PATH . 'dist/css/' . $slug . '.asset.php';
+	} elseif ( file_exists( ELASTICPRESS_LABS_PATH . 'dist/blocks/' . $slug . '.asset.php' ) ) {
+		$asset = require ELASTICPRESS_LABS_PATH . 'dist/blocks/' . $slug . '.asset.php';
 	} else {
 		return null;
 	}

@@ -1,0 +1,141 @@
+name: E2e Tests
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  CI: true
+  COMPOSER_VERSION: "2"
+  COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
+  NODE_VERSION: "20"
+  NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
+  GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
+  VECTOR_EMBEDDINGS_API_KEY: ${{ secrets.VECTOR_EMBEDDINGS_API_KEY }}
+  VECTOR_EMBEDDINGS_API_URL: ${{ secrets.VECTOR_EMBEDDINGS_API_URL }}
+  VECTOR_EMBEDDINGS_MODEL: ${{ secrets.VECTOR_EMBEDDINGS_MODEL }}
+  AI_SEARCH_SUMMARY_API_URL: ${{ secrets.AI_SEARCH_SUMMARY_API_URL }}
+  AI_SEARCH_SUMMARY_MODEL: ${{ secrets.AI_SEARCH_SUMMARY_MODEL }}
+
+on:
+  push:
+    branches:
+      - develop
+      - trunk
+  pull_request:
+    branches:
+      - develop
+      - '[0-9].[0-9x]*' # Version branches: 4.x.x, 4.1.x, 5.x
+
+jobs:
+  e2e_local:
+    name: ES ${{ matrix.esVersion }} - ${{ matrix.core.name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./elasticpress-labs
+    strategy:
+      fail-fast: false
+      matrix:
+        esVersion: ['7.10.1', '8.12.2', 'EP.io']
+        core:
+          - {name: 'WP latest', version: ''}
+          - {name: 'WP minimum', version: '6.2'}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: elasticpress-labs
+    
+    - name: Set path variable
+      run: |
+        echo "WORKING_DIR=$(pwd)" >> $GITHUB_ENV
+
+    - name: Prepare npm cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.NODE_CACHE }}
+        key: npm-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          npm-${{ env.NODE_VERSION }}-
+    - name: Prepare composer cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.COMPOSER_CACHE }}
+        key: composer-${{ env.COMPOSER_VERSION }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          composer-${{ env.COMPOSER_VERSION }}-
+
+    - name: Set PHP version
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: :php-psr
+        tools: cs2pr
+        coverage: none
+
+    - name: composer install
+      run: composer install
+
+    - name: "Install node v${{ env.NODE_VERSION }}"
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install dependencies
+      run: npm ci --include=dev
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Set up WP environment with Elasticsearch
+      run: ES_VERSION=${{ matrix.esVersion }} npm run env:start
+      if: matrix.esVersion != 'EP.io'
+
+    - name: Set up WP environment with Elasticsearch (EP.io)
+      run: |
+        npm run env start
+        npm run env:install-tests-cli
+      if: matrix.esVersion == 'EP.io'
+
+    - name: Check ES response
+      run: curl --connect-timeout 5 --max-time 10 --retry 5 --retry-max-time 40 --retry-all-errors http://localhost:8890
+      if: matrix.esVersion != 'EP.io'
+
+    - name: Build asset
+      run: npm run build
+
+    - name: Set up database
+      run: npm run e2e:setup -- --wp-version=${{ matrix.core.version }} --ep-branch=develop --cf-access-client-id="${{ secrets.CF_ACCESS_CLIENT_ID }}" --cf-access-client-secret="${{ secrets.CF_ACCESS_CLIENT_SECRET }}"
+      if: matrix.esVersion != 'EP.io'
+
+    - name: Set up database (EP.io)
+      env:
+        EPIO_HOST: ${{ vars.EPIO_HOST }}
+        EPIO_INDEX_PREFIX: ${{ vars.EPIO_INDEX_PREFIX }}
+      run: npm run e2e:setup -- --ep-host="$EPIO_HOST" --es-shield='${{ secrets.EP_CREDENTIALS }}' --ep-index-prefix="$EPIO_INDEX_PREFIX" --wp-version=${{ matrix.core.version }} --ep-branch=develop --cf-access-client-id="${{ secrets.CF_ACCESS_CLIENT_ID }}" --cf-access-client-secret="${{ secrets.CF_ACCESS_CLIENT_SECRET }}"
+      if: matrix.esVersion == 'EP.io'
+
+    - name: Run Playwright tests
+      run: npm run playwright:test
+
+    - name: Make artifacts available
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}
+        retention-days: 2
+        path: ${{ env.WORKING_DIR }}/tests/e2e/playwright-report/
+
+    - name: Delete Elasticsearch search templates
+      if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
+      run: |
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress elasticpress-labs"
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress-tests delete-all-search-templates"
+
+    - name: Delete Elasticsearch indices
+      if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
+      run: |
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress elasticpress-labs"
+        ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress-tests delete-all-indices"
