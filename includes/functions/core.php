@@ -33,6 +33,8 @@ function setup() {
 
 	add_filter( 'ep_user_register_feature', '__return_false' );
 
+	add_filter( 'ep_feature_groups', $n( 'add_feature_groups' ) );
+
 	do_action( 'elasticpress_labs_loaded' );
 
 	setup_updater();
@@ -219,12 +221,17 @@ function maybe_load_features() {
 	$sep          = DIRECTORY_SEPARATOR;
 	$features_dir = ELASTICPRESS_LABS_PATH . "includes{$sep}classes{$sep}Feature{$sep}";
 
+	$manually_added_features = [
+		'AISearchSummary',
+		'ElasticPressLabs',
+	];
+
 	foreach ( glob( "{$features_dir}*.php" ) as $filename ) {
-		if ( realpath( $filename ) === __FILE__ ) {
+		$basename = basename( $filename, '.php' );
+		if ( realpath( $filename ) === __FILE__ || in_array( $basename, $manually_added_features, true ) ) {
 			continue;
 		}
 
-		$basename = basename( $filename, '.php' );
 		if ( 'ElasticPressLabs' === $basename ) {
 			continue;
 		}
@@ -237,6 +244,29 @@ function maybe_load_features() {
 			\ElasticPress\Features::factory()->register_feature( $subfeature );
 		}
 	}
+
+	$vector_embeddings = new \ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings();
+	\ElasticPress\Features::factory()->register_feature( $vector_embeddings );
+
+	$semantic_search = new \ElasticPressLabs\Feature\SemanticSearch\SemanticSearch();
+	\ElasticPress\Features::factory()->register_feature( $semantic_search );
+
+	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
+	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
+}
+
+/**
+ * Add feature groups
+ *
+ * @since 2.5.0
+ * @param array $groups Current groups
+ * @return array
+ */
+function add_feature_groups( $groups ) {
+	$groups['ai'] = [
+		'label' => esc_html__( 'AI', 'elasticpress-labs' ),
+	];
+	return $groups;
 }
 
 /**

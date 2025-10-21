@@ -11,6 +11,11 @@ env:
   NODE_VERSION: "20"
   NODE_CACHE: "${{ github.workspace }}/node_modules_cache"
   GOOGLE_MAPS_API_KEY: ${{ secrets.CYPRESS_GOOGLE_MAPS_API_KEY }}
+  VECTOR_EMBEDDINGS_API_KEY: ${{ secrets.VECTOR_EMBEDDINGS_API_KEY }}
+  VECTOR_EMBEDDINGS_API_URL: ${{ secrets.VECTOR_EMBEDDINGS_API_URL }}
+  VECTOR_EMBEDDINGS_MODEL: ${{ secrets.VECTOR_EMBEDDINGS_MODEL }}
+  AI_SEARCH_SUMMARY_API_URL: ${{ secrets.AI_SEARCH_SUMMARY_API_URL }}
+  AI_SEARCH_SUMMARY_MODEL: ${{ secrets.AI_SEARCH_SUMMARY_MODEL }}
 
 on:
   push:
@@ -42,6 +47,10 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: elasticpress-labs
+    
+    - name: Set path variable
+      run: |
+        echo "WORKING_DIR=$(pwd)" >> $GITHUB_ENV
 
     - name: Prepare npm cache
       uses: actions/cache@v4
@@ -98,14 +107,14 @@ jobs:
       run: npm run build
 
     - name: Set up database
-      run: npm run e2e:setup -- --wp-version=${{ matrix.core.version }}
+      run: npm run e2e:setup -- --wp-version=${{ matrix.core.version }} --ep-branch=develop --cf-access-client-id="${{ secrets.CF_ACCESS_CLIENT_ID }}" --cf-access-client-secret="${{ secrets.CF_ACCESS_CLIENT_SECRET }}"
       if: matrix.esVersion != 'EP.io'
 
     - name: Set up database (EP.io)
       env:
         EPIO_HOST: ${{ vars.EPIO_HOST }}
         EPIO_INDEX_PREFIX: ${{ vars.EPIO_INDEX_PREFIX }}
-      run: npm run e2e:setup -- --ep-host="$EPIO_HOST" --es-shield='${{ secrets.EP_CREDENTIALS }}' --ep-index-prefix="$EPIO_INDEX_PREFIX" --wp-version=${{ matrix.core.version }}
+      run: npm run e2e:setup -- --ep-host="$EPIO_HOST" --es-shield='${{ secrets.EP_CREDENTIALS }}' --ep-index-prefix="$EPIO_INDEX_PREFIX" --wp-version=${{ matrix.core.version }} --ep-branch=develop --cf-access-client-id="${{ secrets.CF_ACCESS_CLIENT_ID }}" --cf-access-client-secret="${{ secrets.CF_ACCESS_CLIENT_SECRET }}"
       if: matrix.esVersion == 'EP.io'
 
     - name: Run Playwright tests
@@ -115,9 +124,9 @@ jobs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}-${{ matrix.testGroup }}
+        name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}
         retention-days: 2
-        path: ${{ github.workspace }}/playwright-report/
+        path: ${{ env.WORKING_DIR }}/tests/e2e/playwright-report/
 
     - name: Delete Elasticsearch search templates
       if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}

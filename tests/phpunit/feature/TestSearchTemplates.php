@@ -20,6 +20,8 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	public function set_up() {
 		$instance = new SearchTemplates();
 		\ElasticPress\Features::factory()->register_feature( $instance );
+
+		\ElasticPress\Features::factory()->setup_features();
 	}
 
 	/**
@@ -71,7 +73,10 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	 * @group search-templates
 	 */
 	public function test_setup_endpoint() {
-		$wp_rest_server = rest_get_server();
+		global $wp_rest_server;
+
+		$wp_rest_server = new \WP_REST_Server();
+		do_action( 'rest_api_init', $wp_rest_server );
 
 		$routes = $wp_rest_server->get_routes( 'elasticpress-labs/v1' );
 		$this->assertEmpty( $routes );
@@ -152,7 +157,7 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 				'default'          => false,
 				'key'              => 'active',
 				'label'            => 'Enable',
-				'requires_feature' => false,
+				'requires_feature' => [],
 				'requires_sync'    => false,
 				'type'             => 'toggle',
 			],

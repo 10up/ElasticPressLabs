@@ -10,6 +10,7 @@ import {
 	maybeDisableFeature,
 	maybeEnableFeature,
 } from 'elasticpress-playwright-utils';
+import { setEpLabsDefaultFeatures } from './utils';
 
 test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	test('Can activate the feature and sync automatically', async ({ loggedInPage }) => {
@@ -23,7 +24,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			'**/wp-json/elasticpress/v1/features*',
 		);
 
-		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
 
 		await loggedInPage.getByLabel('Enable').click();
 
@@ -52,7 +54,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			'/wp-json/elasticpress/v1/features*',
 		);
 
-		await loggedInPage.locator('button', { hasText: 'Geo Location' }).click();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
 
 		// Add Google Maps API Key
 		const apiKeyLabel = loggedInPage.locator('label:has-text("Google Maps API Key")');
@@ -107,6 +110,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	});
 
 	test("Can show posts that are near the user's location", async ({ context, loggedInPage }) => {
+		await setEpLabsDefaultFeatures();
+
 		await context.grantPermissions(['geolocation']);
 		await context.setGeolocation({ latitude: 40.712776, longitude: -74.005974 });
 
