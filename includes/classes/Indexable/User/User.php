@@ -578,17 +578,17 @@ class User extends Indexable {
 			}
 
 			if ( in_array( $orderby_clause, [ 'meta_value', 'meta_value_num' ], true ) ) {
-				if ( empty( $args['meta_key'] ) ) {
+				if ( empty( $query_vars['meta_key'] ) ) {
 					continue;
 				} else {
 					/*
 					 * Fixing a false alarm of PHPCS
 					 * phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 					 */
-					$from_to['meta_value'] = 'meta.' . $args['meta_key'] . '.raw';
+					$from_to['meta_value'] = 'meta.' . $query_vars['meta_key'] . '.raw';
 					// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
-					$from_to['meta_value_num'] = 'meta.' . $args['meta_key'] . '.long';
+					$from_to['meta_value_num'] = 'meta.' . $query_vars['meta_key'] . '.long';
 				}
 			}
 
