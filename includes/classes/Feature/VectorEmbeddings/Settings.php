@@ -212,12 +212,10 @@ class Settings {
 	/**
 	 * Get the post type configuration for a given post type.
 	 *
-	 * @param int $post_id The ID of the post to get the configuration for.
+	 * @param string $post_type The post type to get the configuration for.
 	 * @return array The post type configuration.
 	 */
-	public function get_post_type_config( $post_id ) {
-		$post_type = get_post_type( $post_id );
-
+	public function get_post_type_config( $post_type ) {
 		$post_type_config = array_filter(
 			$this->get_settings()['postTypeConfig'],
 			function ( $config ) use ( $post_type ) {
@@ -231,6 +229,21 @@ class Settings {
 
 		// get the first element of the array
 		return reset( $post_type_config );
+	}
+
+	/**
+	 * Check if a post type is embeddable.
+	 *
+	 * @param string $post_type The post type to check.
+	 * @return bool True if the post type is embeddable, false otherwise.
+	 */
+	public function is_post_type_embeddable( $post_type ) {
+		$config = $this->get_post_type_config( $post_type );
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		return ! empty( $config['embeddable'] );
 	}
 
 	/**
@@ -254,7 +267,7 @@ class Settings {
 			return $embeddable;
 		}
 
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -271,6 +284,10 @@ class Settings {
 
 		if ( 'manual' === $embedding_mode ) {
 			return get_post_meta( $post_id, 'ep_embedding_include', true );
+		}
+
+		if ( 'automatic' === $embedding_mode ) {
+			return ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
 		}
 
 		if ( ! $embeddable ) {
@@ -297,7 +314,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_taxonomy( $post_id ) {
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -329,7 +346,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_taxonomy( $post_id ) {
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -361,7 +378,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_meta( $post_id ) {
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -387,7 +404,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_meta( $post_id ) {
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return false;
@@ -413,7 +430,7 @@ class Settings {
 	 * @return array The fields used for embedding content.
 	 */
 	public function get_embedding_fields( $post_id ) {
-		$config = $this->get_post_type_config( $post_id );
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) ) {
 			return [];

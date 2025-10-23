@@ -28,7 +28,7 @@ export default () => {
 			<CheckboxControl
 				label={__('Exclude from vector embeddings', 'elasticpress-labs')}
 				help={__(
-					"Check this if you don't want this post to be vectorized.",
+					"Check this if you don't want this post to be vectorized. Depending on the post meta and taxonomy rules configured for this post type, this post may already be excluded.",
 					'elasticpress-labs',
 				)}
 				checked={ep_embedding_exclude}
