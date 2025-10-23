@@ -108,8 +108,7 @@ class Post extends Indexable {
 			return;
 		}
 
-		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
-		if ( ! $indexable->sync_manager->is_post_indexable( $post->ID ) ) {
+		if ( ! $this->settings_page->is_post_type_embeddable( $post->post_type ) ) {
 			return;
 		}
 
@@ -125,7 +124,7 @@ class Post extends Indexable {
 			'ep-embeddings-editor',
 			'epEmbeddingsEditor',
 			[
-				'postTypeConfig' => $this->settings_page->get_post_type_config( $post->ID ),
+				'postTypeConfig' => $this->settings_page->get_post_type_config( $post->post_type ),
 			]
 		);
 
@@ -315,9 +314,8 @@ class Post extends Indexable {
 	public function should_add_vector_field_to_post( int $post_id ): bool {
 		$post = get_post( $post_id );
 
-		$should_add = ! empty( $post ) && ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
+		$should_add = ! empty( $post ) && $this->settings_page->is_embeddable( $post_id );
 
-		$should_add = $this->settings_page->is_embeddable( $post_id );
 		/**
 		 * Filter whether the vector field should or not be added to the post.
 		 *
