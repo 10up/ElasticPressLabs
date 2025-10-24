@@ -57,6 +57,23 @@ class SemanticSearch extends Feature {
 	}
 
 	/**
+	 * Tell user whether requirements for feature are met or not.
+	 *
+	 * @return FeatureRequirementsStatus Requirements object
+	 */
+	public function requirements_status() {
+		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
+
+		// Vector support was added in Elasticsearch 7.0.
+		if ( version_compare( \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<=' ) ) {
+			$status->code    = 2;
+			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+		}
+
+		return $status;
+	}
+
+	/**
 	 * Sets i18n strings.
 	 *
 	 * @return void
