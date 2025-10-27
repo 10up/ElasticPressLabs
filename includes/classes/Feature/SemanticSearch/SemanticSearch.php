@@ -67,7 +67,7 @@ class SemanticSearch extends Feature {
 		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( $es_version, '7.0', '<=' ) ) {
+		if ( version_compare( $es_version, '7.0', '<' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 		}
