@@ -54,7 +54,8 @@ test.describe('Semantic Search Feature', () => {
 
 		if (process.env.ES_VERSION === '7.10.1') {
 			await expect(loggedInPage.getByLabel('kNN')).toHaveCount(1);
-			await expect(loggedInPage.getByLabel('kNN Cosine')).not.toBeVisible();
+			await expect(loggedInPage.getByLabel('kNN Cosine')).toBeVisible();
+			await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
 			await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).not.toBeVisible();
 		} else {
 			await expect(loggedInPage.getByLabel('kNN')).toHaveCount(3);
