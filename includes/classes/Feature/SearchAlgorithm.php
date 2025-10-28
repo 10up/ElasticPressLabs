@@ -193,6 +193,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * Some other features may provide their own search algorithm versions,
 	 * but when they are deactivated, we need to revert to the default version.
 	 *
+	 * @since 2.5.0
 	 * @param array                 $new_settings The settings to be saved
 	 * @param \ElasticPress\Feature $feature      The feature object
 	 * @return array The new settings
@@ -205,5 +206,22 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 		}
 
 		return $new_settings;
+	}
+
+	/**
+	 * Sanitize the search algorithm version
+	 *
+	 * @since 2.5.0
+	 * @param array $settings The settings to be sanitized
+	 * @return array The sanitized settings
+	 */
+	public function sanitize_settings_callback( $settings ) {
+		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+
+		if ( ! in_array( $settings['search_algorithm_version'], $available_search_algorithms, true ) ) {
+			$settings['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
+		}
+
+		return $settings['search_algorithm_version'];
 	}
 }
