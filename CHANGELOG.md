@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ## [2.5.0] - 2025-XX-XX
 
 ### Added
-- New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), and [@ZacharyRener](https://github.com/ZacharyRener) via [#126](https://github.com/10up/ElasticPressLabs/pull/126).
+- New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz) via [#126](https://github.com/10up/ElasticPressLabs/pull/126), [#158](https://github.com/10up/ElasticPressLabs/pull/158), and [#160](https://github.com/10up/ElasticPressLabs/pull/160).
 - New `ep_user_pre_query_db_results` and `ep_user_query_db_sql` filters in Users `query_db` method. Props [@burhandodhy](https://github.com/burhandodhy), [@felipeelia](https://github.com/felipeelia), and [@yarovikov](https://github.com/yarovikov) via [#141](https://github.com/10up/ElasticPressLabs/pull/141).
 - Support for include, lower_limit_object_id, and upper_limit_object_id to User Indexable. Props [@burhandodhy](https://github.com/burhandodhy) via [#144](https://github.com/10up/ElasticPressLabs/pull/144).
 - Support for searching posts by Co-Author. Props [@burhandodhy](https://github.com/burhandodhy) via [#143](https://github.com/10up/ElasticPressLabs/pull/143).
@@ -29,7 +29,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Security
 - Overwrite package @babel/runtime coming from core packages due to a vulnerability. Props [@hugosolar](https://github.com/hugosolar) via [#152](https://github.com/10up/ElasticPressLabs/pull/152).
-- Bumped `tar-fs` from 2.1.1 to 3.1.0. Props [@dependabot](https://github.com/dependabot) via [#139](https://github.com/10up/ElasticPressLabs/pull/139) and [#150](https://github.com/10up/ElasticPressLabs/pull/150).
+- Bumped `tar-fs` from 2.1.1 to 3.1.1. Props [@dependabot](https://github.com/dependabot) via [#139](https://github.com/10up/ElasticPressLabs/pull/139), [#150](https://github.com/10up/ElasticPressLabs/pull/150), and [#155](https://github.com/10up/ElasticPressLabs/pull/155).
 - Bumped `http-proxy-middleware` from 2.0.7 to 2.0.9. Props [@dependabot](https://github.com/dependabot) via [#142](https://github.com/10up/ElasticPressLabs/pull/142).
 - Removed `tmp`. Props [@dependabot](https://github.com/dependabot) via [#154](https://github.com/10up/ElasticPressLabs/pull/154).
 

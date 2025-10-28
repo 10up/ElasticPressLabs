@@ -17,7 +17,7 @@ Thank you to all the people who have already contributed to this repository via 
 [Tung Du (@dinhtungdu)](https://github.com/dinhtungdu),
 [Ricardo Moraleida (@moraleida)](https://github.com/moraleida),
 [Marko Banusic (@mbanusic)](https://github.com/mbanusic),
-[Oscar Sanchez S. (@oscarssanchez)](https://github.com/oscarssanchez),
+[Oscar Sanchez S. (@oscarssanchezz)](https://github.com/oscarssanchezz),
 [Burhan Nasir (@burhandodhy)](https://github.com/burhandodhy),
 [Mohammed Razzaq (@MARQAS)](https://github.com/MARQAS),
 [Eric Caron (@ecaron)](https://github.com/ecaron),
