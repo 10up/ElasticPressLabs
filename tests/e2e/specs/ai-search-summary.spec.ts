@@ -33,6 +33,7 @@ test.describe('AI Search Summary Feature', () => {
 	test('Can enable and configure the feature', async ({ loggedInPage }) => {
 		await maybeEnableFeature('vector_embeddings');
 		await maybeEnableFeature('semantic_search');
+		await maybeEnableFeature('search_algorithm');
 		await maybeDisableFeature('ai_search_summary');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
@@ -41,7 +42,6 @@ test.describe('AI Search Summary Feature', () => {
 		// We need a kNN search algorithm to match the search down below.
 		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
-		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).setChecked(true);
 		await loggedInPage.getByLabel('kNN Cosine').check();
 
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
