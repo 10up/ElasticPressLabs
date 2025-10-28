@@ -222,6 +222,6 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 			$settings['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
 		}
 
-		return $settings['search_algorithm_version'];
+		return $settings;
 	}
 }

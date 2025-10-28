@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        esVersion: ['7.10.1', '8.12.2', 'EP.io']
+        esVersion: ['7.10.1', '8.12.2', '9.1.5', 'EP.io']
         core:
           - {name: 'WP latest', version: ''}
           - {name: 'WP minimum', version: '6.2'}
