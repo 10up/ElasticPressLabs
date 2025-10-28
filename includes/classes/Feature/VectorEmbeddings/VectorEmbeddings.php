@@ -137,7 +137,7 @@ class VectorEmbeddings extends Feature {
 		$status->message = [];
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<=' ) ) {
+		if ( version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<' ) ) {
 			$status->code      = 2;
 			$status->message[] = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 			return $status;

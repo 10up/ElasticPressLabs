@@ -57,6 +57,30 @@ class SemanticSearch extends Feature {
 	}
 
 	/**
+	 * Tell user whether requirements for feature are met or not.
+	 *
+	 * @return FeatureRequirementsStatus Requirements object
+	 */
+	public function requirements_status() {
+		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
+
+		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
+
+		// Vector support was added in Elasticsearch 7.0.
+		if ( version_compare( $es_version, '7.0', '<' ) ) {
+			$status->code    = 2;
+			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+		}
+
+		if ( version_compare( $es_version, '7.0', '>' ) && version_compare( $es_version, '8.0', '<' ) ) {
+			$status->code    = 1;
+			$status->message = esc_html__( 'With Elasticsearch version 7, only the "kNN Cosine" algorithm is available.', 'elasticpress-labs' );
+		}
+
+		return $status;
+	}
+
+	/**
 	 * Sets i18n strings.
 	 *
 	 * @return void
@@ -75,10 +99,16 @@ class SemanticSearch extends Feature {
 	 */
 	public function setup() {
 		$this->algorithms = [
-			new SearchAlgorithm\Knn(),
 			new SearchAlgorithm\KnnCosine(),
-			new SearchAlgorithm\Hybrid(),
 		];
+
+		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
+
+		if ( version_compare( $es_version, '8.0', '>=' ) ) {
+			$this->algorithms[] = new SearchAlgorithm\Hybrid();
+			$this->algorithms[] = new SearchAlgorithm\Knn();
+		}
+
 		foreach ( $this->algorithms as $algorithm ) {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
 		}
