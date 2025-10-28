@@ -33,6 +33,7 @@ test.describe('AI Search Summary Feature', () => {
 	test('Can enable and configure the feature', async ({ loggedInPage }) => {
 		await maybeEnableFeature('vector_embeddings');
 		await maybeEnableFeature('semantic_search');
+		await maybeEnableFeature('search_algorithm');
 		await maybeDisableFeature('ai_search_summary');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
@@ -41,12 +42,12 @@ test.describe('AI Search Summary Feature', () => {
 		// We need a kNN search algorithm to match the search down below.
 		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
-		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).click();
 		await loggedInPage.getByLabel('kNN Cosine').check();
 
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'AI Search Summary' }).click();
-		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).click();
+		await expect(loggedInPage.locator('h3', { hasText: 'AI Search Summary' })).toBeVisible();
+		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).setChecked(true);
 
 		await loggedInPage
 			.getByLabel('OpenAI API Key')
@@ -58,7 +59,14 @@ test.describe('AI Search Summary Feature', () => {
 			.getByLabel('The name of the chat model to use')
 			.fill(process.env.AI_SEARCH_SUMMARY_MODEL || '');
 
+		// Wait for API request
+		const apiResponsePromise = loggedInPage.waitForResponse(
+			'**/wp-json/elasticpress/v1/features*',
+		);
+
 		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+
+		await apiResponsePromise;
 
 		const result = await wpCli('elasticpress list-features');
 		expect(result.toString()).toContain('ai_search_summary');
@@ -98,12 +106,12 @@ test.describe('AI Search Summary Feature', () => {
 		await responsePromise;
 
 		// Wait for API request
-		const apiResponsePromise = loggedInPage.waitForResponse(
+		const aiSearchSummaryResponsePromise = loggedInPage.waitForResponse(
 			'**/wp-json/elasticpress-labs/v1/ai-search-summary*',
 		);
 
 		await loggedInPage.goto('/?s=what+is+the+name+of+my+cat');
-		await apiResponsePromise;
+		await aiSearchSummaryResponsePromise;
 		await expect(loggedInPage.locator('.ep-ai-search-summary-generated')).toContainText(
 			'Whiskers',
 		);
