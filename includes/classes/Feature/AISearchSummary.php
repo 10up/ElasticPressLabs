@@ -69,7 +69,7 @@ The following JSON object contains the URL and the page content. You should use 
 	public function set_i18n_strings(): void {
 		$this->title = esc_html__( 'AI Search Summary', 'elasticpress-labs' );
 
-		$this->summary = '<p>' . __( 'AI Search Summary Description', 'elasticpress-labs' ) . '</p>';
+		$this->summary = '<p>' . __( 'Use the AI Search Summary block in your search results page to display an AI-generated summary of the search results.', 'elasticpress-labs' ) . '</p>';
 	}
 
 	/**

@@ -46,6 +46,7 @@ test.describe('AI Search Summary Feature', () => {
 
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'AI Search Summary' }).click();
+		await expect(loggedInPage.locator('h3', { hasText: 'AI Search Summary' })).toBeVisible();
 		await loggedInPage.getByRole('checkbox', { name: 'Enable' }).setChecked(true);
 
 		await loggedInPage
