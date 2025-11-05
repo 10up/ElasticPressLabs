@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 6.0
-Tested up to:      6.7
-Stable tag:        2.4.0
+Tested up to:      6.8
+Stable tag:        2.5.0
 Requires PHP:      7.4
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,6 +27,33 @@ This plugin provides a simple interface to enable and disable features.
 5. Settings to index external content.
 
 == Changelog ==
+
+= 2.5.0 - 2025-11-05 =
+
+__Added:__
+
+* New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz).
+* New `ep_user_pre_query_db_results` and `ep_user_query_db_sql` filters in Users `query_db` method. Props [@burhandodhy](https://github.com/burhandodhy), [@felipeelia](https://github.com/felipeelia), and [@yarovikov](https://github.com/yarovikov).
+* Support for include, lower_limit_object_id, and upper_limit_object_id to User Indexable. Props [@burhandodhy](https://github.com/burhandodhy).
+* Support for searching posts by Co-Author. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Fixed:__
+
+* Geolocation infinte loop due to cache. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+* Autoload fatal error when the plugin is installed via composer. Props [@felipeelia](https://github.com/felipeelia), [@burhandodhy](https://github.com/burhandodhy), and [@gsarig](https://github.com/gsarig).
+* Ordering user queries by meta key/value. Props [@mphillips](https://github.com/mphillips).
+
+__Security:__
+
+* Overwrite package @babel/runtime coming from core packages due to a vulnerability. Props [@hugosolar](https://github.com/hugosolar).
+* Bumped `tar-fs` from 2.1.1 to 3.1.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `http-proxy-middleware` from 2.0.7 to 2.0.9. Props [@dependabot](https://github.com/dependabot).
+* Removed `tmp`. Props [@dependabot](https://github.com/dependabot).
+
+__Developer:__
+
+* Migrated e2e tests from Cypress to Playwright. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+* Run e2e tests on Elasticsearch 9. Props [@felipeelia](https://github.com/felipeelia)
 
 = 2.4.0 - 2025-03-26 =
 
