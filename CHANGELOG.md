@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ## [2.5.0] - 2025-XX-XX
 
 ### Added
-- New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz) via [#126](https://github.com/10up/ElasticPressLabs/pull/126), [#158](https://github.com/10up/ElasticPressLabs/pull/158), and [#160](https://github.com/10up/ElasticPressLabs/pull/160).
+- New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz) via [#126](https://github.com/10up/ElasticPressLabs/pull/126), [#158](https://github.com/10up/ElasticPressLabs/pull/158), [#160](https://github.com/10up/ElasticPressLabs/pull/160), and [#161](https://github.com/10up/ElasticPressLabs/pull/161).
 - New `ep_user_pre_query_db_results` and `ep_user_query_db_sql` filters in Users `query_db` method. Props [@burhandodhy](https://github.com/burhandodhy), [@felipeelia](https://github.com/felipeelia), and [@yarovikov](https://github.com/yarovikov) via [#141](https://github.com/10up/ElasticPressLabs/pull/141).
 - Support for include, lower_limit_object_id, and upper_limit_object_id to User Indexable. Props [@burhandodhy](https://github.com/burhandodhy) via [#144](https://github.com/10up/ElasticPressLabs/pull/144).
 - Support for searching posts by Co-Author. Props [@burhandodhy](https://github.com/burhandodhy) via [#143](https://github.com/10up/ElasticPressLabs/pull/143).
@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Developer
 - Migrated e2e tests from Cypress to Playwright. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#153](https://github.com/10up/ElasticPressLabs/pull/153).
+- Run e2e tests on Elasticsearch 9. Props [@felipeelia](https://github.com/felipeelia) via [#161](https://github.com/10up/ElasticPressLabs/pull/161).
 
 ## [2.4.0] - 2025-03-26
 

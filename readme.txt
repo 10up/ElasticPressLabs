@@ -53,6 +53,7 @@ __Security:__
 __Developer:__
 
 * Migrated e2e tests from Cypress to Playwright. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy).
+* Run e2e tests on Elasticsearch 9. Props [@felipeelia](https://github.com/felipeelia)
 
 = 2.4.0 - 2025-03-26 =
 
