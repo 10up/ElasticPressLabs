@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc6f16e26ce19864343da23c81461efd",
+    "content-hash": "cc11bac37a307c4bf40aec84d832182e",
     "packages": [
         {
             "name": "yahnis-elsts/plugin-update-checker",
@@ -64,12 +64,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "8ba3d18fb8bea941d54779c6181e552c2390daf0"
+                "reference": "0b373a3a69f59100eb3de2c4079e931c1053940f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/8ba3d18fb8bea941d54779c6181e552c2390daf0",
-                "reference": "8ba3d18fb8bea941d54779c6181e552c2390daf0",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/0b373a3a69f59100eb3de2c4079e931c1053940f",
+                "reference": "0b373a3a69f59100eb3de2c4079e931c1053940f",
                 "shasum": ""
             },
             "require": {
@@ -78,11 +78,12 @@
                 "psr/container": "1.0.0"
             },
             "require-dev": {
-                "10up/phpcs-composer": "dev-master",
-                "brianhenryie/strauss": "^0.14.0",
+                "10up/phpcs-composer": "dev-trunk",
+                "brianhenryie/strauss": "^0.21.0",
                 "phpcompatibility/phpcompatibility-wp": "*",
+                "phpunit/phpunit": "^9.0.0",
                 "wpackagist-plugin/woocommerce": "*",
-                "yoast/phpunit-polyfills": "^1.0"
+                "yoast/phpunit-polyfills": "^4.0"
             },
             "default-branch": true,
             "type": "wordpress-plugin",
@@ -131,7 +132,7 @@
                 "issues": "https://github.com/10up/ElasticPress/issues",
                 "source": "https://github.com/10up/ElasticPress/tree/develop"
             },
-            "time": "2024-12-05T19:28:40+00:00"
+            "time": "2025-10-16T16:45:04+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -3085,6 +3086,24 @@
             "time": "2024-03-25T16:39:00+00:00"
         },
         {
+            "name": "wpackagist-plugin/co-authors-plus",
+            "version": "3.6.5",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/co-authors-plus/",
+                "reference": "tags/3.6.5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/co-authors-plus.3.6.5.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/co-authors-plus/"
+        },
+        {
             "name": "wpackagist-plugin/woocommerce",
             "version": "9.4.3",
             "source": {
@@ -3183,7 +3202,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.0|^8.0"
+        "php": "^7.4|^8.0"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"

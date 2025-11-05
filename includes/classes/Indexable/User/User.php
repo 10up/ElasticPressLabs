@@ -37,6 +37,15 @@ class User extends Indexable {
 	public $slug = 'user';
 
 	/**
+	 * Flag to indicate if the indexable has support for
+	 * `id_range` pagination method during a sync.
+	 *
+	 * @var boolean
+	 * @since 2.5.0
+	 */
+	public $support_indexing_advanced_pagination = true;
+
+	/**
 	 * Instantiate the indexable SyncManager and QueryIntegration, the main responsibles for the WP integration.
 	 *
 	 * @return void
@@ -54,8 +63,8 @@ class User extends Indexable {
 	/**
 	 * Format query vars into ES query
 	 *
-	 * @param  array         $query_vars WP_User_Query args.
-	 * @param  WP_User_Query $query      User query object
+	 * @param  array          $query_vars WP_User_Query args.
+	 * @param  \WP_User_Query $query      User query object
 	 * @return array
 	 */
 	public function format_args( $query_vars, $query ) {
@@ -569,17 +578,17 @@ class User extends Indexable {
 			}
 
 			if ( in_array( $orderby_clause, [ 'meta_value', 'meta_value_num' ], true ) ) {
-				if ( empty( $args['meta_key'] ) ) {
+				if ( empty( $query_vars['meta_key'] ) ) {
 					continue;
 				} else {
 					/*
 					 * Fixing a false alarm of PHPCS
 					 * phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 					 */
-					$from_to['meta_value'] = 'meta.' . $args['meta_key'] . '.raw';
+					$from_to['meta_value'] = 'meta.' . $query_vars['meta_key'] . '.raw';
 					// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
-					$from_to['meta_value_num'] = 'meta.' . $args['meta_key'] . '.long';
+					$from_to['meta_value_num'] = 'meta.' . $query_vars['meta_key'] . '.long';
 				}
 			}
 
@@ -605,10 +614,11 @@ class User extends Indexable {
 		global $wpdb;
 
 		$defaults = [
-			'number'  => 350,
-			'offset'  => 0,
-			'orderby' => 'ID',
-			'order'   => 'desc',
+			'number'                          => 350,
+			'offset'                          => 0,
+			'orderby'                         => 'ID',
+			'order'                           => 'desc',
+			'ep_indexing_advanced_pagination' => true,
 		];
 
 		if ( isset( $args['per_page'] ) ) {
@@ -631,26 +641,186 @@ class User extends Indexable {
 			$args['order'] = 'desc';
 		}
 
+		/**
+		 * Filter to short-circuit user DB query.
+		 *
+		 * @hook ep_user_pre_query_db_results
+		 * @param {null|array} $results Return null to run the default query, or an array with results to short-circuit
+		 * @param {array} $args Query arguments
+		 * @since 2.5.0
+		 * @return {null|array} Query results or null
+		 */
+		$results = apply_filters( 'ep_user_pre_query_db_results', null, $args );
+		if ( null !== $results ) {
+			return $results;
+		}
+
 		$orderby_args = sanitize_sql_orderby( "{$args['orderby']} {$args['order']}" );
 		$orderby      = $orderby_args ? sprintf( 'ORDER BY %s', $orderby_args ) : '';
 
-		/**
-		 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
-		 * way to do that.
-		 */
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$objects = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d",
+		// Construct WHERE clause based on include and exclude parameters
+		$where = [];
+
+		if ( ! empty( $args['include'] ) ) {
+			$include_ids = implode( ',', array_map( 'absint', (array) $args['include'] ) );
+			$where[]     = "ID IN ($include_ids)";
+		}
+
+		if ( ! empty( $args['exclude'] ) ) {
+			$exclude_ids = implode( ',', array_map( 'absint', (array) $args['exclude'] ) );
+			$where[]     = "ID NOT IN ($exclude_ids)";
+		}
+
+		// Disable advanced pagination if we're targeting specific users or using offset
+		if ( isset( $args['include'] ) || isset( $args['exclude'] ) || 0 < $args['offset'] ) {
+			$args['ep_indexing_advanced_pagination'] = false;
+		}
+
+		$where_clause = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
+
+		if ( $args['ep_indexing_advanced_pagination'] ) {
+			$requested_lower_limit_id = $args['ep_indexing_lower_limit_object_id'] ?? 0;
+			$requested_upper_limit_id = $args['ep_indexing_upper_limit_object_id'] ?? PHP_INT_MAX;
+			$last_processed_id        = $args['ep_indexing_last_processed_object_id'] ?? null;
+
+			// On the first loop we begin with the requested upper limit ID
+			// For subsequent loops, use the last processed ID to paginate
+			$upper_limit_range_id = is_numeric( $last_processed_id ) ? $last_processed_id - 1 : $requested_upper_limit_id;
+
+			$range = [
+				'upper_limit' => "{$wpdb->users}.ID <= {$upper_limit_range_id}",
+				'lower_limit' => "{$wpdb->users}.ID >= {$requested_lower_limit_id}",
+			];
+
+			$where        = array_merge( $where, $range );
+			$where_clause = 'WHERE ' . implode( ' AND ', $where );
+
+			/**
+			 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
+			 * way to do that.
+			 */
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$sql = $wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
 				(int) $args['offset'],
 				(int) $args['number']
-			)
-		);
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			/**
+			 * Filter user indexable DB query SQL.
+			 *
+			 * @hook ep_user_query_db_sql
+			 * @param {string} $sql The SQL query to be executed
+			 * @param {array} $args Query arguments
+			 * @since 2.5.0
+			 * @return {string} Modified SQL query
+			 */
+			$sql = apply_filters( 'ep_user_query_db_sql', $sql, $args );
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$objects = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+
+			$total_objects = $this->get_total_objects_for_query( $args );
+		} else {
+
+			/**
+			 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
+			 * way to do that.
+			 */
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$sql = $wpdb->prepare(
+				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$where_clause} {$orderby} LIMIT %d, %d",
+				(int) $args['offset'],
+				(int) $args['number']
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			/**
+			 * Filter user indexable DB query SQL.
+			 *
+			 * @hook ep_user_query_db_sql
+			 * @param {string} $sql The SQL query to be executed
+			 * @param {array} $args Query arguments
+			 * @since 2.5.0
+			 * @return {string} Modified SQL query
+			 */
+			$sql = apply_filters( 'ep_user_query_db_sql', $sql, $args );
+
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+			$objects = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$total_objects = ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
 		return [
 			'objects'       => $objects,
-			'total_objects' => ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' ),
+			'total_objects' => $total_objects,
 		];
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Get total number of objects for a query
+	 *
+	 * @param array $query_args Query arguments
+	 * @return int Total number of objects
+	 * @since 2.5.0
+	 */
+	protected function get_total_objects_for_query( $query_args ) {
+		global $wpdb;
+
+		$normalized_query_args = array_merge(
+			$query_args,
+			[
+				'offset' => 0,
+				'paged'  => 1,
+			]
+		);
+
+		$requested_lower_limit_id = $normalized_query_args['ep_indexing_lower_limit_object_id'] ?? 0;
+		$requested_upper_limit_id = $normalized_query_args['ep_indexing_upper_limit_object_id'] ?? PHP_INT_MAX;
+
+		$where = [];
+
+		// Add ID range conditions
+		$where['upper_limit'] = "{$wpdb->users}.ID <= " . absint( $requested_upper_limit_id );
+		$where['lower_limit'] = "{$wpdb->users}.ID >= " . absint( $requested_lower_limit_id );
+
+		// Include any additional where conditions from the original query
+		if ( ! empty( $query_args['include'] ) ) {
+			$include_ids = implode( ',', array_map( 'absint', (array) $query_args['include'] ) );
+			$where[]     = "ID IN ($include_ids)";
+		}
+
+		if ( ! empty( $query_args['exclude'] ) ) {
+			$exclude_ids = implode( ',', array_map( 'absint', (array) $query_args['exclude'] ) );
+			$where[]     = "ID NOT IN ($exclude_ids)";
+		}
+
+		$where_clause = 'WHERE ' . implode( ' AND ', $where );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		$sql = "SELECT COUNT(ID) FROM {$wpdb->users} {$where_clause}";
+
+		/**
+		 * Filter the SQL query used to count total user objects.
+		 *
+		 * @hook ep_user_query_db_count_objects_sql
+		 * @param {string} $sql The SQL query to count user objects.
+		 * @param {array} $normalized_query_args The normalized query arguments.
+		 * @since 2.5.0
+		 * @return {string} Modified SQL query
+		 */
+		$sql = apply_filters( 'ep_user_query_db_count_objects_sql', $sql, $normalized_query_args );
+
+		$total_objects = (int) $wpdb->get_var( $sql );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+
+		return $total_objects;
 	}
 
 	/**
@@ -849,7 +1019,7 @@ class User extends Indexable {
 				}
 			} elseif ( true !== $excluded_public_keys && ! in_array( $key, $excluded_public_keys, true ) ) {
 
-					$allow_index = true;
+				$allow_index = true;
 			}
 
 			/**

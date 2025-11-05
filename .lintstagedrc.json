@@ -2,7 +2,7 @@
 	"*.css": [
 		"10up-toolkit lint-style"
 	],
-	"*.{js,jsx}": [
+	"*.{js,jsx,ts,tsx}": [
 		"10up-toolkit lint-js"
 	],
 	"*.php": [

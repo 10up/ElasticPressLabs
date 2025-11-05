@@ -8,6 +8,9 @@
 
 namespace ElasticPressLabsTest;
 
+// Mocks need to be included before the composer autoload
+require_once __DIR__ . '/phpunit/mock/WC_Subscriptions.php';
+
 if ( ! file_exists( __DIR__ . '/../vendor/autoload.php' ) ) {
 	throw new PHPUnit_Framework_Exception(
 		'ERROR' . PHP_EOL . PHP_EOL .
@@ -47,6 +50,7 @@ function load_plugin() {
 
 	include_once __DIR__ . '/../vendor/elasticpress/elasticpress.php';
 	include_once __DIR__ . '/../vendor/woocommerce/woocommerce.php';
+	include_once __DIR__ . '/../vendor/co-authors-plus/co-authors-plus.php';
 	include_once __DIR__ . '/../elasticpresslabs.php';
 
 	update_option( 'ep_host', $host );
@@ -109,6 +113,20 @@ function skip_translations_api() {
 	];
 }
 tests_add_filter( 'translations_api', __NAMESPACE__ . '\skip_translations_api' );
+
+/**
+ * Set WooCommerce as an active plugin
+ *
+ * @since 2.5.0
+ * @param array $active_plugins Active plugins
+ * @return array
+ */
+function add_woocommerce_subscriptions_to_active_plugins( $active_plugins ) {
+	$active_plugins   = (array) $active_plugins;
+	$active_plugins[] = 'woocommerce-subscriptions/woocommerce-subscriptions.php';
+	return $active_plugins;
+}
+tests_add_filter( 'option_active_plugins', __NAMESPACE__ . '\add_woocommerce_subscriptions_to_active_plugins' );
 
 require_once $_tests_dir . '/includes/functions.php';
 require_once $_tests_dir . '/includes/bootstrap.php';

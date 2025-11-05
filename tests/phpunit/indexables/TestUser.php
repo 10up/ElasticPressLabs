@@ -1556,4 +1556,193 @@ class TestUser extends BaseTestCase {
 		$index_settings = $settings[ $index_name ]['settings'];
 		$this->assertSame( '_arabic_', $index_settings['index.analysis.filter.ep_stop.stopwords'] );
 	}
+
+	/**
+	 * Test query_db() function.
+	 *
+	 * @since 2.5.0
+	 * @group user
+	 */
+	public function test_query_db() {
+		$this->ep_factory->user->create_many( 10 );
+
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+
+		$results = $indexable->query_db( [] );
+
+		// 12 because 2 are created by the setup
+		$this->assertEquals( 12, $results['total_objects'] );
+		$this->assertCount( 12, $results['objects'] );
+
+		$results = $indexable->query_db( [ 'per_page' => 5 ] );
+		$this->assertCount( 5, $results['objects'] );
+		$this->assertEquals( 12, $results['total_objects'] );
+
+		// // get test_admin user.
+		$test_admin = get_user_by( 'login', 'test_admin' );
+
+		$results = $indexable->query_db( [ 'include' => $test_admin->ID ] );
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( 1, $results['total_objects'] );
+
+		$results = $indexable->query_db( [ 'exclude' => $test_admin->ID ] );
+		$this->assertCount( 11, $results['objects'] );
+		$this->assertEquals( 11, $results['total_objects'] );
+	}
+
+	/**
+	 * Test query_db() function lower and upper limit.
+	 *
+	 * @since 2.5.0
+	 * @group user
+	 */
+	public function test_query_db_with_limit() {
+		$user_1_id = $this->ep_factory->user->create();
+
+		$this->ep_factory->user->create_many( 5 );
+
+		$user_2_id = $this->ep_factory->user->create();
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+
+		$results = $indexable->query_db(
+			[
+				'ep_indexing_lower_limit_object_id' => $user_2_id,
+			]
+		);
+
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( $user_2_id, $results['objects'][0]->ID );
+		$this->assertEquals( 1, $results['total_objects'] );
+
+		$results = $indexable->query_db(
+			[
+				'ep_indexing_upper_limit_object_id' => $user_1_id,
+			]
+		);
+
+		$this->assertCount( 3, $results['objects'] );
+		$this->assertEquals( 3, $results['total_objects'] );
+		$this->assertEquals( $user_1_id, $results['objects'][0]->ID );
+	}
+
+	/**
+	 * Test query_db() function pagination.
+	 *
+	 * @since 2.5.0
+	 * @group user
+	 */
+	public function test_query_db_pagination() {
+
+		$user_1_id = get_user_by( 'login', 'admin' )->ID;
+		$user_2_id = get_user_by( 'login', 'test_admin' )->ID;
+		$user_3_id = $this->ep_factory->user->create();
+
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+
+		$results = $indexable->query_db( [ 'per_page' => 1 ] );
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( 3, $results['total_objects'] );
+		$this->assertEquals( $user_3_id, $results['objects'][0]->ID );
+
+		// second loop
+		$results = $indexable->query_db(
+			[
+				'per_page'                             => 1,
+				'ep_indexing_last_processed_object_id' => $user_3_id,
+			]
+		);
+
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( 3, $results['total_objects'] );
+		$this->assertEquals( $user_2_id, $results['objects'][0]->ID );
+
+		// third loop
+		$results = $indexable->query_db(
+			[
+				'per_page'                             => 1,
+				'ep_indexing_last_processed_object_id' => $user_2_id,
+			]
+		);
+
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( 3, $results['total_objects'] );
+		$this->assertEquals( $user_1_id, $results['objects'][0]->ID );
+	}
+
+	/**
+	 * Test ep_user_pre_query_db_results filter to short-circuit the DB query
+	 *
+	 * @since 2.5.0
+	 * @group user
+	 */
+	public function test_ep_user_pre_query_db_results_filter() {
+		$users = $this->createAndIndexUsers();
+
+		$expected_results = [
+			'objects'       => [
+				(object) [ 'ID' => $users[0] ],
+				(object) [ 'ID' => $users[1] ],
+			],
+			'total_objects' => 2,
+		];
+
+		// Add filter to short-circuit the query
+		add_filter(
+			'ep_user_pre_query_db_results',
+			function () use ( $expected_results ) {
+				return $expected_results;
+			}
+		);
+
+		$user    = new \ElasticPressLabs\Indexable\User\User();
+		$results = $user->query_db( [] );
+
+		$this->assertEquals( $expected_results['objects'], $results['objects'] );
+		$this->assertEquals( $expected_results['total_objects'], $results['total_objects'] );
+		$this->assertEquals( $expected_results['objects'][0]->ID, $results['objects'][0]->ID );
+		$this->assertEquals( $expected_results['objects'][1]->ID, $results['objects'][1]->ID );
+	}
+
+	/**
+	 * Test ep_user_query_db_sql filter to modify the SQL query
+	 *
+	 * @since 2.5.0
+	 * @group user
+	 */
+	public function test_ep_user_query_db_sql_filter() {
+		global $wpdb;
+
+		$user_id = $this->ep_factory->user->create();
+
+		add_filter(
+			'ep_user_query_db_sql',
+			function () use ( $wpdb, $user_id ) {
+				return $wpdb->prepare(
+					"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} WHERE ID = %d",
+					$user_id
+				);
+			},
+			10,
+			2
+		);
+
+		add_filter(
+			'ep_user_query_db_count_objects_sql',
+			function () use ( $wpdb, $user_id ) {
+				return $wpdb->prepare(
+					"SELECT COUNT(ID) FROM {$wpdb->users} WHERE ID = %d",
+					$user_id
+				);
+			},
+			10,
+			2
+		);
+
+		$user    = new \ElasticPressLabs\Indexable\User\User();
+		$results = $user->query_db( [] );
+
+		$this->assertCount( 1, $results['objects'] );
+		$this->assertEquals( $user_id, $results['objects'][0]->ID );
+		$this->assertEquals( 1, $results['total_objects'] );
+	}
 }

@@ -45,7 +45,7 @@ class TestSearchTemplates extends \ElasticPressLabsTest\BaseTestCase {
 		global $wp_rest_server;
 
 		\ElasticPress\Features::factory()->activate_feature( 'search_templates' );
-		\ElasticPress\Features::factory()->setup_features();
+		\ElasticPress\Features::factory()->get_registered_feature( 'search_templates' )->setup();
 
 		$return_http_code = function () use ( $expected ) {
 			return [

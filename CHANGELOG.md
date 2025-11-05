@@ -14,6 +14,29 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+## [2.5.0] - 2025-11-05
+
+### Added
+- New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz) via [#126](https://github.com/10up/ElasticPressLabs/pull/126), [#158](https://github.com/10up/ElasticPressLabs/pull/158), [#160](https://github.com/10up/ElasticPressLabs/pull/160), and [#161](https://github.com/10up/ElasticPressLabs/pull/161).
+- New `ep_user_pre_query_db_results` and `ep_user_query_db_sql` filters in Users `query_db` method. Props [@burhandodhy](https://github.com/burhandodhy), [@felipeelia](https://github.com/felipeelia), and [@yarovikov](https://github.com/yarovikov) via [#141](https://github.com/10up/ElasticPressLabs/pull/141).
+- Support for include, lower_limit_object_id, and upper_limit_object_id to User Indexable. Props [@burhandodhy](https://github.com/burhandodhy) via [#144](https://github.com/10up/ElasticPressLabs/pull/144).
+- Support for searching posts by Co-Author. Props [@burhandodhy](https://github.com/burhandodhy) via [#143](https://github.com/10up/ElasticPressLabs/pull/143).
+
+### Fixed
+- Geolocation infinte loop due to cache. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#147](https://github.com/10up/ElasticPressLabs/pull/147).
+- Autoload fatal error when the plugin is installed via composer. Props [@felipeelia](https://github.com/felipeelia), [@burhandodhy](https://github.com/burhandodhy), and [@gsarig](https://github.com/gsarig) via [#145](https://github.com/10up/ElasticPressLabs/pull/145).
+- Ordering user queries by meta key/value. Props [@mphillips](https://github.com/mphillips) via [#148](https://github.com/10up/ElasticPressLabs/pull/148).
+
+### Security
+- Overwrite package @babel/runtime coming from core packages due to a vulnerability. Props [@hugosolar](https://github.com/hugosolar) via [#152](https://github.com/10up/ElasticPressLabs/pull/152).
+- Bumped `tar-fs` from 2.1.1 to 3.1.1. Props [@dependabot](https://github.com/dependabot) via [#139](https://github.com/10up/ElasticPressLabs/pull/139), [#150](https://github.com/10up/ElasticPressLabs/pull/150), and [#155](https://github.com/10up/ElasticPressLabs/pull/155).
+- Bumped `http-proxy-middleware` from 2.0.7 to 2.0.9. Props [@dependabot](https://github.com/dependabot) via [#142](https://github.com/10up/ElasticPressLabs/pull/142).
+- Removed `tmp`. Props [@dependabot](https://github.com/dependabot) via [#154](https://github.com/10up/ElasticPressLabs/pull/154).
+
+### Developer
+- Migrated e2e tests from Cypress to Playwright. Props [@felipeelia](https://github.com/felipeelia) and [@burhandodhy](https://github.com/burhandodhy) via [#153](https://github.com/10up/ElasticPressLabs/pull/153).
+- Run e2e tests on Elasticsearch 9. Props [@felipeelia](https://github.com/felipeelia) via [#161](https://github.com/10up/ElasticPressLabs/pull/161).
+
 ## [2.4.0] - 2025-03-26
 
 - New minimum versions (see [#122](https://github.com/10up/ElasticPressLabs/pull/122)) are:
@@ -153,6 +176,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.5.0]: https://github.com/10up/ElasticPressLabs/compare/2.4.0...2.5.0
 [2.4.0]: https://github.com/10up/ElasticPressLabs/compare/2.3.1...2.4.0
 [2.3.1]: https://github.com/10up/ElasticPressLabs/compare/2.3.0...2.3.1
 [2.3.0]: https://github.com/10up/ElasticPressLabs/compare/2.2.0...2.3.0
