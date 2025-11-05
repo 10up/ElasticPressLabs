@@ -28,7 +28,7 @@ This plugin provides a simple interface to enable and disable features.
 
 == Changelog ==
 
-= 2.5.0 - 2025-XX-XX =
+= 2.5.0 - 2025-11-05 =
 
 __Added:__
 

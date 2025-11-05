@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
-## [2.5.0] - 2025-XX-XX
+## [2.5.0] - 2025-11-05
 
 ### Added
 - New Vector Embeddings, Semantic Search, and AI Summary Search features. Props [@tott](https://github.com/tott), [@felipeelia](https://github.com/felipeelia), [@psorensen](https://github.com/psorensen), [@gsarig](https://github.com/gsarig), [@ZacharyRener](https://github.com/ZacharyRener), [@burhandodhy](https://github.com/burhandodhy), and [@oscarssanchezz](https://github.com/oscarssanchezz) via [#126](https://github.com/10up/ElasticPressLabs/pull/126), [#158](https://github.com/10up/ElasticPressLabs/pull/158), [#160](https://github.com/10up/ElasticPressLabs/pull/160), and [#161](https://github.com/10up/ElasticPressLabs/pull/161).
