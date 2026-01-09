@@ -538,7 +538,8 @@ The following JSON object contains the URL and the page content. You should use 
 		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<' ) ) {
+		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
+		if ( $es_version && version_compare( $es_version, '7.0', '<' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 		}

@@ -43,6 +43,15 @@ abstract class Indexable {
 	public function add_vector_mapping_field( array $mapping, bool $quantization = true ): array {
 		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
 
+		if ( ! isset( $mapping['mappings'], $mapping['mappings']['properties'] ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				esc_html__( 'The mapping is not valid.', 'elasticpress-labs' ),
+				'ElasticPress Labs 2.5.1'
+			);
+			return $mapping;
+		}
+
 		// Don't add the field if it already exists.
 		if ( isset( $mapping['mappings']['properties']['chunks'], $mapping['mappings']['properties']['ep_embeddings_control'] ) ) {
 			return $mapping;
