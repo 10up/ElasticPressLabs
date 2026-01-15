@@ -113,6 +113,8 @@ class SemanticSearch extends Feature {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
 		}
 
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_requirements_status_message' ], 10, 2 );
+
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
 		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
@@ -186,5 +188,32 @@ class SemanticSearch extends Feature {
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
 		);
+	}
+
+	/**
+	 * Filter the feature requirements status message
+	 *
+	 * @since 2.4.0
+	 * @param string|array              $message The message to display
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return string|array The message to display
+	 */
+	public function filter_requirements_status_message( $message, $status ) {
+		$feature = $status->get_feature();
+		if ( ! $feature || 'search_algorithm' !== $feature->slug ) {
+			return $message;
+		}
+
+		$autosuggest            = \ElasticPress\Features::factory()->get_registered_feature( 'autosuggest' );
+		$autosuggest_active     = $autosuggest && $autosuggest->is_active();
+		$instant_results        = \ElasticPress\Features::factory()->get_registered_feature( 'instant_results' );
+		$instant_results_active = $instant_results && $instant_results->is_active();
+		if ( ! $autosuggest_active && ! $instant_results_active ) {
+			return $message;
+		}
+
+		$message   = (array) $message;
+		$message[] = esc_html__( 'Please note that Semantic Search algorithms are not compatible with Autosuggest and Instant Results features.', 'elasticpress-labs' );
+		return $message;
 	}
 }
