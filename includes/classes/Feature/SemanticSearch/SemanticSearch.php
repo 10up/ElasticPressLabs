@@ -113,7 +113,8 @@ class SemanticSearch extends Feature {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
 		}
 
-		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_requirements_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
 
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
@@ -191,14 +192,14 @@ class SemanticSearch extends Feature {
 	}
 
 	/**
-	 * Filter the feature requirements status message
+	 * Filter Search Algorithms feature requirements status message
 	 *
 	 * @since 2.5.1
 	 * @param string|array              $message The message to display
 	 * @param FeatureRequirementsStatus $status The feature requirements status object
 	 * @return string|array The message to display
 	 */
-	public function filter_requirements_status_message( $message, $status ) {
+	public function filter_search_algorithm_requirements_status_message( $message, $status ) {
 		$feature = $status->get_feature();
 		if ( ! $feature || 'search_algorithm' !== $feature->slug ) {
 			return $message;
@@ -212,8 +213,51 @@ class SemanticSearch extends Feature {
 			return $message;
 		}
 
+		$algorithms_list = array_map(
+			function ( $algorithm ) {
+				return '<code>' . $algorithm->get_name() . '</code>';
+			},
+			$this->algorithms
+		);
+
 		$message   = (array) $message;
-		$message[] = esc_html__( 'Please note that Semantic Search algorithms are not compatible with Autosuggest and Instant Results features.', 'elasticpress-labs' );
+		$message[] = wp_sprintf(
+			esc_html__( 'Please note that Semantic Search algorithms (%l) are not compatible with the Autosuggest and Instant Results features. Autosuggest and Instant Results will be disabled while those algorithms are selected.', 'elasticpress-labs' ),
+			$algorithms_list
+		);
 		return $message;
+	}
+
+	/**
+	 * Maybe disable Autosuggest and Instant Results features
+	 *
+	 * @since 2.5.1
+	 * @param int                       $code   The code of the feature requirements status
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return int The new code of the feature requirements status
+	 */
+	public function maybe_disable_autosuggest_and_instant_results( $code, $status ) {
+		$feature = $status->get_feature();
+		if ( ! $feature || ! in_array( $feature->slug, [ 'autosuggest', 'instant_results' ], true ) ) {
+			return $code;
+		}
+
+		$search_algorithm = \ElasticPress\Features::factory()->get_registered_feature( 'search_algorithm' );
+		if ( ! $search_algorithm || ! $search_algorithm->is_active() ) {
+			return $code;
+		}
+
+		$search_algorithm_version   = $search_algorithm->get_search_algorithm_version( '' );
+		$semantic_search_algorithms = array_map(
+			function ( $algorithm ) {
+				return $algorithm->get_slug();
+			},
+			$this->algorithms
+		);
+		if ( ! in_array( $search_algorithm_version, $semantic_search_algorithms, true ) ) {
+			return $code;
+		}
+
+		return 2;
 	}
 }

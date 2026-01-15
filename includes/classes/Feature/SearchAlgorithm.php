@@ -162,7 +162,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	}
 
 	/**
-	 * Set the search algorithm
+	 * Get the current search algorithm
 	 *
 	 * @param string $search_algorithm The search algorithm slug
 	 * @return string
