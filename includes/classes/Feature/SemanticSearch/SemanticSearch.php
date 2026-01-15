@@ -193,7 +193,7 @@ class SemanticSearch extends Feature {
 	/**
 	 * Filter the feature requirements status message
 	 *
-	 * @since 2.4.0
+	 * @since 2.5.1
 	 * @param string|array              $message The message to display
 	 * @param FeatureRequirementsStatus $status The feature requirements status object
 	 * @return string|array The message to display
