@@ -9,6 +9,7 @@
 namespace ElasticPressLabs\Feature\SemanticSearch;
 
 use ElasticPress\Feature;
+use ElasticPress\FeatureRequirementsStatus;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -62,7 +63,7 @@ class SemanticSearch extends Feature {
 	 * @return FeatureRequirementsStatus Requirements object
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
+		$status = new FeatureRequirementsStatus( 1 );
 
 		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
 
@@ -93,11 +94,46 @@ class SemanticSearch extends Feature {
 	}
 
 	/**
+	 * Pre-handle feature activation
+	 *
+	 * @return void
+	 */
+	public function pre_handle_feature_activation() {
+		$this->maybe_set_algorithms();
+
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
+	}
+
+	/**
 	 * Connects the Module with WordPress using Hooks and/or Filters.
 	 *
 	 * @return void
 	 */
 	public function setup() {
+		// In older versions of ElasticPress, the algorithms were not set in the pre_handle_feature_activation method.
+		$this->maybe_set_algorithms();
+
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
+		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
+
+		if ( $is_epio && in_array( $search_algorithm, $this->algorithms, true ) ) {
+			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
+			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
+		}
+	}
+
+	/**
+	 * Maybe set the algorithms
+	 *
+	 * @return void
+	 */
+	protected function maybe_set_algorithms() {
+		if ( ! empty( $this->algorithms ) ) {
+			return;
+		}
+
 		$this->algorithms = [
 			new SearchAlgorithm\KnnCosine(),
 		];
@@ -111,18 +147,6 @@ class SemanticSearch extends Feature {
 
 		foreach ( $this->algorithms as $algorithm ) {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
-		}
-
-		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
-		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
-
-		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
-		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
-		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
-
-		if ( $is_epio && in_array( $search_algorithm, $this->algorithms, true ) ) {
-			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
-			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
 	}
 
@@ -207,7 +231,7 @@ class SemanticSearch extends Feature {
 
 		$autosuggest            = \ElasticPress\Features::factory()->get_registered_feature( 'autosuggest' );
 		$autosuggest_active     = $autosuggest && $autosuggest->is_active();
-		$instant_results        = \ElasticPress\Features::factory()->get_registered_feature( 'instant_results' );
+		$instant_results        = \ElasticPress\Features::factory()->get_registered_feature( 'instant-results' );
 		$instant_results_active = $instant_results && $instant_results->is_active();
 		if ( ! $autosuggest_active && ! $instant_results_active ) {
 			return $message;
@@ -238,7 +262,7 @@ class SemanticSearch extends Feature {
 	 */
 	public function maybe_disable_autosuggest_and_instant_results( $code, $status ) {
 		$feature = $status->get_feature();
-		if ( ! $feature || ! in_array( $feature->slug, [ 'autosuggest', 'instant_results' ], true ) ) {
+		if ( ! $feature || ! isset( $feature->slug ) || ! in_array( $feature->slug, [ 'autosuggest', 'instant-results' ], true ) ) {
 			return $code;
 		}
 
@@ -258,6 +282,8 @@ class SemanticSearch extends Feature {
 			return $code;
 		}
 
-		return 2;
+		return defined( '\ElasticPress\FeatureRequirementsStatus::TEMPORARILY_DISABLED' )
+			? FeatureRequirementsStatus::TEMPORARILY_DISABLED
+			: 2;
 	}
 }
