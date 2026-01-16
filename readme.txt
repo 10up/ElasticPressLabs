@@ -26,6 +26,12 @@ This plugin provides a simple interface to enable and disable features.
 4. Settings to change the version of the search algorithm between 3.4 and 3.5.
 5. Settings to index external content.
 
+== Frequently Asked Questions ==
+
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Changelog ==
 
 = 2.5.0 - 2025-11-05 =
