@@ -5,6 +5,7 @@ import {
 	test,
 	expect,
 	maybeDisableFeature,
+	isEpIo,
 } from 'elasticpress-playwright-utils';
 
 test.describe('Semantic Search Feature', () => {
@@ -61,6 +62,81 @@ test.describe('Semantic Search Feature', () => {
 			await expect(loggedInPage.getByLabel('kNN')).toHaveCount(3);
 			await expect(loggedInPage.getByLabel('kNN Cosine')).toBeVisible();
 			await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).toBeVisible();
+		}
+	});
+
+	test('Search algorithms disable Autosuggest and Instant Results', async ({ loggedInPage }) => {
+		// Check if Autosuggest and Instant Results are enabled
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
+
+		await loggedInPage.getByRole('button', { name: 'Autosuggest' }).click();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeEnabled();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeChecked();
+
+		await loggedInPage.getByRole('button', { name: 'Instant Results' }).click();
+		if (isEpIo()) {
+			await expect(
+				loggedInPage
+					.locator('#instant-results-view')
+					.getByRole('checkbox', { name: 'Enable' }),
+			).toBeEnabled();
+		}
+
+		// Select a semantic search algorithm
+		await maybeEnableFeature('vector_embeddings');
+		await maybeEnableFeature('semantic_search');
+		await maybeEnableFeature('search_algorithm');
+
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Other' }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+		await loggedInPage.getByLabel('Hybrid (kNN + Regular ES)').check();
+		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
+		await loggedInPage.getByRole('button', { name: 'Autosuggest' }).click();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeDisabled();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).not.toBeChecked();
+
+		await loggedInPage.getByRole('button', { name: 'Instant Results' }).click();
+		await expect(
+			loggedInPage.locator('#instant-results-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeDisabled();
+
+		// If another algorithm is selected, Autosuggest and Instant Results should be enabled again
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Other' }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+		await loggedInPage.getByLabel('Version 4.0').check();
+		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
+		await loggedInPage.getByRole('button', { name: 'Autosuggest' }).click();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeEnabled();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
+		).toBeChecked();
+
+		await loggedInPage.getByRole('button', { name: 'Instant Results' }).click();
+		if (isEpIo()) {
+			await expect(
+				loggedInPage
+					.locator('#instant-results-view')
+					.getByRole('checkbox', { name: 'Enable' }),
+			).toBeEnabled();
 		}
 	});
 });
