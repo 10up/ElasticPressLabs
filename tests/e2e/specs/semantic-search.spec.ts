@@ -66,6 +66,14 @@ test.describe('Semantic Search Feature', () => {
 	});
 
 	test('Search algorithms disable Autosuggest and Instant Results', async ({ loggedInPage }) => {
+		const saveFeatures = async () => {
+			const apiResponsePromise = loggedInPage.waitForResponse(
+				'**/wp-json/elasticpress/v1/features*',
+			);
+			await loggedInPage.getByRole('button', { name: 'Save changes' }).click();
+			await apiResponsePromise;
+		};
+
 		// Check if Autosuggest and Instant Results are enabled
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
@@ -96,7 +104,7 @@ test.describe('Semantic Search Feature', () => {
 		await loggedInPage.getByRole('button', { name: 'Other' }).click();
 		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
 		await loggedInPage.getByLabel('Hybrid (kNN + Regular ES)').check();
-		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+		await saveFeatures();
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
@@ -118,7 +126,7 @@ test.describe('Semantic Search Feature', () => {
 		await loggedInPage.getByRole('button', { name: 'Other' }).click();
 		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
 		await loggedInPage.getByLabel('Version 4.0').check();
-		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+		await saveFeatures();
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 		await loggedInPage.getByRole('button', { name: 'Live Search' }).click();
