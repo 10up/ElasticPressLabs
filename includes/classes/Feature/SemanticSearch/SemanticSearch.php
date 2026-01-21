@@ -102,6 +102,7 @@ class SemanticSearch extends Feature {
 		$this->maybe_set_algorithms();
 
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_temp_disabled_features_status_message' ], 10, 2 );
 		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
 	}
 
@@ -261,14 +262,48 @@ class SemanticSearch extends Feature {
 	 * @return int The new code of the feature requirements status
 	 */
 	public function maybe_disable_autosuggest_and_instant_results( $code, $status ) {
-		$feature = $status->get_feature();
-		if ( ! $feature || ! isset( $feature->slug ) || ! in_array( $feature->slug, [ 'autosuggest', 'instant-results' ], true ) ) {
+		if ( ! $this->should_disable_autosuggest_and_instant_results( $status->get_feature() ) ) {
 			return $code;
+		}
+
+		return defined( '\ElasticPress\FeatureRequirementsStatus::TEMPORARILY_DISABLED' )
+			? FeatureRequirementsStatus::TEMPORARILY_DISABLED
+			: 2;
+	}
+
+	/**
+	 * Filter the temporarily disabled features status message
+	 *
+	 * @since 2.5.1
+	 * @param string|array              $message The message to display
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return string|array The message to display
+	 */
+	public function filter_temp_disabled_features_status_message( $message, $status ) {
+		if ( ! $this->should_disable_autosuggest_and_instant_results( $status->get_feature() ) ) {
+			return $message;
+		}
+
+		$message   = (array) $message;
+		$message[] = esc_html__( 'This feature is temporarily disabled because it is incompatible with Semantic Search algorithms.', 'elasticpress-labs' );
+		return $message;
+	}
+
+	/**
+	 * Check if Autosuggest and Instant Results features should be temporarily disabled
+	 *
+	 * @since 2.5.1
+	 * @param Feature $feature The feature object
+	 * @return bool True if the feature should be disabled, false otherwise
+	 */
+	protected function should_disable_autosuggest_and_instant_results( $feature ) {
+		if ( ! $feature || ! isset( $feature->slug ) || ! in_array( $feature->slug, [ 'autosuggest', 'instant-results' ], true ) ) {
+			return false;
 		}
 
 		$search_algorithm = \ElasticPress\Features::factory()->get_registered_feature( 'search_algorithm' );
 		if ( ! $search_algorithm || ! $search_algorithm->is_active() ) {
-			return $code;
+			return false;
 		}
 
 		$search_algorithm_version   = $search_algorithm->get_search_algorithm_version( '' );
@@ -279,11 +314,9 @@ class SemanticSearch extends Feature {
 			$this->algorithms
 		);
 		if ( ! in_array( $search_algorithm_version, $semantic_search_algorithms, true ) ) {
-			return $code;
+			return false;
 		}
 
-		return defined( '\ElasticPress\FeatureRequirementsStatus::TEMPORARILY_DISABLED' )
-			? FeatureRequirementsStatus::TEMPORARILY_DISABLED
-			: 2;
+		return true;
 	}
 }

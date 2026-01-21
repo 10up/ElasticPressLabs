@@ -115,11 +115,17 @@ test.describe('Semantic Search Feature', () => {
 		await expect(
 			loggedInPage.locator('#autosuggest-view').getByRole('checkbox', { name: 'Enable' }),
 		).not.toBeChecked();
+		await expect(
+			loggedInPage.locator('#autosuggest-view').getByText('This feature is temporarily'),
+		).toBeVisible();
 
 		await loggedInPage.getByRole('button', { name: 'Instant Results' }).click();
 		await expect(
 			loggedInPage.locator('#instant-results-view').getByRole('checkbox', { name: 'Enable' }),
 		).toBeDisabled();
+		await expect(
+			loggedInPage.locator('#instant-results-view').getByText('This feature is temporarily'),
+		).toBeVisible();
 
 		// If another algorithm is selected, Autosuggest and Instant Results should be enabled again
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
