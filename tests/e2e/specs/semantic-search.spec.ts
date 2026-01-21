@@ -103,7 +103,7 @@ test.describe('Semantic Search Feature', () => {
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 		await loggedInPage.getByRole('button', { name: 'Other' }).click();
 		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
-		await loggedInPage.getByLabel('Hybrid (kNN + Regular ES)').check();
+		await loggedInPage.getByLabel('kNN Cosine').check();
 		await saveFeatures();
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
