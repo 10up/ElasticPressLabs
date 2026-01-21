@@ -29,7 +29,9 @@ class Settings {
 	public function setup() {
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 		add_action( 'admin_menu', [ $this, 'add_vector_embedding_submenu_page' ], 15 );
+		add_action( 'admin_init', [ $this, 'set_current_screen' ], 11 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'scripts' ] );
+		add_filter( 'elasticpress_general_ep_screens', [ $this, 'add_vector_embeddings_screen' ] );
 	}
 
 	/**
@@ -72,12 +74,35 @@ class Settings {
 	 * @return boolean
 	 */
 	public function is_vector_embeddings_page() {
-		if ( ! function_exists( '\get_current_screen' ) ) {
+		if ( empty( $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return false;
 		}
 
-		$screen = get_current_screen();
-		return ( 'elasticpress_page_elasticpress-vector-embeddings' === $screen->base );
+		$page = sanitize_key( $_GET['page'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( false === strpos( $page, 'elasticpress' ) ) {
+			return false;
+		}
+
+		return 'elasticpress-vector-embeddings' === $page;
+	}
+
+	/**
+	 * Set the current screen.
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function set_current_screen() {
+		// If EP version is less than 5.3.3, setting the current screen breaks the header.
+		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.3.3', '<' ) ) {
+			return;
+		}
+
+		if ( ! $this->is_vector_embeddings_page() ) {
+			return;
+		}
+
+		\ElasticPress\Screen::factory()->set_current_screen( 'vector-embeddings' );
 	}
 
 	/**
@@ -118,6 +143,20 @@ class Settings {
 				'embeddingsFiltered' => has_filter( 'ep_embeddings_is_embeddable' ),
 			]
 		);
+	}
+
+	/**
+	 * Add the vector embeddings screen to the list of ElasticPress general screens.
+	 *
+	 * This way, JS and CSS assets for the header are enqueued.
+	 *
+	 * @since 2.5.1
+	 * @param array $screens The list of screens.
+	 * @return array The list of screens.
+	 */
+	public function add_vector_embeddings_screen( $screens ) {
+		$screens[] = 'vector-embeddings';
+		return $screens;
 	}
 
 	/**

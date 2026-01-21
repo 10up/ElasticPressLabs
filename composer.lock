@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "yahnis-elsts/plugin-update-checker",
-            "version": "v5.5",
+            "version": "v5.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/YahnisElsts/plugin-update-checker.git",
-                "reference": "845d65da93bcff31649ede00d9d73b1beadbb7f0"
+                "reference": "a2db6871deec989a74e1f90fafc6d58ae526a879"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/YahnisElsts/plugin-update-checker/zipball/845d65da93bcff31649ede00d9d73b1beadbb7f0",
-                "reference": "845d65da93bcff31649ede00d9d73b1beadbb7f0",
+                "url": "https://api.github.com/repos/YahnisElsts/plugin-update-checker/zipball/a2db6871deec989a74e1f90fafc6d58ae526a879",
+                "reference": "a2db6871deec989a74e1f90fafc6d58ae526a879",
                 "shasum": ""
             },
             "require": {
@@ -27,7 +27,7 @@
             "type": "library",
             "autoload": {
                 "files": [
-                    "load-v5p5.php"
+                    "load-v5p6.php"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -52,9 +52,9 @@
             ],
             "support": {
                 "issues": "https://github.com/YahnisElsts/plugin-update-checker/issues",
-                "source": "https://github.com/YahnisElsts/plugin-update-checker/tree/v5.5"
+                "source": "https://github.com/YahnisElsts/plugin-update-checker/tree/v5.6"
             },
-            "time": "2024-10-16T14:25:00+00:00"
+            "time": "2025-05-20T12:29:01+00:00"
         }
     ],
     "packages-dev": [
@@ -3205,5 +3205,5 @@
         "php": "^7.4|^8.0"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

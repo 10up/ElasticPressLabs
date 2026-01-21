@@ -162,7 +162,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	}
 
 	/**
-	 * Set the search algorithm
+	 * Get the current search algorithm
 	 *
 	 * @param string $search_algorithm The search algorithm slug
 	 * @return string
@@ -180,11 +180,11 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @since 2.0
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
-
-		$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
-
-		return $status;
+		return new \ElasticPress\FeatureRequirementsStatus(
+			1,
+			esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' ),
+			$this
+		);
 	}
 
 	/**
