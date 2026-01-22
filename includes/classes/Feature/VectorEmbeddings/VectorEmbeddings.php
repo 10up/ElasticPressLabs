@@ -16,6 +16,7 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
+use ElasticPressLabs\Traits\DisableAfterFailures;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,6 +27,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Vector Embeddings feature
  */
 class VectorEmbeddings extends Feature {
+	use DisableAfterFailures;
+
 	/**
 	 * Group
 	 *
@@ -161,6 +164,11 @@ class VectorEmbeddings extends Feature {
 					esc_url( 'https://10up.github.io/ElasticPress/tutorial-wp-cli.html' )
 				)
 			);
+		}
+
+		if ( $this->should_disable_after_failures() ) {
+			$status = $this->update_requirements_status( $status );
+			return $status;
 		}
 
 		if ( ! $this->is_epio_beta_available() ) {
@@ -372,10 +380,12 @@ class VectorEmbeddings extends Feature {
 		$response = apply_filters( 'ep_embeddings_request_response', $response, $text );
 
 		if ( is_wp_error( $response ) ) {
+			$this->update_failures_count();
 			return $response;
 		}
 
 		if ( empty( $response['data'] ) ) {
+			$this->update_failures_count();
 			return new WP_Error( 'no_data', esc_html__( 'No data returned from the embedding service.', 'elasticpress-labs' ) );
 		}
 

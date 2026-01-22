@@ -11,6 +11,7 @@ namespace ElasticPressLabs\Feature;
 use ElasticPress\Feature;
 use ElasticPressLabs\Utils;
 use ElasticPressLabs\Traits\LogRequest;
+use ElasticPressLabs\Traits\DisableAfterFailures;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -22,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.5.0
  */
 class AISearchSummary extends Feature {
+	use DisableAfterFailures;
 	use LogRequest;
 
 	/**
@@ -542,6 +544,10 @@ The following JSON object contains the URL and the page content. You should use 
 		if ( $es_version && version_compare( $es_version, '7.0', '<' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+		}
+
+		if ( $this->should_disable_after_failures() ) {
+			$status = $this->update_requirements_status( $status );
 		}
 
 		return $status;

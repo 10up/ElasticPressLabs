@@ -99,6 +99,11 @@ class SemanticSearch extends Feature {
 	 * @return void
 	 */
 	public function pre_handle_feature_activation() {
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		if ( ! $vector_embeddings->is_active() ) {
+			return;
+		}
+
 		$this->maybe_set_algorithms();
 
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
