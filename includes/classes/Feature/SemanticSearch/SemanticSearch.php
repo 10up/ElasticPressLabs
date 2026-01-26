@@ -96,6 +96,7 @@ class SemanticSearch extends Feature {
 	/**
 	 * Pre-handle feature activation
 	 *
+	 * @since 2.5.1
 	 * @return void
 	 */
 	public function pre_handle_feature_activation() {

@@ -87,6 +87,16 @@ The following JSON object contains the URL and the page content. You should use 
 	}
 
 	/**
+	 * Pre-handle feature activation
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function pre_handle_feature_activation() {
+		$this->setup_failures_count();
+	}
+
+	/**
 	 * Register block
 	 */
 	public function register_block() {

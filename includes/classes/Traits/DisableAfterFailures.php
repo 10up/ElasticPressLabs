@@ -18,6 +18,92 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait DisableAfterFailures {
 	/**
+	 * Setup the failures count.
+	 *
+	 * @return void
+	 */
+	public function setup_failures_count() {
+		add_action( 'admin_init', [ $this, 'maybe_reset_failures_count' ] );
+	}
+
+	/**
+	 * Maybe reset the failures count.
+	 *
+	 * @return void
+	 */
+	public function maybe_reset_failures_count() {
+		$is_valid_nonce = isset( $_GET['ep_reset_failures_nonce'] ) &&
+			wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['ep_reset_failures_nonce'] ) ), 'ep_reset_failures_nonce' );
+		if ( ! $is_valid_nonce ) {
+			return;
+		}
+
+		$feature_slug = isset( $_GET['ep_reset_failures'] ) ? sanitize_text_field( wp_unslash( $_GET['ep_reset_failures'] ) ) : '';
+		if ( $feature_slug !== $this->slug ) {
+			return;
+		}
+
+		if ( $this->requirements_status()->code !== FeatureRequirementsStatus::TEMPORARILY_DISABLED ) {
+			return;
+		}
+
+		$this->reset_failures_count();
+		wp_safe_redirect( remove_query_arg( [ 'ep_reset_failures', 'ep_reset_failures_nonce' ] ) . '#/' . $this->slug );
+		exit;
+	}
+
+	/**
+	 * Reset the failures count.
+	 *
+	 * @return void
+	 */
+	public function reset_failures_count() {
+		delete_transient( $this->get_failures_transient_key() );
+	}
+
+	/**
+	 * If the feature should be temporarily disabled after a certain number of failures.
+	 *
+	 * @return boolean
+	 */
+	public function should_disable_after_failures() {
+		$failures = $this->cleanup_failures( (array) get_transient( $this->get_failures_transient_key() ) );
+		return count( $failures ) > $this->get_max_failures_count();
+	}
+
+	/**
+	 * Update the requirements status.
+	 *
+	 * @param FeatureRequirementsStatus $status The feature requirements status object.
+	 * @return FeatureRequirementsStatus The feature requirements status object.
+	 */
+	public function update_requirements_status( FeatureRequirementsStatus $status ) {
+		$max_failures_count = $this->get_max_failures_count();
+
+		$transient_timeout        = get_option( '_transient_timeout_' . $this->get_failures_transient_key() );
+		$time_remaining           = $transient_timeout ? $transient_timeout - time() : 0;
+		$time_remaining_formatted = human_readable_duration( gmdate( 'H:i:s', $time_remaining ) );
+
+		$retry_url = add_query_arg(
+			[
+				'ep_reset_failures'       => $this->slug,
+				'ep_reset_failures_nonce' => wp_create_nonce( 'ep_reset_failures_nonce' ),
+			]
+		);
+
+		$status->code      = 3;
+		$status->message[] = wp_sprintf(
+			/* translators: 1: Maximum number of failures, 2: Time remaining */
+			__( 'The feature has been temporarily disabled after %1$d failures. It will be re-enabled in %2$s. Alternatively, you can <a href="%3$s">reset the counter and re-activate the feature now</a>.', 'elasticpress-labs' ),
+			$max_failures_count,
+			$time_remaining_formatted,
+			$retry_url
+		);
+
+		return $status;
+	}
+
+	/**
 	 * Get the maximum number of failures allowed.
 	 *
 	 * @return int
@@ -103,34 +189,5 @@ trait DisableAfterFailures {
 		$failures = array_slice( $failures, - ( $this->get_max_failures_count() + 1 ) );
 
 		return $failures;
-	}
-
-	/**
-	 * If the feature should be temporarily disabled after a certain number of failures.
-	 *
-	 * @return boolean
-	 */
-	public function should_disable_after_failures() {
-		$failures = $this->cleanup_failures( (array) get_transient( $this->get_failures_transient_key() ) );
-		return count( $failures ) > $this->get_max_failures_count();
-	}
-
-	/**
-	 * Update the requirements status.
-	 *
-	 * @param FeatureRequirementsStatus $status The feature requirements status object.
-	 * @return FeatureRequirementsStatus The feature requirements status object.
-	 */
-	public function update_requirements_status( FeatureRequirementsStatus $status ) {
-		$max_failures_count = $this->get_max_failures_count();
-
-		$status->code      = 3;
-		$status->message[] = wp_sprintf(
-			/* translators: 1: Maximum number of failures */
-			esc_html__( 'The feature has been temporarily disabled after %d failures.', 'elasticpress-labs' ),
-			$max_failures_count
-		);
-
-		return $status;
 	}
 }

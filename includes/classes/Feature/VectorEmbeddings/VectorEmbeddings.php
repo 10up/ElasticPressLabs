@@ -129,6 +129,16 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * Pre-handle feature activation
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function pre_handle_feature_activation() {
+		$this->setup_failures_count();
+	}
+
+	/**
 	 * Tell user whether requirements for feature are met or not.
 	 *
 	 * @return FeatureRequirementsStatus Requirements object
