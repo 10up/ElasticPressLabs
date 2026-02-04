@@ -1,5 +1,8 @@
 name: Build with vendor
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
@@ -10,8 +13,6 @@ jobs:
   wordpress:
     name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
