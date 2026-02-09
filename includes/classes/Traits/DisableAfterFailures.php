@@ -43,7 +43,7 @@ trait DisableAfterFailures {
 			return;
 		}
 
-		if ( $this->requirements_status()->code !== FeatureRequirementsStatus::TEMPORARILY_DISABLED ) {
+		if ( defined( '\ElasticPress\FeatureRequirementsStatus::TEMPORARILY_DISABLED' ) && $this->requirements_status()->code !== FeatureRequirementsStatus::TEMPORARILY_DISABLED ) {
 			return;
 		}
 
