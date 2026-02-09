@@ -182,7 +182,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		$_GET['ep_reset_failures_nonce'] = wp_create_nonce( 'ep_reset_failures_nonce' );
 
 		// Set up transient.
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = array_fill( 0, 4, time() );
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -217,7 +217,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_reset_failures_count_deletes_transient() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time(), time() - 100 ];
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -243,7 +243,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_should_disable_after_failures_with_failures_below_max() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time(), time() - 10 ]; // 2 failures, max is 3.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -256,7 +256,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_should_disable_after_failures_with_failures_equal_to_max() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time(), time() - 10, time() - 20 ]; // 3 failures, max is 3.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -269,7 +269,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_should_disable_after_failures_with_failures_exceeding_max() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time(), time() - 10, time() - 20, time() - 30 ]; // 4 failures, max is 3.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -282,7 +282,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_should_disable_after_failures_cleans_up_old_failures() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$old_time      = time() - ( 2 * HOUR_IN_SECONDS ); // 2 hours ago, outside timeframe.
 		$failures      = [ time(), time() - 10, $old_time ]; // 3 failures, but 1 is old.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
@@ -298,7 +298,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 */
 	public function test_update_requirements_status_sets_code_and_message() {
 		// Set up failures to exceed max.
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = array_fill( 0, 4, time() );
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -318,7 +318,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_update_requirements_status_calculates_time_remaining() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = array_fill( 0, 4, time() );
 		$timeout       = time() + 3600; // 1 hour from now.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
@@ -453,7 +453,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_update_failures_count_adds_current_timestamp() {
-		$transient_key    = $this->feature->get_failures_transient_key();
+		$transient_key    = $this->get_failures_transient_key();
 		$initial_failures = [ time() - 100 ];
 		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
 
@@ -480,7 +480,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_update_failures_count_sets_correct_timeout() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 
 		$reflection = new \ReflectionClass( $this->feature );
 		$method     = $reflection->getMethod( 'update_failures_count' );
@@ -502,7 +502,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_update_failures_count_cleans_up_old_failures() {
-		$transient_key    = $this->feature->get_failures_transient_key();
+		$transient_key    = $this->get_failures_transient_key();
 		$old_time         = time() - ( 2 * HOUR_IN_SECONDS );
 		$initial_failures = [ time() - 10, $old_time ];
 		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
@@ -527,7 +527,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_update_failures_count_limits_stored_failures() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
+
 		// Create more failures than max + 1.
 		$initial_failures = array_fill( 0, 10, time() );
 		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
@@ -630,7 +631,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	 * @group disable-after-failures
 	 */
 	public function test_integration_failures_expire_after_timeframe() {
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		// Set failures that are just within the timeframe.
 		$failures = [ time() - ( HOUR_IN_SECONDS - 100 ) ];
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
@@ -664,7 +665,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 			2
 		);
 
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time() ]; // 1 failure, max is 0.
 		set_transient( $transient_key, $failures, HOUR_IN_SECONDS );
 
@@ -689,7 +690,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 			2
 		);
 
-		$transient_key = $this->feature->get_failures_transient_key();
+		$transient_key = $this->get_failures_transient_key();
 		$failures      = [ time() - 2 ]; // 2 seconds ago, outside 1 second timeframe.
 		set_transient( $transient_key, $failures, 1 );
 
