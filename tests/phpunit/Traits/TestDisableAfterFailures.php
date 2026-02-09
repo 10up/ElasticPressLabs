@@ -48,7 +48,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		remove_all_filters( 'ep_failures_transient_key' );
 
 		// Unregister the feature.
-		\ElasticPress\Features::factory()->unregister_feature( $this->feature->slug );
+		unset( \ElasticPress\Features::factory()->registered_features[ $this->feature->slug ] );
 
 		parent::tear_down();
 	}
