@@ -3,6 +3,7 @@ import {
 	wpCli,
 	test,
 	expect,
+	maybeEnableFeature,
 	maybeDisableFeature,
 	wpCliEval,
 } from 'elasticpress-playwright-utils';
@@ -102,5 +103,66 @@ test.describe('Vector Embeddings Feature', () => {
 
 		const pageInEsAfterSync = await wpCli(`elasticpress get post ${pageId}`);
 		expect(pageInEsAfterSync.toString()).not.toContain('"chunks":[{"vector":[');
+	});
+
+	test('can temporarily disable the feature after failures', async ({ loggedInPage }) => {
+		await maybeEnableFeature('vector_embeddings');
+		await maybeEnableFeature('search_algorithm');
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await setVectorEmbeddingsSettings(loggedInPage);
+
+		await loggedInPage
+			.getByLabel('OpenAI Embeddings API Url')
+			.fill(
+				process.env.VECTOR_EMBEDDINGS_API_URL
+					? `${process.env.VECTOR_EMBEDDINGS_API_URL}-wrong`
+					: '',
+			);
+
+		// We need a kNN search algorithm to match the search down below.
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+		await loggedInPage.getByLabel('kNN Cosine').check();
+
+		// Wait for API request
+		const apiResponsePromise = loggedInPage.waitForResponse(
+			'**/wp-json/elasticpress/v1/features*',
+		);
+
+		await loggedInPage.getByRole('button', { name: 'Save' }).click();
+
+		await apiResponsePromise;
+
+		await expect(
+			loggedInPage
+				.locator('#vector_embeddings-view')
+				.getByText('The feature has been temporarily disabled'),
+		).not.toBeVisible();
+
+		// Searches until it fails
+		await loggedInPage.goto('/?s=test');
+		await loggedInPage.goto('/?s=test');
+		await loggedInPage.goto('/?s=test');
+		await loggedInPage.goto('/?s=test');
+
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Vector Embeddings' }).click();
+
+		await expect(
+			loggedInPage
+				.locator('#vector_embeddings-view')
+				.getByText('The feature has been temporarily disabled'),
+		).toBeVisible();
+
+		await loggedInPage
+			.getByRole('link', { name: 'reset the counter and re-activate the feature now' })
+			.click();
+
+		await expect(
+			loggedInPage
+				.locator('#vector_embeddings-view')
+				.getByText('The feature has been temporarily disabled'),
+		).not.toBeVisible();
 	});
 });
