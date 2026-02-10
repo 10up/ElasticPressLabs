@@ -14,6 +14,28 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+## [2.5.1] - 2026-XX-XX
+
+### Added
+* [Semantic Search] Message about incompatibility with Autosuggest and Instant Results. Props [@felipeelia](https://github.com/felipeelia) via [#171](https://github.com/10up/ElasticPressLabs/pull/171).
+
+### Changed
+* Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia) via [#176](https://github.com/10up/ElasticPressLabs/pull/176).
+
+### Deprecated
+### Removed
+### Fixed
+* AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia) via [#168](https://github.com/10up/ElasticPressLabs/pull/168).
+* Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia) via [#169](https://github.com/10up/ElasticPressLabs/pull/169).
+
+### Security
+* Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#170](https://github.com/10up/ElasticPressLabs/pull/170).
+* Bumped `lodash` from 4.17.21 to 4.17.23. Props [@dependabot](https://github.com/dependabot) via [#175](https://github.com/10up/ElasticPress/pull/175).
+* Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot) via [#177](https://github.com/10up/ElasticPress/pull/177).
+
+### Developer
+* Add Patchstack security-reporting FAQ. Props [@jeffpaul](https://github.com/jeffpaul) via [#174](https://github.com/10up/ElasticPress/pull/174).
+
 ## [2.5.0] - 2025-11-05
 
 ### Added
@@ -176,6 +198,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.5.1]: https://github.com/10up/ElasticPressLabs/compare/2.5.0...2.5.1
 [2.5.0]: https://github.com/10up/ElasticPressLabs/compare/2.4.0...2.5.0
 [2.4.0]: https://github.com/10up/ElasticPressLabs/compare/2.3.1...2.4.0
 [2.3.1]: https://github.com/10up/ElasticPressLabs/compare/2.3.0...2.3.1
