@@ -1,5 +1,8 @@
 name: Build with vendor
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
