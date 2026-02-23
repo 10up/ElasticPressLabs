@@ -107,6 +107,7 @@ class SemanticSearch extends Feature {
 
 		$this->maybe_set_algorithms();
 
+		add_filter( 'ep_search_algorithms', [ $this, 'filter_search_algorithms' ] );
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_temp_disabled_features_status_message' ], 10, 2 );
 		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
@@ -219,6 +220,33 @@ class SemanticSearch extends Feature {
 			};
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
+		);
+	}
+
+	/**
+	 * Remove semantic search algorithms from the available list when the feature is not active.
+	 *
+	 * @since 2.5.1
+	 * @param array $search_algorithms Registered search algorithms keyed by slug.
+	 * @return array Filtered search algorithms.
+	 */
+	public function filter_search_algorithms( $search_algorithms ) {
+		if ( $this->is_active() ) {
+			return $search_algorithms;
+		}
+
+		$semantic_slugs = array_map(
+			function ( $algorithm ) {
+				return $algorithm->get_slug();
+			},
+			$this->algorithms
+		);
+
+		return array_filter(
+			$search_algorithms,
+			function ( $algorithm ) use ( $semantic_slugs ) {
+				return ! in_array( $algorithm->get_slug(), $semantic_slugs, true );
+			}
 		);
 	}
 
