@@ -155,14 +155,10 @@ test.describe('Semantic Search Feature', () => {
 		}
 	});
 
-	test.describe('Settings Schema Updates on Save', () => {
-		test.afterEach(async () => {
-			await setEpLabsDefaultFeatures();
-		});
-
-		test('Search Algorithm options update without page refresh when Semantic Search changes', async ({
-			loggedInPage,
-		}) => {
+	test('Search Algorithm options update without page refresh when Semantic Search changes', async ({
+		loggedInPage,
+	}) => {
+		try {
 			await maybeEnableFeature('vector_embeddings');
 			await maybeEnableFeature('search_algorithm');
 			await maybeDisableFeature('semantic_search');
@@ -209,9 +205,10 @@ test.describe('Semantic Search Feature', () => {
 			// Verify semantic algorithms now appear.
 			await expect(loggedInPage.getByLabel('kNN Cosine')).toBeVisible();
 			if (await loggedInPage.getByLabel('Hybrid (kNN + Regular ES)').isVisible()) {
-				await expect(loggedInPage.getByLabel('kNN', { exact: true })).toBeVisible();
+				await expect(loggedInPage.getByLabel('kNN')).toHaveCount(3);
 				await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).toBeVisible();
 			} else {
+				await expect(loggedInPage.getByLabel('kNN')).toHaveCount(1);
 				await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
 				await expect(
 					loggedInPage.getByLabel('Hybrid (kNN + Regular ES)'),
@@ -240,6 +237,8 @@ test.describe('Semantic Search Feature', () => {
 			await expect(loggedInPage.getByLabel('kNN Cosine')).not.toBeVisible();
 			await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
 			await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).not.toBeVisible();
-		});
+		} finally {
+			await setEpLabsDefaultFeatures();
+		}
 	});
 });
