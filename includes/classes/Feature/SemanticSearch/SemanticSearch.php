@@ -107,7 +107,6 @@ class SemanticSearch extends Feature {
 
 		$this->maybe_set_algorithms();
 
-		add_filter( 'ep_search_algorithms', [ $this, 'filter_search_algorithms' ] );
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_temp_disabled_features_status_message' ], 10, 2 );
 		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
@@ -121,6 +120,7 @@ class SemanticSearch extends Feature {
 	public function setup() {
 		// In older versions of ElasticPress, the algorithms were not set in the pre_handle_feature_activation method.
 		$this->maybe_set_algorithms();
+		$this->register_algorithms();
 
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
@@ -130,6 +130,32 @@ class SemanticSearch extends Feature {
 			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
 			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
+	}
+
+	/**
+	 * Runs after feature activation.
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function post_activation() {
+		$this->maybe_set_algorithms();
+		$this->register_algorithms();
+
+		parent::post_activation();
+	}
+
+	/**
+	 * Runs after feature deactivation.
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function post_deactivation() {
+		$this->maybe_set_algorithms();
+		$this->unregister_algorithms();
+
+		parent::post_deactivation();
 	}
 
 	/**
@@ -152,9 +178,39 @@ class SemanticSearch extends Feature {
 			$this->algorithms[] = new SearchAlgorithm\Hybrid();
 			$this->algorithms[] = new SearchAlgorithm\Knn();
 		}
+	}
+
+	/**
+	 * Register algorithms with the global SearchAlgorithms registry.
+	 *
+	 * @return void
+	 */
+	protected function register_algorithms() {
+		if ( empty( $this->algorithms ) ) {
+			return;
+		}
 
 		foreach ( $this->algorithms as $algorithm ) {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
+		}
+	}
+
+	/**
+	 * Unregister algorithms from the global SearchAlgorithms registry.
+	 *
+	 * @return void
+	 */
+	protected function unregister_algorithms() {
+		if ( empty( $this->algorithms ) ) {
+			return;
+		}
+
+		if ( ! method_exists( \ElasticPress\SearchAlgorithms::factory(), 'unregister' ) ) {
+			return;
+		}
+
+		foreach ( $this->algorithms as $algorithm ) {
+			\ElasticPress\SearchAlgorithms::factory()->unregister( $algorithm->get_slug() );
 		}
 	}
 
@@ -220,33 +276,6 @@ class SemanticSearch extends Feature {
 			};
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
-		);
-	}
-
-	/**
-	 * Remove semantic search algorithms from the available list when the feature is not active.
-	 *
-	 * @since 2.5.1
-	 * @param array $search_algorithms Registered search algorithms keyed by slug.
-	 * @return array Filtered search algorithms.
-	 */
-	public function filter_search_algorithms( $search_algorithms ) {
-		if ( $this->is_active() ) {
-			return $search_algorithms;
-		}
-
-		$semantic_slugs = array_map(
-			function ( $algorithm ) {
-				return $algorithm->get_slug();
-			},
-			$this->algorithms
-		);
-
-		return array_filter(
-			$search_algorithms,
-			function ( $algorithm ) use ( $semantic_slugs ) {
-				return ! in_array( $algorithm->get_slug(), $semantic_slugs, true );
-			}
 		);
 	}
 

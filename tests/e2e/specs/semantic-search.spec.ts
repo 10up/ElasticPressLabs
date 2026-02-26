@@ -7,6 +7,7 @@ import {
 	maybeDisableFeature,
 	isEpIo,
 } from 'elasticpress-playwright-utils';
+import { setEpLabsDefaultFeatures } from './utils';
 
 test.describe('Semantic Search Feature', () => {
 	test('Can not turn the feature on if vector embeddings is not enabled', async ({
@@ -152,5 +153,93 @@ test.describe('Semantic Search Feature', () => {
 					.getByRole('checkbox', { name: 'Enable' }),
 			).toBeEnabled();
 		}
+	});
+
+	test.describe('Settings Schema Updates on Save', () => {
+		test.afterEach(async () => {
+			await setEpLabsDefaultFeatures();
+		});
+
+		test('Search Algorithm options update without page refresh when Semantic Search changes', async ({
+			loggedInPage,
+		}) => {
+			await maybeEnableFeature('vector_embeddings');
+			await maybeEnableFeature('search_algorithm');
+			await maybeDisableFeature('semantic_search');
+
+			// Navigate to the settings page.
+			await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+			await expect(loggedInPage.locator('.ep-settings-page form')).toBeVisible();
+			await loggedInPage.waitForFunction(() => {
+				return !!(window as any).epDashboard && !!(window as any).epDashboard.features;
+			});
+
+			// Start with Semantic Search disabled so semantic algorithms are hidden.
+			await loggedInPage.getByRole('button', { name: 'Other' }).click();
+			await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+			await expect(loggedInPage.locator('div[id*="search_algorithm-view"]')).toBeVisible();
+			await loggedInPage.waitForTimeout(500);
+
+			await expect(loggedInPage.getByLabel('kNN Cosine')).not.toBeVisible();
+			await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
+			await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).not.toBeVisible();
+
+			// Navigate to Semantic Search and enable it.
+			await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
+			await loggedInPage.getByRole('button', { name: 'Semantic Search' }).click();
+			await expect(loggedInPage.locator('div[id*="semantic_search-view"]')).toBeVisible();
+			await loggedInPage.waitForTimeout(500);
+			await loggedInPage.getByRole('checkbox', { name: 'Enable' }).setChecked(true);
+
+			// Save and wait for the save operation to complete.
+			const saveButton = loggedInPage.getByRole('button', { name: 'Save changes' });
+			await saveButton.click();
+			await expect(
+				loggedInPage.locator('.components-snackbar').filter({
+					hasText: 'Feature settings saved',
+				}),
+			).toBeVisible({ timeout: 10000 });
+
+			// Navigate back to Search Algorithm Version (no page refresh).
+			await loggedInPage.getByRole('button', { name: 'Other' }).click();
+			await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+			await expect(loggedInPage.locator('div[id*="search_algorithm-view"]')).toBeVisible();
+			await loggedInPage.waitForTimeout(500);
+
+			// Verify semantic algorithms now appear.
+			await expect(loggedInPage.getByLabel('kNN Cosine')).toBeVisible();
+			if (await loggedInPage.getByLabel('Hybrid (kNN + Regular ES)').isVisible()) {
+				await expect(loggedInPage.getByLabel('kNN', { exact: true })).toBeVisible();
+				await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).toBeVisible();
+			} else {
+				await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
+				await expect(
+					loggedInPage.getByLabel('Hybrid (kNN + Regular ES)'),
+				).not.toBeVisible();
+			}
+
+			// Disable Semantic Search and verify options disappear again.
+			await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
+			await loggedInPage.getByRole('button', { name: 'Semantic Search' }).click();
+			await expect(loggedInPage.locator('div[id*="semantic_search-view"]')).toBeVisible();
+			await loggedInPage.waitForTimeout(500);
+			await loggedInPage.getByRole('checkbox', { name: 'Enable' }).setChecked(false);
+
+			await saveButton.click();
+			await expect(
+				loggedInPage.locator('.components-snackbar').filter({
+					hasText: 'Feature settings saved',
+				}),
+			).toBeVisible({ timeout: 10000 });
+
+			await loggedInPage.getByRole('button', { name: 'Other' }).click();
+			await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+			await expect(loggedInPage.locator('div[id*="search_algorithm-view"]')).toBeVisible();
+			await loggedInPage.waitForTimeout(500);
+
+			await expect(loggedInPage.getByLabel('kNN Cosine')).not.toBeVisible();
+			await expect(loggedInPage.getByLabel('kNN', { exact: true })).not.toBeVisible();
+			await expect(loggedInPage.getByLabel('Hybrid (kNN + Regular ES)')).not.toBeVisible();
+		});
 	});
 });
