@@ -105,6 +105,10 @@ class SemanticSearch extends Feature {
 			return;
 		}
 
+		if ( ! $this->is_active() ) {
+			return;
+		}
+
 		$this->maybe_set_algorithms();
 
 		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );

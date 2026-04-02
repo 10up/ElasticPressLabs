@@ -29,7 +29,18 @@ test.describe('Semantic Search Feature', () => {
 	test('Can turn the feature on', async ({ loggedInPage }) => {
 		await maybeEnableFeature('vector_embeddings');
 		await maybeDisableFeature('semantic_search');
+		const resultPre = (await wpCli('elasticpress list-features')).toString();
+		expect(resultPre).toContain('vector_embeddings');
+		expect(resultPre).not.toContain('semantic_search');
+
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+
+		await expect(loggedInPage.locator('#search_algorithm-view').getByRole('radio')).toHaveCount(
+			3,
+		);
 
 		// Wait for API request
 		const apiRequestPromise = loggedInPage.waitForResponse(
