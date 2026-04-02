@@ -31,6 +31,13 @@ test.describe('Semantic Search Feature', () => {
 		await maybeDisableFeature('semantic_search');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Search Algorithm Version' }).click();
+
+		await expect(loggedInPage.locator('#search_algorithm-view').getByRole('radio')).toHaveCount(
+			3,
+		);
+
 		// Wait for API request
 		const apiRequestPromise = loggedInPage.waitForResponse(
 			'/wp-json/elasticpress/v1/features*',
