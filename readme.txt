@@ -34,6 +34,39 @@ Please report security bugs found in the source code of the undefined plugin thr
 
 == Changelog ==
 
+= 2.5.1 - 2026-XX-XX =
+
+__Added:__
+
+* [Semantic Search] Message about incompatibility with Autosuggest and Instant Results. Props [@felipeelia](https://github.com/felipeelia).
+
+__Changed:__
+
+* [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia).
+* Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia).
+
+__Fixed:__
+
+* AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia).
+* Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia).
+* Bumped `lodash` from 4.17.21 to 4.18.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot).
+* Bumped `webpack` from 5.100.2 to 5.105.0. Props [@dependabot](https://github.com/dependabot).
+* Bumped `qs` from 6.14.1 to 6.14.2. Props [@dependabot](https://github.com/dependabot).
+* Bumped `immutable` from 5.1.3 to 5.1.5. Props [@dependabot](https://github.com/dependabot).
+* Bumped `simple-git` from 3.28.0 to 3.33.0 and `svgo` from 3.3.2 to 3.3.3. Props [@dependabot](https://github.com/dependabot).
+* Bumped `flatted` from 3.3.3 to 3.4.2 and `picomatch` from 2.3.1 to 2.3.2. Props [@dependabot](https://github.com/dependabot).
+
+__Developer:__
+
+* Add Patchstack security-reporting FAQ. Props [@jeffpaul](https://github.com/jeffpaul).
+* Set explicit `permissions` on GitHub Actions workflows. Props [@jeffpaul](https://github.com/jeffpaul).
+* Add `ep_user_sync_kill` filter in Users `action_queue_meta_sync`. Props [@burhandodhy](https://github.com/burhandodhy) and [@yarovikov](https://github.com/yarovikov).
+
 = 2.5.0 - 2025-11-05 =
 
 __Added:__
