@@ -64,7 +64,17 @@ class SyncManager extends SyncManagerAbstract {
 			return;
 		}
 
-		$indexable = Indexables::factory()->get( 'user' );
+		/**
+		 * Filter whether to kill sync for a particular user
+		 *
+		 * @hook ep_user_sync_kill
+		 * @param {bool} $kill    True means dont sync
+		 * @param {int}  $object_id User ID
+		 * @return {bool} New kill value
+		 */
+		if ( apply_filters( 'ep_user_sync_kill', false, $object_id ) ) {
+			return;
+		}
 
 		$this->add_to_queue( $object_id );
 	}
