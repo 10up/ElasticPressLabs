@@ -2,7 +2,7 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 6.0
-Tested up to:      6.9
+Tested up to:      7.0
 Stable tag:        2.5.1
 Requires PHP:      7.4
 License:           GPLv2 or later
