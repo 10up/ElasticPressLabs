@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { CheckboxControl } from '@wordpress/components';
+import { CheckboxControl, __experimentalVStack as VStack } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -46,26 +46,28 @@ export default ({ postType }) => {
 				)}
 			</p>
 			<Group>
-				{coreFields.map((field) => {
-					const { label, value } = field;
-					return (
-						<CheckboxControl
-							key={value}
-							label={label}
-							checked={fieldsEmbedding.includes(value)}
-							onChange={() => {
-								setEmbeddingForPostType(
-									key,
-									null,
-									'fieldsEmbedding',
-									fieldsEmbedding.includes(value)
-										? fieldsEmbedding.filter((f) => f !== value)
-										: [...fieldsEmbedding, value],
-								);
-							}}
-						/>
-					);
-				})}
+				<VStack>
+					{coreFields.map((field) => {
+						const { label, value } = field;
+						return (
+							<CheckboxControl
+								key={value}
+								label={label}
+								checked={fieldsEmbedding.includes(value)}
+								onChange={() => {
+									setEmbeddingForPostType(
+										key,
+										null,
+										'fieldsEmbedding',
+										fieldsEmbedding.includes(value)
+											? fieldsEmbedding.filter((f) => f !== value)
+											: [...fieldsEmbedding, value],
+									);
+								}}
+							/>
+						);
+					})}
+				</VStack>
 			</Group>
 			<Group>
 				<MetaSelect
