@@ -10,10 +10,10 @@ import { __ } from '@wordpress/i18n';
 
 import MetaSelect from '../fields/meta-select';
 import Group from '../layout/group';
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default ({ postType }) => {
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	const { fieldsEmbedding, key } = postType;
 
 	const coreFields = [

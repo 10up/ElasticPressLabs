@@ -8,13 +8,13 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
-import { useVectorEmebeddingSettings } from '../provider';
+import { useVectorEmbeddingSettings } from '../provider';
 import { useSettingsScreen } from '../../settings-screen';
 import PostType from '../components/pages/post-type';
 import Indexing from '../components/pages/indexing';
 
 export default () => {
-	const { currentSettings, save } = useVectorEmebeddingSettings();
+	const { currentSettings, save } = useVectorEmbeddingSettings();
 	const { postTypeConfig: postTypes, embeddingsFiltered } = currentSettings;
 	const { createNotice } = useSettingsScreen();
 	const [currentTab, setCurrentTab] = useState(0); // eslint-disable-line

@@ -7,12 +7,12 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 import TermSelect from '../fields/term-select';
 import Group from '../layout/group';
 
 export default ({ taxonomies, postType }) => {
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	const hasTaxonomies = Object.keys(taxonomies).length > 0;
 	const { key } = postType;
 
