@@ -7,10 +7,10 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default () => {
-	const { currentSettings, setChunkSize, setChunkOverlap } = useVectorEmebeddingSettings();
+	const { currentSettings, setChunkSize, setChunkOverlap } = useVectorEmbeddingSettings();
 	const { chunkSize, chunkOverlap } = currentSettings;
 	return (
 		<Panel>
