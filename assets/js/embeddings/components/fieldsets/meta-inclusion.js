@@ -9,11 +9,11 @@ import { CheckboxControl } from '@wordpress/components';
  */
 import MetaSelect from '../fields/meta-select';
 import Group from '../layout/group';
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default ({ postType, embeddingMode }) => {
 	const { fieldsIndexingInclude, fieldsIndexingExclude, enablefieldsIndexing, key } = postType;
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	return (
 		<>
 			<h4>{__('Post Meta', 'elasticpress-labs')}</h4>
