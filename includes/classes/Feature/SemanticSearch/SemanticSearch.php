@@ -73,7 +73,7 @@ class SemanticSearch extends Feature {
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 		}
 
-		if ( version_compare( $es_version, '7.0', '>' ) && version_compare( $es_version, '8.0', '<' ) ) {
+		if ( $es_version && version_compare( $es_version, '7.0', '>' ) && version_compare( $es_version, '8.0', '<' ) ) {
 			$status->code    = 1;
 			$status->message = esc_html__( 'With Elasticsearch version 7, only the "kNN Cosine" algorithm is available.', 'elasticpress-labs' );
 		}
