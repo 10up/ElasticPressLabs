@@ -46,6 +46,8 @@ class CoAuthorsPlus extends Feature {
 	public function __construct() {
 		$this->slug = 'co_authors_plus';
 
+		$this->group = 'third-party-plugins';
+
 		if ( ! defined( 'EP_VERSION' ) || version_compare( EP_VERSION, '5.2.0', '<' ) ) {
 			$this->set_i18n_strings();
 		}
