@@ -1,7 +1,7 @@
 /**
  * External dependencies
  * */
-import { CheckboxControl } from '@wordpress/components';
+import { CheckboxControl, __experimentalVStack as VStack } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -20,62 +20,64 @@ export default ({ taxonomies, postType }) => {
 		<div>
 			<h4>{__('Taxonomies', 'elasticpress-labs')}</h4>
 			{hasTaxonomies > 0 ? (
-				Object.keys(taxonomies).map((taxonomy) => {
-					const { label, termsInclude, termsExclude, enabled } = taxonomies[taxonomy];
-					return (
-						<>
-							<CheckboxControl
-								label={label}
-								checked={enabled}
-								onChange={() => {
-									setEmbeddingForPostType(key, taxonomy, 'enabled', !enabled);
-								}}
-							/>
-							{enabled && (
-								<>
-									<Group indent>
-										<TermSelect
-											postType={postType}
-											taxonomy={taxonomy}
-											label={__(
-												'Include posts that have any of these terms',
-												'elasticpress-labs',
-											)}
-											value={termsInclude}
-											onChange={(terms) =>
-												setEmbeddingForPostType(
-													key,
-													taxonomy,
-													'termsInclude',
-													terms,
-												)
-											}
-										/>
-									</Group>
-									<Group indent>
-										<TermSelect
-											postType={postType}
-											taxonomy={taxonomy}
-											label={__(
-												'Exclude posts that have any of these terms',
-												'elasticpress-labs',
-											)}
-											onChange={(terms) =>
-												setEmbeddingForPostType(
-													key,
-													taxonomy,
-													'termsExclude',
-													terms,
-												)
-											}
-											value={termsExclude}
-										/>
-									</Group>
-								</>
-							)}
-						</>
-					);
-				})
+				<VStack>
+					{Object.keys(taxonomies).map((taxonomy) => {
+						const { label, termsInclude, termsExclude, enabled } = taxonomies[taxonomy];
+						return (
+							<>
+								<CheckboxControl
+									label={label}
+									checked={enabled}
+									onChange={() => {
+										setEmbeddingForPostType(key, taxonomy, 'enabled', !enabled);
+									}}
+								/>
+								{enabled && (
+									<>
+										<Group indent>
+											<TermSelect
+												postType={postType}
+												taxonomy={taxonomy}
+												label={__(
+													'Include posts that have any of these terms',
+													'elasticpress-labs',
+												)}
+												value={termsInclude}
+												onChange={(terms) =>
+													setEmbeddingForPostType(
+														key,
+														taxonomy,
+														'termsInclude',
+														terms,
+													)
+												}
+											/>
+										</Group>
+										<Group indent>
+											<TermSelect
+												postType={postType}
+												taxonomy={taxonomy}
+												label={__(
+													'Exclude posts that have any of these terms',
+													'elasticpress-labs',
+												)}
+												onChange={(terms) =>
+													setEmbeddingForPostType(
+														key,
+														taxonomy,
+														'termsExclude',
+														terms,
+													)
+												}
+												value={termsExclude}
+											/>
+										</Group>
+									</>
+								)}
+							</>
+						);
+					})}
+				</VStack>
 			) : (
 				<p>
 					{__(
