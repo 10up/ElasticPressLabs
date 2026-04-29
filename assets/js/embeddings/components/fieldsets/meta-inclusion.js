@@ -12,24 +12,24 @@ import Group from '../layout/group';
 import { useVectorEmbeddingSettings } from '../../provider';
 
 export default ({ postType, embeddingMode }) => {
-	const { fieldsIndexingInclude, fieldsIndexingExclude, enablefieldsIndexing, key } = postType;
+	const { fieldsIndexingInclude, fieldsIndexingExclude, enableFieldsIndexing, key } = postType;
 	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	return (
 		<>
 			<h4>{__('Post Meta', 'elasticpress-labs')}</h4>
 			<CheckboxControl
 				label={__('Post Meta Fields', 'elasticpress-labs')}
-				checked={enablefieldsIndexing}
+				checked={enableFieldsIndexing}
 				onChange={() => {
 					setEmbeddingForPostType(
 						key,
 						null,
-						'enablefieldsIndexing',
-						!enablefieldsIndexing,
+						'enableFieldsIndexing',
+						!enableFieldsIndexing,
 					);
 				}}
 			/>
-			{embeddingMode === 'automatic' && enablefieldsIndexing && (
+			{embeddingMode === 'automatic' && enableFieldsIndexing && (
 				<>
 					<Group indent>
 						<MetaSelect
