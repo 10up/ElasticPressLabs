@@ -188,13 +188,8 @@ trait DisableAfterFailures {
 	protected function update_failures_count() {
 		$transient_key = $this->get_failures_transient_key();
 
-		static $cache = [];
-		if ( ! array_key_exists( $transient_key, $cache ) ) {
-			$stored = get_transient( $transient_key );
-			$cache[ $transient_key ] = is_array( $stored ) ? $stored : [];
-		}
-
-		$failures = &$cache[ $transient_key ];
+		$stored   = get_transient( $transient_key );
+		$failures = is_array( $stored ) ? $stored : [];
 
 		if ( count( $failures ) > $this->get_max_failures_count() ) {
 			$time_since_last_failure = time() - max( $failures );
