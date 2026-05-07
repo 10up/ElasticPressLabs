@@ -34,7 +34,7 @@ Please report security bugs found in the source code of the undefined plugin thr
 
 == Changelog ==
 
-= 2.5.1 - 2026-XX-XX =
+= 2.5.1 - 2026-05-07 =
 
 __Added:__
 
