@@ -160,9 +160,9 @@ trait DisableAfterFailures {
 	/**
 	 * Get the minimum time between failures storage (after the limit is hit).
 	 *
-	 * @return string
+	 * @return int
 	 */
-	protected function get_failures_min_time_between_writes(): string {
+	protected function get_failures_min_time_between_writes(): int {
 		$default_min_time_between_writes = wp_using_ext_object_cache() ? 1 : 10;
 
 		/**
