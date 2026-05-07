@@ -69,7 +69,7 @@ trait DisableAfterFailures {
 	 * @return boolean
 	 */
 	public function should_disable_after_failures() {
-		$stored = get_transient( $this->get_failures_transient_key() );
+		$stored   = get_transient( $this->get_failures_transient_key() );
 		$failures = $this->cleanup_failures( is_array( $stored ) ? $stored : [] );
 		return count( $failures ) > $this->get_max_failures_count();
 	}
