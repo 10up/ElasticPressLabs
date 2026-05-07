@@ -44,15 +44,22 @@ __Changed:__
 
 * [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia).
 * Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia).
+* Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy).
 
 __Fixed:__
 
 * AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia).
 * Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia).
+* Vertical spacing between embedding field checkboxes. Props [@burhandodhy](https://github.com/burhandodhy).
+* Typo in `useVectorEmbeddingSettings`. Props [@burhandodhy](https://github.com/burhandodhy).
+* `version_compare()` deprecation when passing null. Props [@burhandodhy](https://github.com/burhandodhy).
+* Removed obsolete TinyMCE editor stylesheet and unused `script_loader_tag` filter. Props [@burhandodhy](https://github.com/burhandodhy).
+* Deprecated `RangeControl` default size, wrap checkboxes in `VStack`, and rename `enablefieldsIndexing` to `enableFieldsIndexing`. Props [@burhandodhy](https://github.com/burhandodhy).
 
 __Security:__
 
 * Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia).
+* npm audit dependency updates. Props [@felipeelia](https://github.com/felipeelia).
 * Bumped `lodash` from 4.17.21 to 4.18.1. Props [@dependabot](https://github.com/dependabot).
 * Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot).
 * Bumped `webpack` from 5.100.2 to 5.105.0. Props [@dependabot](https://github.com/dependabot).

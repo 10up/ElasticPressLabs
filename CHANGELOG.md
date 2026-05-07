@@ -22,15 +22,22 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Changed
 * [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia) via [#188](https://github.com/10up/ElasticPressLabs/pull/188).
 * Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia) via [#176](https://github.com/10up/ElasticPressLabs/pull/176).
+* Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy) via [#195](https://github.com/10up/ElasticPressLabs/pull/195).
 
 ### Deprecated
 ### Removed
 ### Fixed
 * AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia) via [#168](https://github.com/10up/ElasticPressLabs/pull/168).
 * Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia) via [#169](https://github.com/10up/ElasticPressLabs/pull/169).
+* Vertical spacing between embedding field checkboxes. Props [@burhandodhy](https://github.com/burhandodhy) via [#192](https://github.com/10up/ElasticPressLabs/pull/192).
+* Typo in `useVectorEmbeddingSettings`. Props [@burhandodhy](https://github.com/burhandodhy) via [#193](https://github.com/10up/ElasticPressLabs/pull/193).
+* `version_compare()` deprecation when passing null. Props [@burhandodhy](https://github.com/burhandodhy) via [#194](https://github.com/10up/ElasticPressLabs/pull/194).
+* Removed obsolete TinyMCE editor stylesheet and unused `script_loader_tag` filter. Props [@burhandodhy](https://github.com/burhandodhy) via [#197](https://github.com/10up/ElasticPressLabs/pull/197).
+* Deprecated `RangeControl` default size, wrap checkboxes in `VStack`, and rename `enablefieldsIndexing` to `enableFieldsIndexing`. Props [@burhandodhy](https://github.com/burhandodhy) via [#199](https://github.com/10up/ElasticPressLabs/pull/199).
 
 ### Security
 * Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#170](https://github.com/10up/ElasticPressLabs/pull/170).
+* npm audit dependency updates. Props [@felipeelia](https://github.com/felipeelia) via [#191](https://github.com/10up/ElasticPressLabs/pull/191).
 * Bumped `lodash` from 4.17.21 to 4.18.1. Props [@dependabot](https://github.com/dependabot) via [#175](https://github.com/10up/ElasticPressLabs/pull/175) and [#189](https://github.com/10up/ElasticPressLabs/pull/189).
 * Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot) via [#177](https://github.com/10up/ElasticPressLabs/pull/177).
 * Bumped `webpack` from 5.100.2 to 5.105.0. Props [@dependabot](https://github.com/dependabot) via [#179](https://github.com/10up/ElasticPressLabs/pull/179).
