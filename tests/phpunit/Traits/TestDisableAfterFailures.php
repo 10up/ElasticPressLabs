@@ -62,6 +62,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		delete_transient( $transient_key );
 		delete_option( '_transient_' . $transient_key );
 		delete_option( '_transient_timeout_' . $transient_key );
+		delete_transient( $transient_key . '_lock' );
 	}
 
 	/**
@@ -74,6 +75,16 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		$method     = $reflection->getMethod( 'get_failures_transient_key' );
 		$method->setAccessible( true );
 		return $method->invoke( $this->feature );
+	}
+
+	/**
+	 * Failure timestamps array from a failures transient value.
+	 *
+	 * @param mixed $stored Transient value.
+	 * @return array
+	 */
+	protected function get_stored_failure_timestamps( $stored ): array {
+		return is_array( $stored ) ? $stored : [];
 	}
 
 	/**
@@ -507,7 +518,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		$method->invoke( $this->feature );
 		$after_time = time();
 
-		$updated_failures = get_transient( $transient_key );
+		$updated_stored   = get_transient( $transient_key );
+		$updated_failures = $this->get_stored_failure_timestamps( $updated_stored );
 		$this->assertIsArray( $updated_failures );
 		$this->assertCount( 2, $updated_failures );
 
@@ -555,7 +567,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 
 		$method->invoke( $this->feature );
 
-		$updated_failures = get_transient( $transient_key );
+		$updated_stored   = get_transient( $transient_key );
+		$updated_failures = $this->get_stored_failure_timestamps( $updated_stored );
 		$this->assertIsArray( $updated_failures );
 		// Should only have recent failures (old one cleaned up, plus new one).
 		foreach ( $updated_failures as $failure_time ) {
@@ -587,7 +600,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 
 		$method->invoke( $this->feature );
 
-		$updated_failures = get_transient( $transient_key );
+		$updated_stored   = get_transient( $transient_key );
+		$updated_failures = $this->get_stored_failure_timestamps( $updated_stored );
 		// Should only keep max_failures_count + 1 (3 + 1 = 4).
 		$this->assertLessThanOrEqual( 4, count( $updated_failures ) );
 	}
@@ -653,7 +667,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		$method->invoke( $this->feature );
 		$after_time = time();
 
-		$updated_failures = get_transient( $transient_key );
+		$updated_stored   = get_transient( $transient_key );
+		$updated_failures = $this->get_stored_failure_timestamps( $updated_stored );
 		$this->assertIsArray( $updated_failures );
 
 		// The newly added timestamp should be the last entry in the stored array.
@@ -688,7 +703,8 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 
 		$method->invoke( $this->feature );
 
-		$updated_failures = get_transient( $transient_key );
+		$updated_stored   = get_transient( $transient_key );
+		$updated_failures = $this->get_stored_failure_timestamps( $updated_stored );
 		$this->assertIsArray( $updated_failures );
 		$this->assertCount( count( $initial_failures ) + 1, $updated_failures );
 	}
@@ -795,7 +811,10 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 
 		$failures_after_disable = get_transient( $transient_key );
 		$this->assertIsArray( $failures_after_disable );
-		$this->assertCount( 4, $failures_after_disable );
+		$this->assertCount(
+			4,
+			$this->get_stored_failure_timestamps( $failures_after_disable )
+		);
 		$this->assertTrue( $this->feature->should_disable_after_failures() );
 
 		// Subsequent rapid calls should be skipped: the transient must remain identical.

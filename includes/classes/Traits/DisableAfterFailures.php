@@ -58,7 +58,9 @@ trait DisableAfterFailures {
 	 * @return void
 	 */
 	public function reset_failures_count() {
-		delete_transient( $this->get_failures_transient_key() );
+		$transient_key = $this->get_failures_transient_key();
+		delete_transient( $transient_key );
+		delete_transient( $transient_key . '_lock' );
 	}
 
 	/**
@@ -67,7 +69,8 @@ trait DisableAfterFailures {
 	 * @return boolean
 	 */
 	public function should_disable_after_failures() {
-		$failures = $this->cleanup_failures( (array) get_transient( $this->get_failures_transient_key() ) );
+		$stored = get_transient( $this->get_failures_transient_key() );
+		$failures = $this->cleanup_failures( is_array( $stored ) ? $stored : [] );
 		return count( $failures ) > $this->get_max_failures_count();
 	}
 
@@ -184,7 +187,14 @@ trait DisableAfterFailures {
 	 */
 	protected function update_failures_count() {
 		$transient_key = $this->get_failures_transient_key();
-		$failures      = (array) get_transient( $transient_key );
+
+		static $cache = [];
+		if ( ! array_key_exists( $transient_key, $cache ) ) {
+			$stored = get_transient( $transient_key );
+			$cache[ $transient_key ] = is_array( $stored ) ? $stored : [];
+		}
+
+		$failures = &$cache[ $transient_key ];
 
 		if ( count( $failures ) > $this->get_max_failures_count() ) {
 			$time_since_last_failure = time() - max( $failures );
@@ -195,12 +205,20 @@ trait DisableAfterFailures {
 		}
 
 		$failures[] = time();
+		$failures   = $this->cleanup_failures( $failures );
+
+		$lock_ttl = max( 1, (int) $this->get_failures_min_time_between_writes() );
+		if ( wp_using_ext_object_cache() && ! wp_cache_add( $transient_key . '_lock', 1, 'transient', $lock_ttl ) ) {
+			return;
+		}
 
 		set_transient(
 			$transient_key,
-			$this->cleanup_failures( $failures ),
+			$failures,
 			$this->get_max_failures_timeframe()
 		);
+
+		delete_transient( $transient_key . '_lock' );
 	}
 
 	/**
