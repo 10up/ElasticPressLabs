@@ -46,6 +46,7 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		remove_all_filters( 'ep_max_failures_count' );
 		remove_all_filters( 'ep_max_failures_timeframe' );
 		remove_all_filters( 'ep_failures_transient_key' );
+		remove_all_filters( 'ep_failures_min_time_between_writes' );
 
 		// Unregister the feature.
 		unset( \ElasticPress\Features::factory()->registered_features[ $this->feature->slug ] );
@@ -448,6 +449,47 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test get_failures_min_time_between_writes returns the expected default value.
+	 *
+	 * The default is 1 second when an external object cache is present and 10 seconds otherwise.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_get_failures_min_time_between_writes_returns_default() {
+		$reflection = new \ReflectionClass( $this->feature );
+		$method     = $reflection->getMethod( 'get_failures_min_time_between_writes' );
+		$method->setAccessible( true );
+
+		$expected = wp_using_ext_object_cache() ? 1 : 10;
+		$this->assertSame( $expected, $method->invoke( $this->feature ) );
+	}
+
+	/**
+	 * Test get_failures_min_time_between_writes respects the ep_failures_min_time_between_writes filter.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_get_failures_min_time_between_writes_respects_filter() {
+		add_filter(
+			'ep_failures_min_time_between_writes',
+			function ( $min_time, $feature ) {
+				if ( $feature->slug === $this->feature->slug ) {
+					return 30;
+				}
+				return $min_time;
+			},
+			10,
+			2
+		);
+
+		$reflection = new \ReflectionClass( $this->feature );
+		$method     = $reflection->getMethod( 'get_failures_min_time_between_writes' );
+		$method->setAccessible( true );
+
+		$this->assertSame( 30, $method->invoke( $this->feature ) );
+	}
+
+	/**
 	 * Test update_failures_count adds current timestamp
 	 *
 	 * @group disable-after-failures
@@ -524,9 +566,15 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 	/**
 	 * Test update_failures_count limits stored failures
 	 *
+	 * The rate limit on writes after the limit is hit is disabled here so we can
+	 * validate that, when a write does happen, cleanup_failures keeps the array
+	 * trimmed to max + 1 entries.
+	 *
 	 * @group disable-after-failures
 	 */
 	public function test_update_failures_count_limits_stored_failures() {
+		add_filter( 'ep_failures_min_time_between_writes', '__return_zero' );
+
 		$transient_key = $this->get_failures_transient_key();
 
 		// Create more failures than max + 1.
@@ -542,6 +590,107 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		$updated_failures = get_transient( $transient_key );
 		// Should only keep max_failures_count + 1 (3 + 1 = 4).
 		$this->assertLessThanOrEqual( 4, count( $updated_failures ) );
+	}
+
+	/**
+	 * Test update_failures_count skips the write when the failure count is already over
+	 * the max and the most recently stored failure happened within the rate-limit window.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_update_failures_count_skips_write_when_over_limit_and_recent() {
+		$transient_key = $this->get_failures_transient_key();
+
+		// Already over the max (3) with the most recent failure happening "now",
+		// well within the default 10s rate-limit window.
+		$now              = time();
+		$initial_failures = [ $now - 30, $now - 20, $now - 10, $now ];
+		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
+
+		$reflection = new \ReflectionClass( $this->feature );
+		$method     = $reflection->getMethod( 'update_failures_count' );
+		$method->setAccessible( true );
+
+		$method->invoke( $this->feature );
+
+		// The transient should be untouched: no new entry, same values.
+		$updated_failures = get_transient( $transient_key );
+		$this->assertSame( $initial_failures, $updated_failures );
+	}
+
+	/**
+	 * Test update_failures_count writes when over the limit but the last stored failure
+	 * is older than the configured min_time_between_writes window.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_update_failures_count_writes_when_over_limit_and_last_failure_is_old() {
+		// Set a small window so the test is not flaky on slow runners.
+		add_filter(
+			'ep_failures_min_time_between_writes',
+			function ( $min_time, $feature ) {
+				if ( $feature->slug === $this->feature->slug ) {
+					return 1;
+				}
+				return $min_time;
+			},
+			10,
+			2
+		);
+
+		$transient_key = $this->get_failures_transient_key();
+
+		// Already over the max (3), but the most recent stored failure is 30s old.
+		$now              = time();
+		$initial_failures = [ $now - 60, $now - 50, $now - 40, $now - 30 ];
+		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
+
+		$reflection = new \ReflectionClass( $this->feature );
+		$method     = $reflection->getMethod( 'update_failures_count' );
+		$method->setAccessible( true );
+
+		$before_time = time();
+		$method->invoke( $this->feature );
+		$after_time = time();
+
+		$updated_failures = get_transient( $transient_key );
+		$this->assertIsArray( $updated_failures );
+
+		// The newly added timestamp should be the last entry in the stored array.
+		$last_failure = end( $updated_failures );
+		$this->assertGreaterThanOrEqual( $before_time, $last_failure );
+		$this->assertLessThanOrEqual( $after_time, $last_failure );
+
+		// cleanup_failures keeps at most max + 1 entries.
+		$this->assertLessThanOrEqual( 4, count( $updated_failures ) );
+	}
+
+	/**
+	 * Test update_failures_count writes normally while the failure count is still at or below max.
+	 *
+	 * The rate-limit logic must not affect calls happening before the feature gets
+	 * temporarily disabled, otherwise the disable threshold could never be reached.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_update_failures_count_writes_when_at_or_below_max() {
+		$transient_key = $this->get_failures_transient_key();
+
+		// Exactly at max, all timestamps are "now" which is the worst case for the
+		// rate limit if it were applied below the max.
+		$now              = time();
+		$initial_failures = [ $now, $now, $now ];
+		set_transient( $transient_key, $initial_failures, HOUR_IN_SECONDS );
+
+		$reflection = new \ReflectionClass( $this->feature );
+		$method     = $reflection->getMethod( 'update_failures_count' );
+		$method->setAccessible( true );
+
+		$method->invoke( $this->feature );
+
+		$updated_failures = get_transient( $transient_key );
+		$this->assertIsArray( $updated_failures );
+		$this->assertCount( count( $initial_failures ) + 1, $updated_failures );
 	}
 
 	/**
@@ -623,6 +772,40 @@ class TestDisableAfterFailures extends \WP_UnitTestCase {
 		// Status should be temporarily disabled.
 		$status = $this->feature->requirements_status();
 		$this->assertSame( FeatureRequirementsStatus::TEMPORARILY_DISABLED, $status->code );
+	}
+
+	/**
+	 * Test integration: once the feature is temporarily disabled, additional failures
+	 * happening in rapid succession do not write to the transient (rate limit), but
+	 * the feature remains disabled.
+	 *
+	 * @group disable-after-failures
+	 */
+	public function test_integration_rate_limits_writes_after_disabled() {
+		$transient_key = $this->get_failures_transient_key();
+
+		$reflection    = new \ReflectionClass( $this->feature );
+		$update_method = $reflection->getMethod( 'update_failures_count' );
+		$update_method->setAccessible( true );
+
+		// Trigger enough failures (max + 1 = 4) to disable the feature.
+		for ( $i = 0; $i < 4; $i++ ) {
+			$update_method->invoke( $this->feature );
+		}
+
+		$failures_after_disable = get_transient( $transient_key );
+		$this->assertIsArray( $failures_after_disable );
+		$this->assertCount( 4, $failures_after_disable );
+		$this->assertTrue( $this->feature->should_disable_after_failures() );
+
+		// Subsequent rapid calls should be skipped: the transient must remain identical.
+		for ( $i = 0; $i < 5; $i++ ) {
+			$update_method->invoke( $this->feature );
+		}
+
+		$failures_after_rapid_calls = get_transient( $transient_key );
+		$this->assertSame( $failures_after_disable, $failures_after_rapid_calls );
+		$this->assertTrue( $this->feature->should_disable_after_failures() );
 	}
 
 	/**
