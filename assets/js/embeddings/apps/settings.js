@@ -8,13 +8,13 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
-import { useVectorEmebeddingSettings } from '../provider';
+import { useVectorEmbeddingSettings } from '../provider';
 import { useSettingsScreen } from '../../settings-screen';
 import PostType from '../components/pages/post-type';
 import Indexing from '../components/pages/indexing';
 
 export default () => {
-	const { currentSettings, save } = useVectorEmebeddingSettings();
+	const { currentSettings, save } = useVectorEmbeddingSettings();
 	const { postTypeConfig: postTypes, embeddingsFiltered } = currentSettings;
 	const { createNotice } = useSettingsScreen();
 	const [currentTab, setCurrentTab] = useState(0); // eslint-disable-line
@@ -57,7 +57,7 @@ export default () => {
 		<form className="ep-vector-embedding-settings__post-types-list">
 			<p>
 				{__(
-					'Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data. Additionally, you can control',
+					'Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data.',
 					'elasticpress-labs',
 				)}
 			</p>

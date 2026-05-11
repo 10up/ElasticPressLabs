@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 6.0
-Tested up to:      6.8
-Stable tag:        2.5.0
+Tested up to:      7.0
+Stable tag:        2.5.1
 Requires PHP:      7.4
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,54 @@ This plugin provides a simple interface to enable and disable features.
 4. Settings to change the version of the search algorithm between 3.4 and 3.5.
 5. Settings to index external content.
 
+== Frequently Asked Questions ==
+
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Changelog ==
+
+= 2.5.1 - 2026-05-11 =
+
+__Added:__
+
+* [Semantic Search] Message about incompatibility with Autosuggest and Instant Results. Props [@felipeelia](https://github.com/felipeelia).
+
+__Changed:__
+
+* [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia).
+* Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia).
+* Avoid excessive database writes when logging AI feature failures. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
+* Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Fixed:__
+
+* AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia).
+* Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia).
+* Vertical spacing between embedding field checkboxes. Props [@burhandodhy](https://github.com/burhandodhy).
+* Typo in `useVectorEmbeddingSettings`. Props [@burhandodhy](https://github.com/burhandodhy).
+* `version_compare()` deprecation when passing null. Props [@burhandodhy](https://github.com/burhandodhy).
+* Removed obsolete TinyMCE editor stylesheet and unused `script_loader_tag` filter. Props [@burhandodhy](https://github.com/burhandodhy).
+* Deprecated `RangeControl` default size, wrap checkboxes in `VStack`, and rename `enablefieldsIndexing` to `enableFieldsIndexing`. Props [@burhandodhy](https://github.com/burhandodhy).
+
+__Security:__
+
+* Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia).
+* npm audit dependency updates. Props [@felipeelia](https://github.com/felipeelia).
+* Bumped `lodash` from 4.17.21 to 4.18.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot).
+* Bumped `webpack` from 5.100.2 to 5.105.0. Props [@dependabot](https://github.com/dependabot).
+* Bumped `qs` from 6.14.1 to 6.14.2. Props [@dependabot](https://github.com/dependabot).
+* Bumped `immutable` from 5.1.3 to 5.1.5. Props [@dependabot](https://github.com/dependabot).
+* Bumped `simple-git` from 3.28.0 to 3.33.0 and `svgo` from 3.3.2 to 3.3.3. Props [@dependabot](https://github.com/dependabot).
+* Bumped `flatted` from 3.3.3 to 3.4.2 and `picomatch` from 2.3.1 to 2.3.2. Props [@dependabot](https://github.com/dependabot).
+
+__Developer:__
+
+* Add Patchstack security-reporting FAQ. Props [@jeffpaul](https://github.com/jeffpaul).
+* Set explicit `permissions` on GitHub Actions workflows. Props [@jeffpaul](https://github.com/jeffpaul).
+* Add `ep_user_sync_kill` filter in Users `action_queue_meta_sync`. Props [@burhandodhy](https://github.com/burhandodhy) and [@yarovikov](https://github.com/yarovikov).
 
 = 2.5.0 - 2025-11-05 =
 

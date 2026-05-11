@@ -9,6 +9,7 @@
 namespace ElasticPressLabs\Feature\SemanticSearch;
 
 use ElasticPress\Feature;
+use ElasticPress\FeatureRequirementsStatus;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -62,17 +63,17 @@ class SemanticSearch extends Feature {
 	 * @return FeatureRequirementsStatus Requirements object
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
+		$status = new FeatureRequirementsStatus( 1 );
 
 		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( $es_version, '7.0', '<' ) ) {
+		if ( $es_version && version_compare( $es_version, '7.0', '<' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
 		}
 
-		if ( version_compare( $es_version, '7.0', '>' ) && version_compare( $es_version, '8.0', '<' ) ) {
+		if ( $es_version && version_compare( $es_version, '7.0', '>' ) && version_compare( $es_version, '8.0', '<' ) ) {
 			$status->code    = 1;
 			$status->message = esc_html__( 'With Elasticsearch version 7, only the "kNN Cosine" algorithm is available.', 'elasticpress-labs' );
 		}
@@ -93,11 +94,57 @@ class SemanticSearch extends Feature {
 	}
 
 	/**
+	 * Pre-handle feature activation
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function pre_handle_feature_activation() {
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		if ( ! $vector_embeddings->is_active() ) {
+			return;
+		}
+
+		if ( ! $this->is_active() ) {
+			return;
+		}
+
+		$this->maybe_set_algorithms();
+
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_search_algorithm_requirements_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_message', [ $this, 'filter_temp_disabled_features_status_message' ], 10, 2 );
+		add_filter( 'ep_feature_requirements_status_code', [ $this, 'maybe_disable_autosuggest_and_instant_results' ], 10, 2 );
+	}
+
+	/**
 	 * Connects the Module with WordPress using Hooks and/or Filters.
 	 *
 	 * @return void
 	 */
 	public function setup() {
+		// In older versions of ElasticPress, the algorithms were not set in the pre_handle_feature_activation method.
+		$this->maybe_set_algorithms();
+
+		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
+		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
+		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
+
+		if ( $is_epio && in_array( $search_algorithm, $this->algorithms, true ) ) {
+			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
+			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
+		}
+	}
+
+	/**
+	 * Maybe set the algorithms
+	 *
+	 * @return void
+	 */
+	protected function maybe_set_algorithms() {
+		if ( ! empty( $this->algorithms ) ) {
+			return;
+		}
+
 		$this->algorithms = [
 			new SearchAlgorithm\KnnCosine(),
 		];
@@ -111,15 +158,6 @@ class SemanticSearch extends Feature {
 
 		foreach ( $this->algorithms as $algorithm ) {
 			\ElasticPress\SearchAlgorithms::factory()->register( $algorithm );
-		}
-
-		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
-		$is_epio           = 'epio' === $vector_embeddings->get_setting( 'ep_embeddings_generator' );
-		$search_algorithm  = \ElasticPress\Indexables::factory()->get( 'post' )->get_search_algorithm( '', [], [] );
-
-		if ( $is_epio && in_array( $search_algorithm, $this->algorithms, true ) ) {
-			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
-			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
 	}
 
@@ -186,5 +224,109 @@ class SemanticSearch extends Feature {
 			wp.hooks.addFilter('ep.Autosuggest.fetchOptions', 'myTheme/epAutosuggestFetchOptions', epAutosuggestFetchOptions);",
 			'before'
 		);
+	}
+
+	/**
+	 * Filter Search Algorithms feature requirements status message
+	 *
+	 * @since 2.5.1
+	 * @param string|array              $message The message to display
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return string|array The message to display
+	 */
+	public function filter_search_algorithm_requirements_status_message( $message, $status ) {
+		$feature = $status->get_feature();
+		if ( ! $feature || 'search_algorithm' !== $feature->slug ) {
+			return $message;
+		}
+
+		$autosuggest            = \ElasticPress\Features::factory()->get_registered_feature( 'autosuggest' );
+		$autosuggest_active     = $autosuggest && $autosuggest->is_active();
+		$instant_results        = \ElasticPress\Features::factory()->get_registered_feature( 'instant-results' );
+		$instant_results_active = $instant_results && $instant_results->is_active();
+		if ( ! $autosuggest_active && ! $instant_results_active ) {
+			return $message;
+		}
+
+		$algorithms_list = array_map(
+			function ( $algorithm ) {
+				return '<code>' . $algorithm->get_name() . '</code>';
+			},
+			$this->algorithms
+		);
+
+		$message   = (array) $message;
+		$message[] = wp_sprintf(
+			esc_html__( 'Please note that Semantic Search algorithms (%l) are not compatible with the Autosuggest and Instant Results features. Autosuggest and Instant Results will be disabled while those algorithms are selected.', 'elasticpress-labs' ),
+			$algorithms_list
+		);
+		return $message;
+	}
+
+	/**
+	 * Maybe disable Autosuggest and Instant Results features
+	 *
+	 * @since 2.5.1
+	 * @param int                       $code   The code of the feature requirements status
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return int The new code of the feature requirements status
+	 */
+	public function maybe_disable_autosuggest_and_instant_results( $code, $status ) {
+		if ( ! $this->should_disable_autosuggest_and_instant_results( $status->get_feature() ) ) {
+			return $code;
+		}
+
+		return defined( '\ElasticPress\FeatureRequirementsStatus::TEMPORARILY_DISABLED' )
+			? FeatureRequirementsStatus::TEMPORARILY_DISABLED
+			: 2;
+	}
+
+	/**
+	 * Filter the temporarily disabled features status message
+	 *
+	 * @since 2.5.1
+	 * @param string|array              $message The message to display
+	 * @param FeatureRequirementsStatus $status The feature requirements status object
+	 * @return string|array The message to display
+	 */
+	public function filter_temp_disabled_features_status_message( $message, $status ) {
+		if ( ! $this->should_disable_autosuggest_and_instant_results( $status->get_feature() ) ) {
+			return $message;
+		}
+
+		$message   = (array) $message;
+		$message[] = esc_html__( 'This feature is temporarily disabled because it is incompatible with Semantic Search algorithms.', 'elasticpress-labs' );
+		return $message;
+	}
+
+	/**
+	 * Check if Autosuggest and Instant Results features should be temporarily disabled
+	 *
+	 * @since 2.5.1
+	 * @param Feature $feature The feature object
+	 * @return bool True if the feature should be disabled, false otherwise
+	 */
+	protected function should_disable_autosuggest_and_instant_results( $feature ) {
+		if ( ! $feature || ! isset( $feature->slug ) || ! in_array( $feature->slug, [ 'autosuggest', 'instant-results' ], true ) ) {
+			return false;
+		}
+
+		$search_algorithm = \ElasticPress\Features::factory()->get_registered_feature( 'search_algorithm' );
+		if ( ! $search_algorithm || ! $search_algorithm->is_active() ) {
+			return false;
+		}
+
+		$search_algorithm_version   = $search_algorithm->get_search_algorithm_version( '' );
+		$semantic_search_algorithms = array_map(
+			function ( $algorithm ) {
+				return $algorithm->get_slug();
+			},
+			$this->algorithms
+		);
+		if ( ! in_array( $search_algorithm_version, $semantic_search_algorithms, true ) ) {
+			return false;
+		}
+
+		return true;
 	}
 }

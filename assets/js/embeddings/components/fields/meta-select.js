@@ -7,11 +7,11 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default (props) => {
 	const { value, postType: postTypeObj, updateKey, label } = props;
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	const { key: postType } = postTypeObj;
 	return (
 		<FormTokenField

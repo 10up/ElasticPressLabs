@@ -11,6 +11,7 @@ namespace ElasticPressLabs\Feature;
 use ElasticPress\Feature;
 use ElasticPressLabs\Utils;
 use ElasticPressLabs\Traits\LogRequest;
+use ElasticPressLabs\Traits\DisableAfterFailures;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -22,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 2.5.0
  */
 class AISearchSummary extends Feature {
+	use DisableAfterFailures;
 	use LogRequest;
 
 	/**
@@ -82,6 +84,16 @@ The following JSON object contains the URL and the page content. You should use 
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 
 		add_filter( 'ep_query_logger_allowed_log_types', [ $this, 'add_ai_search_summary_to_allowed_log_types' ] );
+	}
+
+	/**
+	 * Pre-handle feature activation
+	 *
+	 * @since 2.5.1
+	 * @return void
+	 */
+	public function pre_handle_feature_activation() {
+		$this->setup_failures_count();
 	}
 
 	/**
@@ -538,9 +550,14 @@ The following JSON object contains the URL and the page content. You should use 
 		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
 
 		// Vector support was added in Elasticsearch 7.0.
-		if ( version_compare( \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '<' ) ) {
+		$es_version = \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version();
+		if ( $es_version && version_compare( $es_version, '7.0', '<' ) ) {
 			$status->code    = 2;
 			$status->message = esc_html__( 'You need to have Elasticsearch with version >7.0.', 'elasticpress-labs' );
+		}
+
+		if ( $this->should_disable_after_failures() ) {
+			$status = $this->update_requirements_status( $status );
 		}
 
 		return $status;

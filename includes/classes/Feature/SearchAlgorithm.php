@@ -82,6 +82,8 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 
 		add_filter( 'ep_post_search_algorithm', [ $this, 'get_search_algorithm_version' ] );
 		add_filter( 'ep_sanitize_feature_settings', [ $this, 'fix_search_algorithm_version' ], 10, 2 );
+		add_filter( 'option_ep_feature_settings', [ $this, 'maybe_apply_default_search_algorithm_version' ] );
+		add_filter( 'option_ep_feature_settings_draft', [ $this, 'maybe_apply_default_search_algorithm_version' ] );
 	}
 
 	/**
@@ -162,7 +164,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	}
 
 	/**
-	 * Set the search algorithm
+	 * Get the current search algorithm
 	 *
 	 * @param string $search_algorithm The search algorithm slug
 	 * @return string
@@ -174,17 +176,40 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	}
 
 	/**
+	 * Maybe apply the default search algorithm version
+	 *
+	 * Applying it to the feature options (normal and draft), avoids getting an
+	 * unselected search algorithm version.
+	 *
+	 * @since 2.5.1
+	 * @param array $settings The settings to be sanitized
+	 * @return array The sanitized settings
+	 */
+	public function maybe_apply_default_search_algorithm_version( $settings ) {
+		if ( empty( $settings['search_algorithm'] ) ) {
+			return $settings;
+		}
+
+		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+		if ( ! in_array( $settings['search_algorithm']['search_algorithm_version'], $available_search_algorithms, true ) ) {
+			$settings['search_algorithm']['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Tell user whether requirements for feature are met or not.
 	 *
 	 * @return array $status Status array
 	 * @since 2.0
 	 */
 	public function requirements_status() {
-		$status = new \ElasticPress\FeatureRequirementsStatus( 1 );
-
-		$status->message = esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' );
-
-		return $status;
+		return new \ElasticPress\FeatureRequirementsStatus(
+			1,
+			esc_html__( 'Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches.', 'elasticpress-labs' ),
+			$this
+		);
 	}
 
 	/**
