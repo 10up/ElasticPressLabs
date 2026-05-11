@@ -34,7 +34,7 @@ Please report security bugs found in the source code of the undefined plugin thr
 
 == Changelog ==
 
-= 2.5.1 - 2026-05-07 =
+= 2.5.1 - 2026-05-11 =
 
 __Added:__
 
@@ -44,6 +44,7 @@ __Changed:__
 
 * [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia).
 * Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia).
+* Avoid excessive database writes when logging AI feature failures. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy).
 
 __Fixed:__

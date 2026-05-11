@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
-## [2.5.1] - 2026-05-07
+## [2.5.1] - 2026-05-11
 
 ### Added
 * [Semantic Search] Message about incompatibility with Autosuggest and Instant Results. Props [@felipeelia](https://github.com/felipeelia) via [#171](https://github.com/10up/ElasticPressLabs/pull/171).
@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Changed
 * [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia) via [#188](https://github.com/10up/ElasticPressLabs/pull/188).
 * Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia) via [#176](https://github.com/10up/ElasticPressLabs/pull/176).
+* Avoid excessive database writes when logging AI feature failures. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#201](https://github.com/10up/ElasticPressLabs/pull/201).
 * Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy) via [#195](https://github.com/10up/ElasticPressLabs/pull/195).
 
 ### Deprecated
