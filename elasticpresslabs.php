@@ -54,5 +54,6 @@ require_once ELASTICPRESS_LABS_INC . 'functions/utils.php';
 register_activation_hook( __FILE__, '\ElasticPressLabs\Core\activate' );
 register_deactivation_hook( __FILE__, '\ElasticPressLabs\Core\deactivate' );
 
+
 // Bootstrap.
 ElasticPressLabs\Core\setup();
