@@ -64,12 +64,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "c20b835002b47c2991010a079356142de095b13a"
+                "reference": "10fe375bf443a0e8c668fa3e38447f913332496f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/c20b835002b47c2991010a079356142de095b13a",
-                "reference": "c20b835002b47c2991010a079356142de095b13a",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/10fe375bf443a0e8c668fa3e38447f913332496f",
+                "reference": "10fe375bf443a0e8c668fa3e38447f913332496f",
                 "shasum": ""
             },
             "require": {
@@ -83,6 +83,9 @@
                 "phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
                 "phpcompatibility/phpcompatibility-wp": "*",
                 "phpunit/phpunit": "^9.0.0",
+                "symfony/filesystem": "^7.0",
+                "symfony/finder": "^7.0",
+                "symfony/process": "^7.0",
                 "wpackagist-plugin/woocommerce": "*",
                 "yoast/phpunit-polyfills": "^4.0"
             },
@@ -133,7 +136,7 @@
                 "issues": "https://github.com/10up/ElasticPress/issues",
                 "source": "https://github.com/10up/ElasticPress/tree/develop"
             },
-            "time": "2026-02-06T18:36:40+00:00"
+            "time": "2026-07-01T12:39:20+00:00"
         },
         {
             "name": "10up/phpcs-composer",
@@ -3262,5 +3265,5 @@
         "php": "^7.4|^8.0"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
