@@ -486,15 +486,16 @@ class VectorEmbeddings extends Feature {
 
 		$chunks     = [];
 		$text_count = count( $words );
+		$step       = max( 1, $chunk_size - (int) $overlap_size );
 
 		// Iterate through & chunk data with an overlap.
-		for ( $i = 0; $i < $text_count; $i += $chunk_size ) {
+		for ( $i = 0; $i < $text_count; $i += $step ) {
 			// Join a set of words into a string.
 			$chunk = implode(
 				' ',
 				array_slice(
 					$words,
-					max( $i - $overlap_size, 0 ),
+					$i,
 					$chunk_size
 				)
 			);
