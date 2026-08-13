@@ -1,8 +1,7 @@
 name: "WordPress version checker"
 
 permissions:
-  contents: read
-
+  issues: write
 
 on:
   push:
