@@ -22,10 +22,10 @@ jobs:
         php-version: '8.2'
         coverage: none
 
-    - name: install node v20
+    - name: install node v24
       uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
 
     - name: Build
       run: |
