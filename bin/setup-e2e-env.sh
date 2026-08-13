@@ -79,8 +79,13 @@ if [ ! -z $EP_BRANCH ]; then
 	# read the package version. Mark it safe inside the container only.
 	./bin/wp-env-cli tests-wordpress "git config --global --add safe.directory /var/www/html/wp-content/plugins/elasticpress"
 	./bin/wp-env-cli tests-wordpress "composer --working-dir=./wp-content/plugins/elasticpress install"
-	LOCAL_PATH=$(npm run env install-path --silent --no-progress)
-	pushd $LOCAL_PATH/elasticpress
+	# wp-env 11 removed `install-path`; read the work directory from config instead.
+	LOCAL_PATH=$(node -e "require('@wordpress/env/lib/config').loadConfig('.').then((c) => process.stdout.write(c.workDirectoryPath))")
+	if [ ! -d "${LOCAL_PATH}/elasticpress" ]; then
+		echo "Could not find ElasticPress at ${LOCAL_PATH}/elasticpress"
+		exit 1
+	fi
+	pushd "${LOCAL_PATH}/elasticpress"
 		sudo chmod -R 767 .
 		# Husky's prepare hook also invokes git and is not needed to build assets.
 		npm pkg set scripts.prepare=" "
