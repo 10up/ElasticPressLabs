@@ -74,11 +74,17 @@ fi
 if [ ! -z $EP_BRANCH ]; then
 	./bin/wp-env-cli tests-wordpress "rm -rf wp-content/plugins/elasticpress"
 	./bin/wp-env-cli tests-wordpress "git clone --depth 1 https://github.com/10up/ElasticPress.git --branch $EP_BRANCH wp-content/plugins/elasticpress"
+	# wp-env bind-mounts are often owned by a different UID than the container user.
+	# Git 2.35.2+ then refuses the clone ("dubious ownership"), and Composer cannot
+	# read the package version. Mark it safe inside the container only.
+	./bin/wp-env-cli tests-wordpress "git config --global --add safe.directory /var/www/html/wp-content/plugins/elasticpress"
 	./bin/wp-env-cli tests-wordpress "composer --working-dir=./wp-content/plugins/elasticpress install"
 	LOCAL_PATH=$(npm run env install-path --silent --no-progress)
 	pushd $LOCAL_PATH/elasticpress
 		sudo chmod -R 767 .
-		npm ci
+		# Husky's prepare hook also invokes git and is not needed to build assets.
+		npm pkg set scripts.prepare=" "
+		HUSKY=0 npm ci
 		npm run build
 	popd
 fi
