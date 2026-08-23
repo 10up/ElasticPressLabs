@@ -139,6 +139,6 @@ export const VectorEmbeddingsProvider = ({
  *
  * @returns {object} API Search Context.
  */
-export const useVectorEmebeddingSettings = () => {
+export const useVectorEmbeddingSettings = () => {
 	return useContext(Context);
 };

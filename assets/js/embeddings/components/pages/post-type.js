@@ -7,14 +7,14 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 import TaxonomyInclusion from '../fieldsets/taxonomy-inclusion';
 import MetaInclusion from '../fieldsets/meta-inclusion';
 import EmbeddedFields from '../fieldsets/embedded-fields';
 import EmbeddingMode from '../fieldsets/embedding-mode';
 
 export default ({ postType }) => {
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 	const {
 		embeddable,
 		fieldsIndexingInclude,

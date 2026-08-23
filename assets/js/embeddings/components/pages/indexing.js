@@ -7,10 +7,10 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default () => {
-	const { currentSettings, setChunkSize, setChunkOverlap } = useVectorEmebeddingSettings();
+	const { currentSettings, setChunkSize, setChunkOverlap } = useVectorEmbeddingSettings();
 	const { chunkSize, chunkOverlap } = currentSettings;
 	return (
 		<Panel>
@@ -24,6 +24,7 @@ export default () => {
 					onChange={setChunkSize}
 					min={1}
 					max={300}
+					__next40pxDefaultSize
 				/>
 				<RangeControl
 					label={__('Chunk Overlap (in words)', 'elasticpress-labs')}
@@ -31,6 +32,7 @@ export default () => {
 					onChange={setChunkOverlap}
 					min={1}
 					max={100}
+					__next40pxDefaultSize
 				/>
 			</PanelBody>
 		</Panel>

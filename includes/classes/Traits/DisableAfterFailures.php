@@ -58,7 +58,9 @@ trait DisableAfterFailures {
 	 * @return void
 	 */
 	public function reset_failures_count() {
-		delete_transient( $this->get_failures_transient_key() );
+		$transient_key = $this->get_failures_transient_key();
+		delete_transient( $transient_key );
+		delete_transient( $transient_key . '_lock' );
 	}
 
 	/**
@@ -67,7 +69,8 @@ trait DisableAfterFailures {
 	 * @return boolean
 	 */
 	public function should_disable_after_failures() {
-		$failures = $this->cleanup_failures( (array) get_transient( $this->get_failures_transient_key() ) );
+		$stored   = get_transient( $this->get_failures_transient_key() );
+		$failures = $this->cleanup_failures( is_array( $stored ) ? $stored : [] );
 		return count( $failures ) > $this->get_max_failures_count();
 	}
 
@@ -158,19 +161,59 @@ trait DisableAfterFailures {
 	}
 
 	/**
+	 * Get the minimum time between failures storage (after the limit is hit).
+	 *
+	 * @return int
+	 */
+	protected function get_failures_min_time_between_writes(): int {
+		$default_min_time_between_writes = wp_using_ext_object_cache() ? 1 : 10;
+
+		/**
+		 * Filter the minimum time between failures storage (after the limit is hit).
+		 *
+		 * @hook ep_failures_min_time_between_writes
+		 * @since 2.5.1
+		 * @param {int}     $min_time_between_writes The minimum time between failures storage (after the limit is hit). Default is 1 seconds if using external object cache, 10 seconds otherwise.
+		 * @param {Feature} $feature                 The feature object.
+		 * @return {int} The minimum time between failures storage (after the limit is hit).
+		 */
+		return (int) apply_filters( 'ep_failures_min_time_between_writes', $default_min_time_between_writes, $this );
+	}
+
+	/**
 	 * Update the failures count.
 	 *
 	 * @return void
 	 */
 	protected function update_failures_count() {
 		$transient_key = $this->get_failures_transient_key();
-		$failures      = (array) get_transient( $transient_key );
-		$failures[]    = time();
+
+		$stored   = get_transient( $transient_key );
+		$failures = is_array( $stored ) ? $stored : [];
+
+		if ( count( $failures ) > $this->get_max_failures_count() ) {
+			$time_since_last_failure = time() - max( $failures );
+
+			if ( $time_since_last_failure < $this->get_failures_min_time_between_writes() ) {
+				return;
+			}
+		}
+
+		$failures[] = time();
+		$failures   = $this->cleanup_failures( $failures );
+
+		$lock_ttl = max( 1, (int) $this->get_failures_min_time_between_writes() );
+		if ( wp_using_ext_object_cache() && ! wp_cache_add( $transient_key . '_lock', 1, 'transient', $lock_ttl ) ) {
+			return;
+		}
+
 		set_transient(
 			$transient_key,
-			$this->cleanup_failures( $failures ),
+			$failures,
 			$this->get_max_failures_timeframe()
 		);
+
+		delete_transient( $transient_key . '_lock' );
 	}
 
 	/**

@@ -14,6 +14,44 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+## [2.5.1] - 2026-05-11
+
+### Added
+* [Semantic Search] Message about incompatibility with Autosuggest and Instant Results. Props [@felipeelia](https://github.com/felipeelia) via [#171](https://github.com/10up/ElasticPressLabs/pull/171).
+
+### Changed
+* [Semantic Search] Adjust when search algorithms are displayed. Props [@felipeelia](https://github.com/felipeelia) via [#188](https://github.com/10up/ElasticPressLabs/pull/188).
+* Disable AI features after 3 failures. Props [@felipeelia](https://github.com/felipeelia) via [#176](https://github.com/10up/ElasticPressLabs/pull/176).
+* Avoid excessive database writes when logging AI feature failures. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#201](https://github.com/10up/ElasticPressLabs/pull/201).
+* Move Co-Authors Plus and WooCommerce Subscription Search settings to the third-party plugins section. Props [@burhandodhy](https://github.com/burhandodhy) via [#195](https://github.com/10up/ElasticPressLabs/pull/195).
+
+### Deprecated
+### Removed
+### Fixed
+* AI Features being automatically disabled when ES is unavailable. Props [@felipeelia](https://github.com/felipeelia) via [#168](https://github.com/10up/ElasticPressLabs/pull/168).
+* Vector embeddings screen: Incomplete text and wrong `<title>`. Props [@felipeelia](https://github.com/felipeelia) via [#169](https://github.com/10up/ElasticPressLabs/pull/169).
+* Vertical spacing between embedding field checkboxes. Props [@burhandodhy](https://github.com/burhandodhy) via [#192](https://github.com/10up/ElasticPressLabs/pull/192).
+* Typo in `useVectorEmbeddingSettings`. Props [@burhandodhy](https://github.com/burhandodhy) via [#193](https://github.com/10up/ElasticPressLabs/pull/193).
+* `version_compare()` deprecation when passing null. Props [@burhandodhy](https://github.com/burhandodhy) via [#194](https://github.com/10up/ElasticPressLabs/pull/194).
+* Removed obsolete TinyMCE editor stylesheet and unused `script_loader_tag` filter. Props [@burhandodhy](https://github.com/burhandodhy) via [#197](https://github.com/10up/ElasticPressLabs/pull/197).
+* Deprecated `RangeControl` default size, wrap checkboxes in `VStack`, and rename `enablefieldsIndexing` to `enableFieldsIndexing`. Props [@burhandodhy](https://github.com/burhandodhy) via [#199](https://github.com/10up/ElasticPressLabs/pull/199).
+
+### Security
+* Updated composer and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#170](https://github.com/10up/ElasticPressLabs/pull/170).
+* npm audit dependency updates. Props [@felipeelia](https://github.com/felipeelia) via [#191](https://github.com/10up/ElasticPressLabs/pull/191).
+* Bumped `lodash` from 4.17.21 to 4.18.1. Props [@dependabot](https://github.com/dependabot) via [#175](https://github.com/10up/ElasticPressLabs/pull/175) and [#189](https://github.com/10up/ElasticPressLabs/pull/189).
+* Bumped `phpunit/phpunit` from 9.6.22 to 9.6.33. Props [@dependabot](https://github.com/dependabot) via [#177](https://github.com/10up/ElasticPressLabs/pull/177).
+* Bumped `webpack` from 5.100.2 to 5.105.0. Props [@dependabot](https://github.com/dependabot) via [#179](https://github.com/10up/ElasticPressLabs/pull/179).
+* Bumped `qs` from 6.14.1 to 6.14.2. Props [@dependabot](https://github.com/dependabot) via [#182](https://github.com/10up/ElasticPressLabs/pull/182).
+* Bumped `immutable` from 5.1.3 to 5.1.5. Props [@dependabot](https://github.com/dependabot) via [#185](https://github.com/10up/ElasticPressLabs/pull/185).
+* Bumped `simple-git` from 3.28.0 to 3.33.0 and `svgo` from 3.3.2 to 3.3.3. Props [@dependabot](https://github.com/dependabot) via [#186](https://github.com/10up/ElasticPressLabs/pull/186).
+* Bumped `flatted` from 3.3.3 to 3.4.2 and `picomatch` from 2.3.1 to 2.3.2. Props [@dependabot](https://github.com/dependabot) via [#187](https://github.com/10up/ElasticPressLabs/pull/187).
+
+### Developer
+* Add Patchstack security-reporting FAQ. Props [@jeffpaul](https://github.com/jeffpaul) via [#174](https://github.com/10up/ElasticPressLabs/pull/174).
+* Set explicit `permissions` on GitHub Actions workflows. Props [@jeffpaul](https://github.com/jeffpaul) via [#178](https://github.com/10up/ElasticPressLabs/pull/178).
+* Add `ep_user_sync_kill` filter in Users `action_queue_meta_sync`. Props [@burhandodhy](https://github.com/burhandodhy) and [@yarovikov](https://github.com/yarovikov) via [#183](https://github.com/10up/ElasticPressLabs/pull/183).
+
 ## [2.5.0] - 2025-11-05
 
 ### Added
@@ -71,7 +109,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 - Bumped actions/upload-artifact from v3 to v4. Props [@iamdharmesh](https://github.com/iamdharmesh) via [#106](https://github.com/10up/ElasticPressLabs/pull/106).
 - Update versions of GitHub Actions, composer, and node packages. Props [@felipeelia](https://github.com/felipeelia) via [#110](https://github.com/10up/ElasticPressLabs/pull/110) and [#111](https://github.com/10up/ElasticPressLabs/pull/111).
 
-## Fixed
+### Fixed
 - Textdomain in the Users feature. Props [@burhandodhy](https://github.com/burhandodhy) via [#114](https://github.com/10up/ElasticPressLabs/pull/114).
 
 ## [2.3.0] - 2024-03-04
@@ -126,7 +164,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Users Feature (migrated from the main ElasticPress plugin). Props [@felipeelia](https://github.com/felipeelia), [@MARQAS](https://github.com/MARQAS), and [@burhandodhy](https://github.com/burhandodhy) via [#50](https://github.com/10up/ElasticPressLabs/pull/50) and [#59](https://github.com/10up/ElasticPressLabs/pull/50).
 - Load PHP classes via `spl_autoload_register()`. Props [@burhandodhy](https://github.com/burhandodhy) via [#57](https://github.com/10up/ElasticPressLabs/pull/57).
 
-## Changed
+### Changed
 - Code standards are now applied to the test suite too. Props [@felipeelia](https://github.com/felipeelia) via [#54](https://github.com/10up/ElasticPressLabs/pull/54).
 - Hide subfeatures if the required plugins are not activated. Props [@burhandodhy](https://github.com/burhandodhy) via [#56](https://github.com/10up/ElasticPressLabs/pull/56).
 
@@ -171,11 +209,12 @@ This version introduces the new *External Content* feature. Check [our blog post
 ### Added
 - Integration with [Co-Authors Plus](https://wordpress.org/plugins/co-authors-plus/). Props [@dinhtungdu](https://github.com/dinhtungdu), [@Rahmon](https://github.com/Rahmon), and [@mbanusic](https://github.com/mbanusic) via [#4](https://github.com/10up/ElasticPressLabs/pull/4).
 
-### [1.0.0] - 2021-02-09
+## [1.0.0] - 2021-02-09
 ### Added
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.5.1]: https://github.com/10up/ElasticPressLabs/compare/2.5.0...2.5.1
 [2.5.0]: https://github.com/10up/ElasticPressLabs/compare/2.4.0...2.5.0
 [2.4.0]: https://github.com/10up/ElasticPressLabs/compare/2.3.1...2.4.0
 [2.3.1]: https://github.com/10up/ElasticPressLabs/compare/2.3.0...2.3.1

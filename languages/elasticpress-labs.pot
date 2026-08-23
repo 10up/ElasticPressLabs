@@ -1,37 +1,42 @@
-# Copyright (C) 2025 10up
+# Copyright (C) 2026 10up
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.5.0\n"
+"Project-Id-Version: ElasticPress Labs 2.5.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-05T17:05:15+00:00\n"
+"POT-Creation-Date: 2026-05-07T12:28:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.8.1\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: elasticpress-labs\n"
 
 #. Plugin Name of the plugin
+#: elasticpresslabs.php
 #: includes/classes/Feature/ElasticPressLabs.php:54
 msgid "ElasticPress Labs"
 msgstr ""
 
 #. Plugin URI of the plugin
+#: elasticpresslabs.php
 msgid "https://github.com/10up/ElasticPressLabs"
 msgstr ""
 
 #. Description of the plugin
+#: elasticpresslabs.php
 msgid "A developer focused interface to commonly ElasticPress plugin issues."
 msgstr ""
 
 #. Author of the plugin
+#: elasticpresslabs.php
 msgid "10up"
 msgstr ""
 
 #. Author URI of the plugin
+#: elasticpresslabs.php
 msgid "https://10up.com"
 msgstr ""
 
@@ -39,67 +44,68 @@ msgstr ""
 msgid "Error: Please run $ composer install in the ElasticPress Labs plugin directory."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:70
+#: includes/classes/Feature/AISearchSummary.php:72
 msgid "AI Search Summary"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:72
+#: includes/classes/Feature/AISearchSummary.php:74
 msgid "Use the AI Search Summary block in your search results page to display an AI-generated summary of the search results."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:415
+#: includes/classes/Feature/AISearchSummary.php:427
 msgid "Send your response as a JSON object with the following keys: \"response\" (the asnwer, in HTML format) and \"references\" (an array of objects with the URLs you used to build the response, having \"url\" and \"title\" as attributes). Do not wrap the response in any other tags or limiters like \"```json\". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the \"response\" value, as it will be displayed using the values in \"references\"."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:460
-#: includes/classes/Feature/AISearchSummary.php:465
 #: includes/classes/Feature/AISearchSummary.php:472
+#: includes/classes/Feature/AISearchSummary.php:477
+#: includes/classes/Feature/AISearchSummary.php:484
 msgid "An error occurred. Try again later."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:482
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:236
+#: includes/classes/Feature/AISearchSummary.php:494
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:255
 msgid "OpenAI API Key"
 msgstr ""
 
 #. translators: 1: OpenAI sign up URL, 2: OpenAI API keys URL
-#: includes/classes/Feature/AISearchSummary.php:486
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:240
+#: includes/classes/Feature/AISearchSummary.php:498
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:259
+#, php-format
 msgid "Don't have an OpenAI account yet? <a title=\"Sign up for an OpenAI account\" href=\"%1$s\">Sign up for one</a> in order to get your API key.<br>If you already have an account, <a title=\"Get your API key from the OpenAI website\" href=\"%2$s\">generate an API key</a>."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:503
-#: includes/classes/Feature/AISearchSummary.php:504
+#: includes/classes/Feature/AISearchSummary.php:515
+#: includes/classes/Feature/AISearchSummary.php:516
 msgid "OpenAI Chat Completion API Url"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:510
+#: includes/classes/Feature/AISearchSummary.php:522
 msgid "OpenAI Chat model"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:511
+#: includes/classes/Feature/AISearchSummary.php:523
 msgid "The name of the chat model to use"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:517
+#: includes/classes/Feature/AISearchSummary.php:529
 msgid "Number of posts"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:518
+#: includes/classes/Feature/AISearchSummary.php:530
 msgid "Number of posts to be used in the context building"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:524
+#: includes/classes/Feature/AISearchSummary.php:536
 msgid "AI Prompt"
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:525
+#: includes/classes/Feature/AISearchSummary.php:537
 msgid "The <code>{posts}</code> string will be replaced."
 msgstr ""
 
-#: includes/classes/Feature/AISearchSummary.php:543
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:72
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:142
+#: includes/classes/Feature/AISearchSummary.php:556
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:73
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:156
 msgid "You need to have Elasticsearch with version >7.0."
 msgstr ""
 
@@ -122,60 +128,67 @@ msgstr ""
 
 #. translators: 1: <code>+</code>, 2: <code>AND</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:360
+#, php-format
 msgid "%1$s or %2$s signifies AND operation. eg.: modern +art, modern AND art"
 msgstr ""
 
 #. translators: 1: <code>|</code>, 2: <code>OR</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:372
+#, php-format
 msgid "%1$s or %2$s signifies OR operation. eg.: modern | art, modern OR art"
 msgstr ""
 
 #. translators: 1: <code>-</code>, 2: <code>NOT</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:384
+#, php-format
 msgid "%1$s or %2$s signifies NOT operation. eg.: modern -art, modern NOT art"
 msgstr ""
 
 #. translators: 1: <code>"</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:396
+#, php-format
 msgid "%1$s wraps characters to signify a phrase. eg.: \"modern art\""
 msgstr ""
 
 #. translators: 1: <code>*</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:407
+#, php-format
 msgid "%1$s signifies a prefix wildcard. eg.: art*"
 msgstr ""
 
 #. translators: 1: <code>()</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:418
+#, php-format
 msgid "%1$s signifies precedence. eg.: (MoMA OR (modern AND art))"
 msgstr ""
 
 #. translators: 1: <code>~#</code>
 #: includes/classes/Feature/BooleanSearchOperators.php:429
+#, php-format
 msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:71
+#: includes/classes/Feature/CoAuthorsPlus.php:73
 msgid "Co-Authors Plus"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:225
+#: includes/classes/Feature/CoAuthorsPlus.php:227
 msgid "Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:237
+#: includes/classes/Feature/CoAuthorsPlus.php:239
 msgid "If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:258
+#: includes/classes/Feature/CoAuthorsPlus.php:260
 msgid "When enabled, this feature integrates ElasticPress with Co-Authors Plus to enhance author-related queries on the frontend. If \"Protected Content\" is activated, visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:276
+#: includes/classes/Feature/CoAuthorsPlus.php:278
 msgid "You need to have Co-Authors Plus installed and activated."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:279
+#: includes/classes/Feature/CoAuthorsPlus.php:281
 msgid "You need to activate the Protected Content Feature to this feature work properly."
 msgstr ""
 
@@ -201,6 +214,7 @@ msgstr ""
 
 #. translators: Search Fields & Weighting Dashboard URL
 #: includes/classes/Feature/ExternalContent.php:97
+#, php-format
 msgid "Add one field per line. Visit the <a href=\"%s\">Search Fields & Weighting Dashboard</a> if you want to make their <code>ep_external_content_*</code> version searchable."
 msgstr ""
 
@@ -214,6 +228,7 @@ msgstr ""
 
 #. translators: %1$s and %2$s are the opening and closing <a> tags, respectively
 #: includes/classes/Feature/GeoLocation.php:58
+#, php-format
 msgid "Allow users to search for posts based on their location. %1$sLearn more about it.%2$s"
 msgstr ""
 
@@ -231,19 +246,22 @@ msgstr ""
 
 #: includes/classes/Feature/GeoLocation.php:287
 #: assets/js/geo-location/panel/index.js:70
-#: dist/js/geo-location-editor-script.js:1
+#: dist/js/geo-location-editor-script.js:170
+#: dist/js/geo-location-editor-script.js:111
 msgid "Latitude"
 msgstr ""
 
 #: includes/classes/Feature/GeoLocation.php:298
 #: assets/js/geo-location/panel/index.js:79
-#: dist/js/geo-location-editor-script.js:1
+#: dist/js/geo-location-editor-script.js:186
+#: dist/js/geo-location-editor-script.js:120
 msgid "Longitude"
 msgstr ""
 
 #: includes/classes/Feature/GeoLocation.php:309
 #: assets/js/geo-location/panel/AutoCompleteField.js:31
-#: dist/js/geo-location-editor-script.js:1
+#: dist/js/geo-location-editor-script.js:46
+#: dist/js/geo-location-editor-script.js:31
 msgid "Address"
 msgstr ""
 
@@ -281,6 +299,7 @@ msgstr ""
 
 #. translators: Sync Page URL
 #: includes/classes/Feature/MetaKeyPattern.php:493
+#, php-format
 msgid "Changes in this feature will only be applied after you <a href=\"%1$s\">delete all data and sync</a>."
 msgstr ""
 
@@ -296,25 +315,27 @@ msgstr ""
 msgid "By default, the ElasticPress uses version 3.5 but you can change to version 3.4."
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:103
-#: includes/classes/Feature/SearchAlgorithm.php:158
+#: includes/classes/Feature/SearchAlgorithm.php:105
+#: includes/classes/Feature/SearchAlgorithm.php:160
 msgid "Version"
 msgstr ""
 
-#: includes/classes/Feature/SearchAlgorithm.php:185
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:157
+#: includes/classes/Feature/SearchAlgorithm.php:210
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:159
 msgid "Changes in this feature will be reflected only on the next page reload or expiration of any front-end caches."
 msgstr ""
 
 #: includes/classes/Feature/SearchTemplates.php:52
 #: includes/classes/Feature/SearchTemplates.php:119
 #: assets/js/search-templates/index.js:25
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:2624
+#: dist/js/search-templates-script.js:2083
 msgid "Search Templates"
 msgstr ""
 
 #. translators: %s: Search API documentation URL
 #: includes/classes/Feature/SearchTemplates.php:56
+#, php-format
 msgid "Search templates are Elasticsearch queries stored in ElasticPress.io servers used by the <a href=\"%s\" target=\"_blank\">Search API</a>."
 msgstr ""
 
@@ -362,24 +383,32 @@ msgstr ""
 msgid "Search using Elasticsearch kNN Cosine."
 msgstr ""
 
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:77
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:78
 msgid "With Elasticsearch version 7, only the \"kNN Cosine\" algorithm is available."
 msgstr ""
 
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:90
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:91
 msgid "Semantic Search"
 msgstr ""
 
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:92
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:93
 msgid "Enable kNN Search. To use a kNN search algorithm, enable the Search Algorithm Version feature and select one of the kNN variations."
 msgstr ""
 
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:133
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:171
 msgid "Minimum score"
 msgstr ""
 
-#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:134
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:172
 msgid "The minimum score to be used by kNN searches. Input a number between 0 and 1."
+msgstr ""
+
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:260
+msgid "Please note that Semantic Search algorithms (%l) are not compatible with the Autosuggest and Instant Results features. Autosuggest and Instant Results will be disabled while those algorithms are selected."
+msgstr ""
+
+#: includes/classes/Feature/SemanticSearch/SemanticSearch.php:298
+msgid "This feature is temporarily disabled because it is incompatible with Semantic Search algorithms."
 msgstr ""
 
 #: includes/classes/Feature/Users.php:43
@@ -403,9 +432,14 @@ msgstr ""
 msgid "Be aware that storing user data may bound you to certain legal obligations depending on your local government regulations."
 msgstr ""
 
+#: includes/classes/Feature/VectorEmbeddings/Indexable.php:49
+msgid "The mapping is not valid."
+msgstr ""
+
 #: includes/classes/Feature/VectorEmbeddings/Indexables/Post/Post.php:148
 #: assets/js/embeddings-editor/plugins/exclude-from-embedding.js:29
-#: dist/js/embeddings-editor-script.js:1
+#: dist/js/embeddings-editor-script.js:56
+#: dist/js/embeddings-editor-script.js:29
 msgid "Exclude from vector embeddings"
 msgstr ""
 
@@ -431,13 +465,14 @@ msgstr ""
 
 #. translators: %s is a list of errors.
 #: includes/classes/Feature/VectorEmbeddings/Indexables/Post/Post.php:263
+#, php-format
 msgid "Vector embeddings failed with the following error(s): %s"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/Settings.php:49
-#: includes/classes/Feature/VectorEmbeddings/Settings.php:50
+#: includes/classes/Feature/VectorEmbeddings/Settings.php:51
+#: includes/classes/Feature/VectorEmbeddings/Settings.php:52
 #: includes/classes/Feature/VectorEmbeddings/StatusReport.php:39
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:93
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:96
 msgid "Vector Embeddings"
 msgstr ""
 
@@ -455,87 +490,92 @@ msgstr ""
 
 #. translators: 1: total count, 2: list of post links
 #: includes/classes/Feature/VectorEmbeddings/StatusReport.php:125
+#, php-format
 msgid "%1$d (%2$l)"
 msgstr ""
 
 #. translators: 1: total count, 2: list of post links
 #: includes/classes/Feature/VectorEmbeddings/StatusReport.php:133
+#, php-format
 msgid "%1$d (%2$s, and more)"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:95
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:98
 msgid "This feature enables storage of vector embeddings, a numerical representation of the indexed content that can capture semantic relationships and similarities between data points. These embeddings are often used by AI models to process and understand complex information more efficiently and are used for features like natural language processing, recommendations and computer vision."
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:102
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:105
 msgid "OpenAI Connection Details"
 msgstr ""
 
 #. translators: 1: Settings URL, 2: Recommended bulk setting, 3: WP-CLI URL
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:157
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:171
+#, php-format
 msgid "While using OpenAI, as each content piece is processed individually, consider using a low number of items per sync cycle in the <a href=\"%1$s\">Settings page</a>, like %2$d. You can also try running it via <a href=\"%3$s\">WP-CLI</a>."
 msgstr ""
 
 #. translators: %s: Upgrade URL
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:175
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:194
+#, php-format
 msgid "Your current ElasticPress.io plan does not include the vector embeddings service. <a href=\"%s\" target=\"_blank\">Upgrade now!</a>"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:184
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:203
 msgid "You need to update the ElasticPress plugin to use this feature."
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:198
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:217
 msgid "Generator"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:201
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:220
 msgid "External embedding processing"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:205
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:224
 msgid "OpenAI"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:209
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:228
 msgid "<b>External embedding processing:</b> An external process is providing the vector_embeddings meta field.<br><b>OpenAI:</b> Use the fields below to generate the embeddings."
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:219
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:238
 msgid "ElasticPress.io"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:224
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:243
 msgid "<b>ElasticPress.io:</b> Your vectors will be generated by the ElasticPress.io service.<br>"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:256
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:258
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:275
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:277
 msgid "OpenAI Embeddings API Url"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:264
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:283
 msgid "OpenAI Embedding model"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:266
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:285
 msgid "The name of the embedding model to use"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:272
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:291
 msgid "Embedding model dimensions"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:274
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:293
 msgid "The number of dimensions supported by your embedding model"
 msgstr ""
 
 #. translators: 1: object type, 2: object id.
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:336
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:355
+#, php-format
 msgid "Generating embedding for %1$s ID: %2$s"
 msgstr ""
 
-#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:378
+#: includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php:399
 msgid "No data returned from the embedding service."
 msgstr ""
 
@@ -543,23 +583,23 @@ msgstr ""
 msgid "An error occured"
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:49
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:51
 msgid "WooCommerce Admin Subscription Search"
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:57
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:59
 msgid "Have WooCommerce Subscription admin search use EP."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:66
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:68
 msgid "By default, WooCommerce Subscriptions does not use ElasticPress. This tells it to index and search those, just like ElasticPress does for orders."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:152
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:154
 msgid "This feature requires the WooCommerce Subscriptions plugin to be activated."
 msgstr ""
 
-#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:155
+#: includes/classes/Feature/WooCommerceSubscriptionSearch.php:157
 msgid "This feature requires the WooCommerce and Protected Content features to be enabled."
 msgstr ""
 
@@ -599,320 +639,394 @@ msgstr ""
 msgid "Taxonomies settings."
 msgstr ""
 
-#: includes/functions/core.php:267
+#. translators: 1: Maximum number of failures, 2: Time remaining
+#: includes/classes/Traits/DisableAfterFailures.php:97
+#, php-format
+msgid "The feature has been temporarily disabled after %1$d failures. It will be re-enabled in %2$s. Alternatively, you can <a href=\"%3$s\">reset the counter and re-activate the feature now</a>."
+msgstr ""
+
+#: includes/functions/core.php:212
 msgid "AI"
 msgstr ""
 
-#: includes/functions/core.php:278
+#: includes/functions/core.php:223
 msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
 #. translators: Min. EP version
-#: includes/functions/core.php:293
+#: includes/functions/core.php:238
+#, php-format
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""
 
 #: assets/js/blocks/ai-search-summary/edit.js:26
-#: dist/blocks/ai-search-summary-block-script.js:1
+#: dist/blocks/ai-search-summary-block-script.js:54
+#: dist/blocks/ai-search-summary-block-script.js:26
 msgid "Title text"
 msgstr ""
 
 #: assets/js/blocks/ai-search-summary/edit.js:27
-#: dist/blocks/ai-search-summary-block-script.js:1
+#: dist/blocks/ai-search-summary-block-script.js:55
+#: dist/blocks/ai-search-summary-block-script.js:27
 msgid "Add title"
 msgstr ""
 
 #: assets/js/blocks/ai-search-summary/edit.js:32
-#: dist/blocks/ai-search-summary-block-script.js:1
+#: dist/blocks/ai-search-summary-block-script.js:68
+#: dist/blocks/ai-search-summary-block-script.js:32
 msgid "AI Response"
 msgstr ""
 
 #: assets/js/blocks/ai-search-summary/edit.js:34
-#: dist/blocks/ai-search-summary-block-script.js:1
+#: dist/blocks/ai-search-summary-block-script.js:76
+#: dist/blocks/ai-search-summary-block-script.js:34
 msgid "Note"
 msgstr ""
 
 #: assets/js/blocks/ai-search-summary/edit.js:35
-#: dist/blocks/ai-search-summary-block-script.js:1
+#: dist/blocks/ai-search-summary-block-script.js:77
+#: dist/blocks/ai-search-summary-block-script.js:35
 msgid "Add a note"
 msgstr ""
 
 #: assets/js/embeddings-editor/plugins/exclude-from-embedding.js:30
-#: dist/js/embeddings-editor-script.js:1
+#: dist/js/embeddings-editor-script.js:57
+#: dist/js/embeddings-editor-script.js:30
 msgid "Check this if you don't want this post to be vectorized. Depending on the post meta and taxonomy rules configured for this post type, this post may already be excluded."
 msgstr ""
 
 #: assets/js/embeddings-editor/plugins/include-for-embedding.js:29
-#: dist/js/embeddings-editor-script.js:1
+#: dist/js/embeddings-editor-script.js:123
+#: dist/js/embeddings-editor-script.js:70
 msgid "Include for vector embeddings"
 msgstr ""
 
 #: assets/js/embeddings-editor/plugins/include-for-embedding.js:30
-#: dist/js/embeddings-editor-script.js:1
+#: dist/js/embeddings-editor-script.js:124
+#: dist/js/embeddings-editor-script.js:71
 msgid "Check this if you want this post to be vectorized."
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:31
 #: assets/js/embeddings/components/pages/indexing.js:18
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:58
+#: dist/js/embeddings-script.js:838
+#: dist/js/embeddings-script.js:31
+#: dist/js/embeddings-script.js:510
 msgid "Indexing"
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:47
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:73
+#: dist/js/embeddings-script.js:47
 msgid "Settings saved."
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:51
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:75
+#: dist/js/embeddings-script.js:51
 msgid "Something went wrong. Please try again."
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:59
-#: dist/js/embeddings-script.js:1
-msgid "Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data. Additionally, you can control"
+#: dist/js/embeddings-script.js:93
+#: dist/js/embeddings-script.js:59
+msgid "Configure vector embedding settings for each post type. These settings control which posts and what content will be indexed with vector embedding data."
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:69
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:116
+#: dist/js/embeddings-script.js:69
 msgid "This configuration is currently filtered via the `ep_embeddings_is_embeddable` filter. Changes made here will not be applied."
 msgstr ""
 
 #: assets/js/embeddings/apps/settings.js:94
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:164
+#: dist/js/embeddings-script.js:94
 msgid "Save settings"
 msgstr ""
 
 #: assets/js/embeddings/components/fields/meta-select.js:21
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:209
+#: dist/js/embeddings-script.js:123
 msgid "Add meta field..."
 msgstr ""
 
 #: assets/js/embeddings/components/fields/term-select.js:37
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:278
+#: dist/js/embeddings-script.js:166
 msgid "Type to search for terms"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:21
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:333
+#: dist/js/embeddings-script.js:195
 msgid "Post Title"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:25
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:336
+#: dist/js/embeddings-script.js:199
 msgid "Post Content"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:29
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:339
+#: dist/js/embeddings-script.js:203
 msgid "Post Excerpt"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:37
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:349
+#: dist/js/embeddings-script.js:211
 msgid "This setting controls which fields will be used to create embedded data."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:43
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:356
+#: dist/js/embeddings-script.js:217
 msgid "Select from the post fields below. Additional meta keys can be added to the input below."
 msgstr ""
 
-#: assets/js/embeddings/components/fieldsets/embedded-fields.js:73
-#: dist/js/embeddings-script.js:1
+#: assets/js/embeddings/components/fieldsets/embedded-fields.js:75
+#: dist/js/embeddings-script.js:391
+#: dist/js/embeddings-script.js:247
 msgid "Add Custom Fields"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:18
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:441
+#: dist/js/embeddings-script.js:273
 msgid "Manual"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:19
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:444
+#: dist/js/embeddings-script.js:274
 msgid "Automatic"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:25
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:462
+#: dist/js/embeddings-script.js:280
 msgid "This setting controls which posts will be indexed with vector embedding data."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:30
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:469
+#: dist/js/embeddings-script.js:285
 msgid "Modes"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:33
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:487
+#: dist/js/embeddings-script.js:288
 msgid "Automatic (Default): Posts are indexed based on taxonomy terms and post meta. Configure rules to include or exclude posts automatically."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:39
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:494
+#: dist/js/embeddings-script.js:294
 msgid "Manual: Editors will manually select which posts will qualify for vector embedding."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:46
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:501
+#: dist/js/embeddings-script.js:301
 msgid "Choose the mode that best fits your needs. If unsure, the automatic mode ensures consistent indexing based on predefined rules"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:53
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:509
+#: dist/js/embeddings-script.js:308
 msgid "Embedding Mode"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:56
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:510
+#: dist/js/embeddings-script.js:311
 msgid "Posts be will indexed according to the configuration below."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:60
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:510
+#: dist/js/embeddings-script.js:315
 msgid "Users will manually select which posts will qualify for vector embedding"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:19
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:574
+#: dist/js/embeddings-script.js:349
 msgid "Post Meta"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:21
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:575
+#: dist/js/embeddings-script.js:351
 msgid "Post Meta Fields"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:37
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:596
+#: dist/js/embeddings-script.js:367
 msgid "Include posts that have any of these meta keys"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:49
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:616
+#: dist/js/embeddings-script.js:379
 msgid "Exclude posts that have any of these meta keys"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:21
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:681
+#: dist/js/embeddings-script.js:412
 msgid "Taxonomies"
 msgstr ""
 
-#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:40
-#: dist/js/embeddings-script.js:1
+#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:41
+#: dist/js/embeddings-script.js:711
+#: dist/js/embeddings-script.js:431
 msgid "Include posts that have any of these terms"
 msgstr ""
 
-#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:59
-#: dist/js/embeddings-script.js:1
+#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:60
+#: dist/js/embeddings-script.js:731
+#: dist/js/embeddings-script.js:450
 msgid "Exclude posts that have any of these terms"
 msgstr ""
 
-#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:81
-#: dist/js/embeddings-script.js:1
+#: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:83
+#: dist/js/embeddings-script.js:748
+#: dist/js/embeddings-script.js:472
 msgid "No public taxonomies are registered to this post type."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/indexing.js:22
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:846
+#: dist/js/embeddings-script.js:514
 msgid "Chunk Size (in words)"
 msgstr ""
 
-#: assets/js/embeddings/components/pages/indexing.js:29
-#: dist/js/embeddings-script.js:1
+#: assets/js/embeddings/components/pages/indexing.js:30
+#: dist/js/embeddings-script.js:858
+#: dist/js/embeddings-script.js:521
 msgid "Chunk Overlap (in words)"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:36
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:958
+#: dist/js/embeddings-script.js:567
 msgid "Allow Vector Embedding"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:37
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:959
+#: dist/js/embeddings-script.js:568
 msgid "Enable or disable vector embeddings for this post type."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:49
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:969
+#: dist/js/embeddings-script.js:580
 msgid "Indexing Criteria"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:53
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:991
+#: dist/js/embeddings-script.js:584
 msgid "Rules"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:56
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1009
+#: dist/js/embeddings-script.js:587
 msgid "Include: If you specify terms or fields to include, only posts with those terms or fields will be included. All others will be excluded."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:62
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1016
+#: dist/js/embeddings-script.js:593
 msgid "Exclude: If you specify terms or fields to exclude, posts with those terms and fields will be left out, while all others will be included."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:68
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1023
+#: dist/js/embeddings-script.js:599
 msgid "Both Include & Exclude: If both are set, excluded terms and fields take priority — posts with those terms will always be left out, even if they match the included terms."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:74
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1030
+#: dist/js/embeddings-script.js:605
 msgid "If no rules are set, all posts are included by default."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:94
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1052
+#: dist/js/embeddings-script.js:625
 msgid "Content Fields"
 msgstr ""
 
 #: assets/js/embeddings/index.js:27
-#: dist/js/embeddings-script.js:1
+#: dist/js/embeddings-script.js:1629
+#: dist/js/embeddings-script.js:955
 msgid "Manage Vector Embeddings"
 msgstr ""
 
 #: assets/js/geo-location/panel/AutoCompleteField.js:32
-#: dist/js/geo-location-editor-script.js:1
+#: dist/js/geo-location-editor-script.js:47
+#: dist/js/geo-location-editor-script.js:32
 msgid "Enter an address"
 msgstr ""
 
 #: assets/js/geo-location/panel/index.js:62
-#: dist/js/geo-location-editor-script.js:1
+#: dist/js/geo-location-editor-script.js:152
+#: dist/js/geo-location-editor-script.js:103
 msgid "ElasticPress Geo Location"
 msgstr ""
 
 #: assets/js/search-templates/apps/search-templates-list.js:28
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:55
+#: dist/js/search-templates-script.js:28
 msgid "Search templates are Elasticsearch queries stored in ElasticPress.io servers used by the <a>Search API</a>. Please note that all the API fields are still available for custom search templates. Your templates do not to differ in post types, offset, pagination arguments, or even filters, as for those you can still use query parameters. The templates can be used for searching in different fields or applying different scores, for instance."
 msgstr ""
 
 #: assets/js/search-templates/apps/search-templates-list.js:37
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:73
+#: dist/js/search-templates-script.js:37
 msgid "Once you have a search template saved, you can start sending requests to your endpoint URL below. Your template needs to have <code>{{ep_placeholder}}</code> in all places where the search term needs to be used."
 msgstr ""
 
 #. translators: %s: endpoint URL
 #: assets/js/search-templates/apps/search-templates-list.js:48
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:90
+#: dist/js/search-templates-script.js:48
+#, js-format
 msgid "<strong>Endpoint URL:</strong> <code>%s</code>"
 msgstr ""
 
 #: assets/js/search-templates/apps/search-templates-list.js:57
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:126
+#: dist/js/search-templates-script.js:57
 msgid "Loading..."
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:34
 #: assets/js/search-templates/components/template-row.js:76
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:207
+#: dist/js/search-templates-script.js:522
+#: dist/js/search-templates-script.js:106
+#: dist/js/search-templates-script.js:328
 msgid "Template saved."
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:40
 #: assets/js/search-templates/components/template-row.js:81
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:209
+#: dist/js/search-templates-script.js:524
+#: dist/js/search-templates-script.js:112
+#: dist/js/search-templates-script.js:333
 msgid "Could not save the template. Please try again."
 msgstr ""
 
@@ -920,83 +1034,107 @@ msgstr ""
 #: assets/js/search-templates/components/template-row.js:53
 #: assets/js/search-templates/components/template-row.js:84
 #: assets/js/search-templates/components/template-row.js:103
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:211
+#: dist/js/search-templates-script.js:504
+#: dist/js/search-templates-script.js:526
+#: dist/js/search-templates-script.js:538
+#: dist/js/search-templates-script.js:115
+#: dist/js/search-templates-script.js:305
+#: dist/js/search-templates-script.js:336
+#: dist/js/search-templates-script.js:355
 msgid "ElasticPress Labs Error: "
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:59
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:223
+#: dist/js/search-templates-script.js:131
 msgid "Add New Template"
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:64
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:258
+#: dist/js/search-templates-script.js:136
 msgid "This name is already in use. You can change the existing template instead."
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:71
 #: assets/js/search-templates/components/template-row.js:118
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:259
+#: dist/js/search-templates-script.js:572
+#: dist/js/search-templates-script.js:143
+#: dist/js/search-templates-script.js:370
 msgid "Name"
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:72
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:260
+#: dist/js/search-templates-script.js:144
 msgid "Template names are not editable and only accept lowercase letters, numbers, -, and _. Double-check your template name before saving it."
 msgstr ""
 
 #: assets/js/search-templates/components/new-template-row.js:90
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:300
+#: dist/js/search-templates-script.js:162
 msgid "Save Template"
 msgstr ""
 
 #: assets/js/search-templates/components/template-field.js:38
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:357
+#: dist/js/search-templates-script.js:208
 msgid "Make sure your template is a valid JSON object and has <code>{{ep_placeholder}}</code>, so it can be replaced by the actual search term."
 msgstr ""
 
 #: assets/js/search-templates/components/template-field.js:48
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:383
+#: dist/js/search-templates-script.js:218
 msgid "This does not seem to be a valid JSON object."
 msgstr ""
 
 #: assets/js/search-templates/components/template-field.js:53
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:400
+#: dist/js/search-templates-script.js:223
 msgid "Template"
 msgstr ""
 
 #: assets/js/search-templates/components/template-field.js:66
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:415
+#: dist/js/search-templates-script.js:236
 msgid "Import default template"
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:50
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:502
+#: dist/js/search-templates-script.js:302
 msgid "Could not load your templates."
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:95
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:534
+#: dist/js/search-templates-script.js:347
 msgid "Template deleted."
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:100
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:536
+#: dist/js/search-templates-script.js:352
 msgid "Could not delete the template. Please try again."
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:119
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:573
+#: dist/js/search-templates-script.js:371
 msgid "Template names are not editable. If you need a different name, delete the template and recreate it."
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:139
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:612
+#: dist/js/search-templates-script.js:391
 msgid "Save changes"
 msgstr ""
 
 #: assets/js/search-templates/components/template-row.js:149
-#: dist/js/search-templates-script.js:2
+#: dist/js/search-templates-script.js:625
+#: dist/js/search-templates-script.js:401
 msgid "Delete template"
 msgstr ""
 

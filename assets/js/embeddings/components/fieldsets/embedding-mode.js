@@ -8,11 +8,11 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import Group from '../layout/group';
-import { useVectorEmebeddingSettings } from '../../provider';
+import { useVectorEmbeddingSettings } from '../../provider';
 
 export default ({ postType }) => {
 	const { embeddingMode, key } = postType;
-	const { setEmbeddingForPostType } = useVectorEmebeddingSettings();
+	const { setEmbeddingForPostType } = useVectorEmbeddingSettings();
 
 	const options = [
 		{ label: __('Manual', 'elasticpress-labs'), value: 'manual' },

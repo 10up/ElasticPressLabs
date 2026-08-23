@@ -150,6 +150,11 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	 * @group search-templates
 	 */
 	public function test_set_settings_schema() {
+		$ep_host = function () {
+			return 'elasticpress.io/random-string';
+		};
+		add_filter( 'ep_host', $ep_host );
+
 		\ElasticPress\Features::factory()->activate_feature( 'search_templates' );
 
 		$expected = [

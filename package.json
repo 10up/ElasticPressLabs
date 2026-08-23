@@ -1,6 +1,6 @@
 {
   "name": "elasticpress-labs",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "ElasticPress Labs",
   "author": {
     "name": "10up",
@@ -42,7 +42,7 @@
     "tests/e2e"
   ],
   "devDependencies": {
-    "@wordpress/env": "^10.15.0",
+    "@wordpress/env": "^11",
     "10up-toolkit": "^6.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10"

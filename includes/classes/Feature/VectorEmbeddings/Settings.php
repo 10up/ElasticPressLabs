@@ -202,7 +202,7 @@ class Settings {
 			$return[] = [
 				'embeddable'            => true, // whether to allow embeddings for this post type.
 				'embeddingMode'         => 'automatic', // Whether to use auto or manual embedding.
-				'enablefieldsIndexing'  => false, // Whether to flagging content inclusion via post meta.
+				'enableFieldsIndexing'  => false, // Whether to flagging content inclusion via post meta.
 				'fieldsIndexingInclude' => [], // Meta fields used to flag content for inclusion.
 				'fieldsIndexingExclude' => [], // Meta fields used to flag content for exclusion. A post with an exluded
 				'fieldsEmbedding'       => [ 'post_title', 'post_content' ], // Fields to use for embedding generation.
