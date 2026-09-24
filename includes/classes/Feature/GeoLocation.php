@@ -70,7 +70,7 @@ class GeoLocation extends Feature {
 		$this->settings_schema = [
 			[
 				'default' => '',
-				'help'    => __( 'Providing a Google Maps API key enables an autocomplete address field that automatically fetches the latitude and longitude.', 'elasticpress-labs' ),
+				'help'    => __( 'Providing a Google Maps API key with Places API (New) enabled adds an autocomplete address field that automatically fetches the latitude and longitude.', 'elasticpress-labs' ),
 				'key'     => 'google_maps_api_key',
 				'label'   => __( 'Google Maps API Key', 'elasticpress-labs' ),
 				'type'    => 'text',
@@ -233,17 +233,21 @@ class GeoLocation extends Feature {
 	 * @return void
 	 */
 	public function admin_scripts(): void {
+		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
+		$dependencies        = (array) Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' );
+		if ( ! empty( $google_maps_api_key ) ) {
+			$dependencies[] = 'google-places-api';
+		}
+
 		wp_enqueue_script(
 			'ep_geo_location_editor_script',
 			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-editor-script.js',
-			Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' ),
+			$dependencies,
 			Utils\get_asset_info( 'geo-location-editor-script', 'version' ),
 			true
 		);
 
 		wp_set_script_translations( 'ep_geo_location_script', 'elasticpress-labs' );
-
-		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
 
 		wp_localize_script(
 			'ep_geo_location_editor_script',

@@ -31,24 +31,38 @@ const GeoLocationPanel = () => {
 		...meta
 	} = useSelect((select) => select('core/editor').getEditedPostAttribute('meta') || {});
 
+	/**
+	 * Update the latitude entered manually.
+	 *
+	 * @param {string} latitude Latitude input value.
+	 */
 	const onUpdateLatitude = (latitude) => {
 		editPost({ meta: { ...meta, ep_latitude: latitude } });
 	};
 
+	/**
+	 * Update the longitude entered manually.
+	 *
+	 * @param {string} longitude Longitude input value.
+	 */
 	const onUpdateLongitude = (longitude) => {
 		editPost({ meta: { ...meta, ep_longitude: longitude } });
 	};
 
+	/**
+	 * Save the selected address and coordinates in one editor update.
+	 *
+	 * @param {object} place Google Place with fetched address and location.
+	 */
 	const onPlaceSelected = (place) => {
-		editPost({ meta: { ...meta, ep_address: place.formatted_address } });
-
-		if (place.geometry && place.geometry.location) {
-			const latitude = place.geometry.location.lat();
-			const longitude = place.geometry.location.lng();
-
-			onUpdateLatitude(latitude);
-			onUpdateLongitude(longitude);
-		}
+		editPost({
+			meta: {
+				...meta,
+				ep_address: place.formattedAddress,
+				ep_latitude: place.location.lat(),
+				ep_longitude: place.location.lng(),
+			},
+		});
 	};
 
 	const WrapperElement =

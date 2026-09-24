@@ -72,11 +72,6 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 		await goToAdminPage(loggedInPage, 'post-new.php');
 
-		// Wait for Google Maps API request
-		const mapApiRequestPromise = loggedInPage.waitForResponse(
-			'https://maps.googleapis.com/maps/api/place/js/AutocompletionService*',
-		);
-
 		const geoLocationButton = loggedInPage.getByRole('button', {
 			name: 'ElasticPress Geo Location',
 		});
@@ -86,16 +81,12 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			await geoLocationButton.click();
 		}
 
-		// Add address
-		const addressLabel = loggedInPage.locator('label:has-text("Address")');
-		const addressId = await addressLabel.getAttribute('for');
-		if (addressId) {
-			await loggedInPage.locator(`#${addressId}`).fill('california');
-
-			await mapApiRequestPromise;
-			await loggedInPage.locator(`#${addressId}`).press('ArrowDown');
-			await loggedInPage.locator(`#${addressId}`).press('Enter');
-		}
+		// Select an address using the Places API (New) widget.
+		const addressInput = loggedInPage.locator('gmp-place-autocomplete input');
+		await addressInput.fill('california');
+		await loggedInPage.getByRole('option').first().waitFor();
+		await addressInput.press('ArrowDown');
+		await addressInput.press('Enter');
 
 		// Check if fields are not empty
 		const latitudeLabel = loggedInPage.locator('label:has-text("Latitude")');
