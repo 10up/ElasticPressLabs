@@ -1445,6 +1445,177 @@ class TestUser extends BaseTestCase {
 	}
 
 	/**
+	 * Published types include all published content, once per site and type.
+	 */
+	public function testPreparePublishedPostTypes() {
+		$user_id   = $this->factory->user->create();
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		$this->assertSame( [], $indexable->prepare_document( $user_id )['published_post_types'] );
+
+		register_post_type( 'ep_private_test', [ 'public' => false ] );
+		try {
+			foreach ( [ 'publish', 'publish', 'draft', 'future', 'private', 'trash' ] as $status ) {
+				$this->factory->post->create(
+					[
+						'post_author' => $user_id,
+						'post_status' => $status,
+						'post_date'   => 'future' === $status ? gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ) : '2020-01-01 00:00:00',
+					]
+				);
+			}
+			$this->factory->post->create(
+				[
+					'post_author'   => $user_id,
+					'post_status'   => 'publish',
+					'post_type'     => 'page',
+					'post_password' => 'secret',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $user_id,
+					'post_status' => 'publish',
+					'post_type'   => 'ep_private_test',
+				]
+			);
+			$other_user = $this->factory->user->create();
+			$this->factory->post->create(
+				[
+					'post_author' => $other_user,
+					'post_status' => 'publish',
+				]
+			);
+			$blog_id = get_current_blog_id();
+			$this->assertSame(
+				[ $blog_id . ':ep_private_test', $blog_id . ':page', $blog_id . ':post' ],
+				$indexable->prepare_document( $user_id )['published_post_types']
+			);
+			$this->assertSame( [ $blog_id . ':post' ], $indexable->prepare_published_post_types( $other_user ) );
+		} finally {
+			unregister_post_type( 'ep_private_test' );
+		}
+	}
+
+	/**
+	 * Drafts and other unpublished statuses do not establish eligibility.
+	 */
+	public function testUnpublishedPostTypesAreExcluded() {
+		$user_id = $this->factory->user->create();
+		foreach ( [ 'draft', 'future', 'private', 'trash' ] as $status ) {
+			$this->factory->post->create(
+				[
+					'post_author' => $user_id,
+					'post_status' => $status,
+					'post_date'   => 'future' === $status ? gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ) : '2020-01-01 00:00:00',
+				]
+			);
+		}
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		$this->assertSame( [], $indexable->prepare_published_post_types( $user_id ) );
+	}
+
+	/**
+	 * Keep site/type pairs distinct even when the author is not a site member.
+	 *
+	 * @group multisite
+	 */
+	public function testPublishedPostTypesAcrossSites() {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Requires multisite.' );
+		}
+		$user_id = $this->factory->user->create();
+		$site_id = $this->factory->blog->create();
+		$home_id = get_current_blog_id();
+		$this->factory->post->create(
+			[
+				'post_author' => $user_id,
+				'post_status' => 'publish',
+			]
+		);
+		switch_to_blog( $site_id );
+		try {
+			$this->factory->post->create(
+				[
+					'post_author' => $user_id,
+					'post_status' => 'publish',
+					'post_type'   => 'page',
+				]
+			);
+			$this->assertFalse( is_user_member_of_blog( $user_id, $site_id ) );
+		} finally {
+			restore_current_blog();
+		}
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		// Authorship must not depend on which sites are selected for post indexing.
+		add_filter( 'ep_indexable_sites', '__return_empty_array' );
+		try {
+			$this->assertEqualsCanonicalizing(
+				[ $home_id . ':post', $site_id . ':page' ],
+				$indexable->prepare_published_post_types( $user_id )
+			);
+		} finally {
+			remove_filter( 'ep_indexable_sites', '__return_empty_array' );
+		}
+		$this->assertNotFalse( $indexable->index( $user_id, true ) );
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+		foreach ( [
+			$home_id . ':post' => 1,
+			$site_id . ':page' => 1,
+			$site_id . ':post' => 0,
+			$home_id . ':page' => 0,
+		] as $pair => $count ) {
+			$result = $indexable->query_es( [ 'query' => [ 'term' => [ 'published_post_types' => $pair ] ] ], [] );
+			$this->assertNotFalse( $result );
+			$total = $result['found_documents'];
+			$this->assertSame( $count, is_array( $total ) ? $total['value'] : $total );
+			if ( $count ) {
+				$this->assertSame( $user_id, $result['documents'][0]['ID'] );
+			}
+		}
+	}
+
+	/**
+	 * A failed database read must not overwrite a user's indexed eligibility.
+	 */
+	public function testPublishedPostTypesReadFailure() {
+		$user_id = $this->factory->user->create();
+		$this->factory->post->create(
+			[
+				'post_author' => $user_id,
+				'post_status' => 'publish',
+			]
+		);
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		$this->assertNotFalse( $indexable->index( $user_id, true ) );
+		$expected = $indexable->get( $user_id );
+
+		$fail_read = static function ( $query ) {
+			if ( 0 === strpos( $query, 'SELECT DISTINCT post_type FROM ' ) ) {
+				return 'SELECT post_type FROM ep116_missing_posts_table';
+			}
+			return $query;
+		};
+		add_filter( 'query', $fail_read );
+		try {
+			$this->assertFalse( $indexable->index( $user_id, true ) );
+		} finally {
+			remove_filter( 'query', $fail_read );
+		}
+		$this->assertSame( $expected, $indexable->get( $user_id ) );
+	}
+
+	/**
+	 * Both mapping versions store the site/type pair as an exact keyword.
+	 */
+	public function testPublishedPostTypesMapping() {
+		$directory = dirname( __DIR__, 3 ) . '/includes/mappings/user/';
+		$legacy    = require $directory . 'initial.php';
+		$current   = require $directory . '7-0.php';
+		$this->assertSame( 'keyword', $legacy['mappings']['user']['properties']['published_post_types']['type'] );
+		$this->assertSame( 'keyword', $current['mappings']['properties']['published_post_types']['type'] );
+	}
+
+	/**
 	 * Test protected meta does not index.
 	 */
 	public function testProtectedMetaNotIndex() {

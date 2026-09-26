@@ -885,18 +885,19 @@ class User extends Indexable {
 		}
 
 		$user_args = [
-			'ID'              => $user_id,
-			'user_login'      => $user->user_login,
-			'user_email'      => $user->user_email,
-			'user_nicename'   => $user->user_nicename,
-			'spam'            => $user->spam,
-			'deleted'         => $user->spam,
-			'user_status'     => $user->user_status,
-			'display_name'    => $user->display_name,
-			'user_registered' => $user->user_registered,
-			'user_url'        => $user->user_url,
-			'capabilities'    => $this->prepare_capabilities( $user_id ),
-			'meta'            => $this->prepare_meta_types( $this->prepare_meta( $user_id ) ),
+			'ID'                   => $user_id,
+			'user_login'           => $user->user_login,
+			'user_email'           => $user->user_email,
+			'user_nicename'        => $user->user_nicename,
+			'spam'                 => $user->spam,
+			'deleted'              => $user->spam,
+			'user_status'          => $user->user_status,
+			'display_name'         => $user->display_name,
+			'user_registered'      => $user->user_registered,
+			'user_url'             => $user->user_url,
+			'published_post_types' => $this->prepare_published_post_types( $user_id ),
+			'capabilities'         => $this->prepare_capabilities( $user_id ),
+			'meta'                 => $this->prepare_meta_types( $this->prepare_meta( $user_id ) ),
 		];
 
 		/**
@@ -911,6 +912,51 @@ class User extends Indexable {
 		$user_args = apply_filters( 'ep_user_sync_args', $user_args, $user_id );
 
 		return $user_args;
+	}
+
+	/**
+	 * Get published post types, paired with site IDs as "site_id:post_type" keywords.
+	 *
+	 * Read posts directly so password protection, index exclusions, and site membership
+	 * do not hide authorship. Only publication status determines eligibility here.
+	 *
+	 * @param int $user_id User ID.
+	 * @return string[] Published post types qualified by site ID.
+	 * @throws \RuntimeException If published post types cannot be read.
+	 */
+	public function prepare_published_post_types( $user_id ) {
+		global $wpdb;
+
+		$site_ids = is_multisite() ? get_sites(
+			[
+				'fields' => 'ids',
+				'number' => 0,
+			]
+		) : [ get_current_blog_id() ];
+		$types    = [];
+
+		foreach ( $site_ids as $site_id ) {
+			$blog_id     = (int) $site_id;
+			$posts_table = $wpdb->get_blog_prefix( $blog_id ) . 'posts';
+			// The table name comes from WordPress; values are prepared separately.
+			$post_types = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					"SELECT DISTINCT post_type FROM {$posts_table} WHERE post_author = %d AND post_status = %s ORDER BY post_type", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- %i is unavailable before WordPress 6.2.
+					$user_id,
+					'publish'
+				)
+			);
+
+			if ( $wpdb->last_error ) {
+				throw new \RuntimeException( esc_html( 'Could not read published post types for site ' . $blog_id . '.' ) );
+			}
+
+			foreach ( $post_types as $post_type ) {
+				$types[] = $blog_id . ':' . $post_type;
+			}
+		}
+
+		return $types;
 	}
 
 	/**

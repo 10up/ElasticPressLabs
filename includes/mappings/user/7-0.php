@@ -212,14 +212,17 @@ return array(
 			),
 		),
 		'properties'        => array(
-			'ID'              => array(
+			'published_post_types' => array(
+				'type' => 'keyword',
+			),
+			'ID'                   => array(
 				'type' => 'long',
 			),
-			'user_registered' => array(
+			'user_registered'      => array(
 				'type'   => 'date',
 				'format' => 'yyyy-MM-dd HH:mm:ss',
 			),
-			'user_nicename'   => array(
+			'user_nicename'        => array(
 				'type'   => 'text',
 				'fields' => array(
 					'user_nicename' => array(
@@ -231,7 +234,7 @@ return array(
 					),
 				),
 			),
-			'user_login'      => array(
+			'user_login'           => array(
 				'type'   => 'text',
 				'fields' => array(
 					'user_login' => array(
@@ -243,7 +246,7 @@ return array(
 					),
 				),
 			),
-			'display_name'    => array(
+			'display_name'         => array(
 				'type'   => 'text',
 				'fields' => array(
 					'raw'      => array(
@@ -256,7 +259,7 @@ return array(
 					),
 				),
 			),
-			'user_email'      => array(
+			'user_email'           => array(
 				'type'   => 'text',
 				'fields' => array(
 					'user_email' => array(
@@ -268,10 +271,10 @@ return array(
 					),
 				),
 			),
-			'capabilities'    => array(
+			'capabilities'         => array(
 				'type' => 'object',
 			),
-			'user_url'        => array(
+			'user_url'             => array(
 				'type'   => 'text',
 				'fields' => array(
 					'user_url' => array(
@@ -283,16 +286,16 @@ return array(
 					),
 				),
 			),
-			'status'          => array(
+			'status'               => array(
 				'type' => 'long',
 			),
-			'spam'            => array(
+			'spam'                 => array(
 				'type' => 'long',
 			),
-			'deleted'         => array(
+			'deleted'              => array(
 				'type' => 'long',
 			),
-			'meta'            => array(
+			'meta'                 => array(
 				'type' => 'object',
 			),
 		),
