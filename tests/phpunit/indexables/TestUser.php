@@ -1445,6 +1445,299 @@ class TestUser extends BaseTestCase {
 	}
 
 	/**
+	 * Compare the filtered users and total with WordPress, requiring an ES response.
+	 *
+	 * @param array    $args Query arguments.
+	 * @param int[]    $expected_ids Expected user IDs in ascending order.
+	 * @param int|null $expected_total Expected total before pagination.
+	 */
+	protected function assertPublishedPostsQuery( $args, $expected_ids, $expected_total = null ) {
+		$args          += [
+			'fields'        => 'ID',
+			'orderby'       => 'ID',
+			'order'         => 'ASC',
+			'cache_results' => false,
+		];
+		$wp_query       = new \WP_User_Query( array_merge( $args, [ 'ep_integrate' => false ] ) );
+		$es_query       = new \WP_User_Query( array_merge( $args, [ 'ep_integrate' => true ] ) );
+		$expected_total = null === $expected_total ? count( $expected_ids ) : $expected_total;
+		$this->assertSame( $expected_ids, array_map( 'intval', $wp_query->get_results() ) );
+		$this->assertSame( $expected_ids, array_map( 'intval', $es_query->get_results() ) );
+		$this->assertSame( $expected_total, (int) $wp_query->get_total() );
+		$this->assertSame( $expected_total, (int) $es_query->get_total() );
+		$this->assertTrue( $es_query->get( 'elasticsearch_success' ) );
+	}
+
+	/**
+	 * Match native argument semantics, including private types and empty restrictions.
+	 */
+	public function testHasPublishedPostsQuery() {
+		register_post_type( 'ep_private_test', [ 'public' => false ] );
+		try {
+			$users = [];
+			foreach ( [ 'both', 'post', 'page', 'hidden', 'draft', 'none' ] as $name ) {
+				$users[ $name ] = $this->factory->user->create( [ 'role' => 'author' ] );
+			}
+			foreach ( [ 'post', 'post', 'page' ] as $type ) {
+				$this->factory->post->create(
+					[
+						'post_author' => $users['both'],
+						'post_status' => 'publish',
+						'post_type'   => $type,
+					]
+				);
+			}
+			$this->factory->post->create(
+				[
+					'post_author'   => $users['post'],
+					'post_status'   => 'publish',
+					'post_password' => 'secret',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users['page'],
+					'post_status' => 'publish',
+					'post_type'   => 'page',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users['hidden'],
+					'post_status' => 'publish',
+					'post_type'   => 'ep_private_test',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users['draft'],
+					'post_status' => 'draft',
+				]
+			);
+			$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+			foreach ( $users as $user_id ) {
+				$this->assertNotFalse( $indexable->index( $user_id, true ) );
+			}
+			ElasticPress\Elasticsearch::factory()->refresh_indices();
+			$cases = [
+				[ true, [ $users['both'], $users['post'], $users['page'] ] ],
+				[ [ 'post' ], [ $users['both'], $users['post'] ] ],
+				[ [ 'page' ], [ $users['both'], $users['page'] ] ],
+				[ [ 'post', 'page' ], [ $users['both'], $users['post'], $users['page'] ] ],
+				[ [ 'named' => 'post' ], [ $users['both'], $users['post'] ] ],
+				[ [ 'post', 'post' ], [ $users['both'], $users['post'] ] ],
+				[ [ 'POST' ], [ $users['both'], $users['post'] ] ],
+				[ 'PoSt', [ $users['both'], $users['post'] ] ],
+				[ [ 'po.st' ], [] ],
+				[ [ 'ep_private_test' ], [ $users['hidden'] ] ],
+				[ [ 'ep_missing_type' ], [] ],
+				[ [ 'post', 'ep_missing_type' ], [ $users['both'], $users['post'] ] ],
+				[ 'post', [ $users['both'], $users['post'] ] ],
+				[ 1, [] ],
+			];
+			foreach ( [ false, null, [], '', 0, '0' ] as $empty ) {
+				$cases[] = [ $empty, array_values( $users ) ];
+			}
+			foreach ( $cases as [ $restriction, $expected ] ) {
+				$this->assertPublishedPostsQuery(
+					[
+						'include'             => array_values( $users ),
+						'has_published_posts' => $restriction,
+					],
+					$expected
+				);
+			}
+			$this->assertPublishedPostsQuery(
+				[
+					'include'             => array_values( $users ),
+					'has_published_posts' => [ 'post' ],
+					'blog_id'             => 0,
+				],
+				array_values( $users )
+			);
+		} finally {
+			unregister_post_type( 'ep_private_test' );
+		}
+	}
+
+	/**
+	 * Published-post filters compose with roles, search, inclusion and pagination.
+	 */
+	public function testHasPublishedPostsCombinedFilters() {
+		$users = [];
+		foreach ( [ 'author', 'subscriber', 'author' ] as $offset => $role ) {
+			$user_id = $this->factory->user->create(
+				[
+					'user_login' => [ 'ep116alpha', 'ep116bravo', 'ep116charlie' ][ $offset ],
+					'role'       => $role,
+				]
+			);
+			$users[] = $user_id;
+			$this->factory->post->create(
+				[
+					'post_author' => $user_id,
+					'post_status' => 'publish',
+				]
+			);
+			$this->assertNotFalse( ElasticPress\Indexables::factory()->get( 'user' )->index( $user_id, true ) );
+		}
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+		$args = [ 'has_published_posts' => [ 'post' ] ];
+		$this->assertPublishedPostsQuery( $args + [ 'role' => 'author' ], [ $users[0], $users[2] ] );
+		$this->assertPublishedPostsQuery( $args + [ 'role__in' => [ 'subscriber' ] ], [ $users[1] ] );
+		$this->assertPublishedPostsQuery( $args + [ 'role__not_in' => [ 'subscriber' ] ], [ $users[0], $users[2] ] );
+		$this->assertPublishedPostsQuery(
+			$args + [
+				'search'         => 'ep116alpha',
+				'search_columns' => [ 'user_login' ],
+			],
+			[ $users[0] ]
+		);
+		$this->assertPublishedPostsQuery( $args + [ 'include' => [ $users[1] ] ], [ $users[1] ] );
+		$this->assertPublishedPostsQuery( $args + [ 'exclude' => [ $users[1] ] ], [ $users[0], $users[2] ] );
+		$this->assertPublishedPostsQuery(
+			$args + [
+				'number' => 1,
+				'paged'  => 2,
+			],
+			[ $users[1] ],
+			3
+		);
+		$this->assertPublishedPostsQuery(
+			$args + [
+				'number' => 1,
+				'offset' => 2,
+			],
+			[ $users[2] ],
+			3
+		);
+		$this->assertPublishedPostsQuery(
+			$args + [
+				'number' => 1,
+				'paged'  => 4,
+			],
+			[],
+			3
+		);
+	}
+
+	/**
+	 * Site and post type must match together, independently of current site context.
+	 *
+	 * @group multisite
+	 */
+	public function testHasPublishedPostsAcrossSites() {
+		if ( ! is_multisite() || ! defined( 'EP_IS_NETWORK' ) || ! EP_IS_NETWORK ) {
+			$this->markTestSkipped( 'Cross-site capabilities require network activation.' );
+		}
+		$home_id = get_current_blog_id();
+		$site_id = $this->factory->blog->create();
+		$users   = $this->factory->user->create_many( 3, [ 'role' => 'author' ] );
+		$this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'publish',
+			]
+		);
+		$this->factory->post->create(
+			[
+				'post_author' => $users[1],
+				'post_status' => 'publish',
+				'post_type'   => 'page',
+			]
+		);
+		switch_to_blog( $site_id );
+		try {
+			add_user_to_blog( $site_id, $users[0], 'author' );
+			add_user_to_blog( $site_id, $users[1], 'author' );
+			$this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+					'post_type'   => 'page',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users[1],
+					'post_status' => 'publish',
+				]
+			);
+			// An author who is not a member must not match this site's user query.
+			$this->factory->post->create(
+				[
+					'post_author' => $users[2],
+					'post_status' => 'publish',
+				]
+			);
+		} finally {
+			restore_current_blog();
+		}
+		foreach ( $users as $user_id ) {
+			$this->assertNotFalse( ElasticPress\Indexables::factory()->get( 'user' )->index( $user_id, true ) );
+		}
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+		$args = [
+			'include'             => $users,
+			'has_published_posts' => [ 'post' ],
+		];
+		$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+		$this->assertPublishedPostsQuery( $args + [ 'blog_id' => $site_id ], [ $users[1] ] );
+		$this->assertPublishedPostsQuery( $args + [ 'blog_id' => 0 ], $users );
+		switch_to_blog( $site_id );
+		try {
+			$this->assertPublishedPostsQuery( $args, [ $users[1] ] );
+			$this->assertPublishedPostsQuery( $args + [ 'blog_id' => $home_id ], [ $users[0] ] );
+		} finally {
+			restore_current_blog();
+		}
+	}
+
+	/**
+	 * Large filtered counts must not be truncated at Elasticsearch's 10,000-hit limit.
+	 */
+	public function testHasPublishedPostsLargeTotal() {
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		$client    = ElasticPress\Elasticsearch::factory();
+		if ( version_compare( $client->get_elasticsearch_version(), '7.0', '<' ) ) {
+			$this->markTestSkipped( 'Elasticsearch 7 introduced the default hit-count limit.' );
+		}
+		// Synthetic user documents avoid creating 10,001 WordPress users for a count test.
+		$body = '';
+		for ( $offset = 1; $offset <= 10001; ++$offset ) {
+			$id    = 1000000 + $offset;
+			$body .= wp_json_encode( [ 'index' => [ '_id' => $id ] ] ) . "\n";
+			$body .= wp_json_encode(
+				[
+					'ID'                   => $id,
+					'capabilities'         => [ get_current_blog_id() => [ 'roles' => [ 'author' ] ] ],
+					'published_post_types' => [ get_current_blog_id() . ':post' ],
+				]
+			) . "\n";
+		}
+		$result = $client->bulk_index( $indexable->get_index_name(), 'user', $body );
+		$this->assertNotWPError( $result );
+		$this->assertFalse( $result['errors'] );
+		$client->refresh_indices();
+		foreach ( [ get_current_blog_id(), 0 ] as $blog_id ) {
+			$query = new \WP_User_Query(
+				[
+					'ep_integrate'        => true,
+					'blog_id'             => $blog_id,
+					'has_published_posts' => [ 'post' ],
+					'fields'              => 'ID',
+					'number'              => 1,
+					'orderby'             => 'ID',
+					'order'               => 'ASC',
+				]
+			);
+			$this->assertTrue( $query->get( 'elasticsearch_success' ) );
+			$this->assertSame( 10001, (int) $query->get_total() );
+			$this->assertSame( [ 1000001 ], array_map( 'intval', $query->get_results() ) );
+		}
+	}
+
+	/**
 	 * Published types include all published content, once per site and type.
 	 */
 	public function testPreparePublishedPostTypes() {

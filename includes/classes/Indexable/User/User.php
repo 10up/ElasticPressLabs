@@ -96,6 +96,11 @@ class User extends Indexable {
 			'size' => $number,
 		];
 
+		// Keep totals exact for published-author queries, including blog_id = 0.
+		if ( ! empty( $query_vars['has_published_posts'] ) && ! empty( $query_vars['count_total'] ) && version_compare( Elasticsearch::factory()->get_elasticsearch_version(), '7.0', '>=' ) ) {
+			$formatted_args['track_total_hits'] = true;
+		}
+
 		$filter = [
 			'bool' => [
 				'must' => [],
@@ -363,12 +368,26 @@ class User extends Indexable {
 		}
 
 		/**
+		 * Match published authors using site-qualified post types in the user index.
+		 */
+		if ( $blog_id && ! empty( $query_vars['has_published_posts'] ) ) {
+			$post_types           = true === $query_vars['has_published_posts']
+				? get_post_types( [ 'public' => true ] )
+				: (array) $query_vars['has_published_posts'];
+			$published_post_types = [];
+			foreach ( $post_types as $post_type ) {
+				$published_post_types[] = $blog_id . ':' . strtolower( (string) $post_type );
+			}
+			$filter['bool']['must'][] = [ 'terms' => [ 'published_post_types' => $published_post_types ] ];
+			$use_filters              = true;
+		}
+
+		/**
 		 * Need to support a few more params
 		 *
 		 * @todo  Support the following parameters:
 		 *
 		 * $who
-		 * $has_published_posts
 		 */
 
 		/**
