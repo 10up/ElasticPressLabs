@@ -1738,6 +1738,472 @@ class TestUser extends BaseTestCase {
 	}
 
 	/**
+	 * Flush the real user sync queue and verify which authors were scheduled.
+	 *
+	 * @param int[] $expected Expected author IDs.
+	 */
+	protected function syncPublishedAuthors( $expected ) {
+		$manager = ElasticPress\Indexables::factory()->get( 'user' )->sync_manager;
+		$manager->queue_deferred_authors();
+		$queued = [];
+
+		foreach ( $manager->sync_queue as $queue ) {
+			$queued = array_merge( $queued, array_keys( $queue ) );
+		}
+
+		$queued = array_values( array_unique( $queued ) );
+		sort( $queued );
+		sort( $expected );
+		$this->assertSame( $expected, $queued );
+		$manager->index_sync_queue();
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+	}
+
+	/**
+	 * Publish, unpublish, trash, restore and delete through WordPress's normal hooks.
+	 */
+	public function testPublishedAuthorsLifecycle() {
+		$user_id             = $this->ep_factory->user->create( [ 'role' => 'author' ] );
+		$manager             = ElasticPress\Indexables::factory()->get( 'user' )->sync_manager;
+		$manager->sync_queue = [];
+		$post_id             = $this->factory->post->create(
+			[
+				'post_author' => $user_id,
+				'post_status' => 'draft',
+			]
+		);
+		$args                = [
+			'has_published_posts' => [ 'post' ],
+			'include'             => [ $user_id ],
+		];
+		$this->syncPublishedAuthors( [] );
+		$this->assertPublishedPostsQuery( $args, [] );
+
+		foreach ( [ 'publish', 'draft', 'publish', 'private', 'publish' ] as $status ) {
+			wp_update_post(
+				[
+					'ID'          => $post_id,
+					'post_status' => $status,
+				]
+			);
+			$this->syncPublishedAuthors( [ $user_id ] );
+			$this->assertPublishedPostsQuery( $args, 'publish' === $status ? [ $user_id ] : [] );
+		}
+
+		wp_trash_post( $post_id );
+		$this->syncPublishedAuthors( [ $user_id ] );
+		$this->assertPublishedPostsQuery( $args, [] );
+		// WordPress restores to draft by default.
+		wp_untrash_post( $post_id );
+		$this->syncPublishedAuthors( [] );
+		$this->assertPublishedPostsQuery( $args, [] );
+		wp_publish_post( $post_id );
+		$this->syncPublishedAuthors( [ $user_id ] );
+		wp_trash_post( $post_id );
+		$this->syncPublishedAuthors( [ $user_id ] );
+		add_filter( 'wp_untrash_post_status', 'wp_untrash_post_set_previous_status', 10, 3 );
+		try {
+			wp_untrash_post( $post_id );
+		} finally {
+			remove_filter( 'wp_untrash_post_status', 'wp_untrash_post_set_previous_status', 10 );
+		}
+		$this->syncPublishedAuthors( [ $user_id ] );
+		$this->assertPublishedPostsQuery( $args, [ $user_id ] );
+		wp_delete_post( $post_id, true );
+		$this->syncPublishedAuthors( [ $user_id ] );
+		$this->assertPublishedPostsQuery( $args, [] );
+	}
+
+	/**
+	 * Preserve remaining posts and refresh both authors, including author zero and private types.
+	 */
+	public function testPublishedAuthorsReassignmentAndTypes() {
+		$users               = [
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+		];
+		$manager             = ElasticPress\Indexables::factory()->get( 'user' )->sync_manager;
+		$manager->sync_queue = [];
+		register_post_type( 'ep_private_test', [ 'public' => false ] );
+		try {
+			$first  = $this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+				]
+			);
+			$second = $this->factory->post->create(
+				[
+					'post_author'   => $users[0],
+					'post_status'   => 'publish',
+					'post_password' => 'secret',
+				]
+			);
+			$args   = [
+				'has_published_posts' => [ 'post' ],
+				'include'             => $users,
+			];
+			$this->syncPublishedAuthors( [ $users[0] ] );
+			$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+			wp_delete_post( $first, true );
+			$this->syncPublishedAuthors( [ $users[0] ] );
+			$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+			$first = $this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+				]
+			);
+			$this->syncPublishedAuthors( [ $users[0] ] );
+			wp_update_post(
+				[
+					'ID'          => $first,
+					'post_author' => $users[1],
+				]
+			);
+			$this->syncPublishedAuthors( $users );
+			$this->assertPublishedPostsQuery( $args, $users );
+			wp_update_post(
+				[
+					'ID'          => $first,
+					'post_author' => 0,
+				]
+			);
+			$this->syncPublishedAuthors( [ $users[1] ] );
+			$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+			wp_update_post(
+				[
+					'ID'          => $first,
+					'post_author' => $users[1],
+				]
+			);
+			$this->syncPublishedAuthors( [ $users[1] ] );
+			$this->assertPublishedPostsQuery( $args, $users );
+			wp_update_post(
+				[
+					'ID'        => $second,
+					'post_type' => 'page',
+				]
+			);
+			$this->syncPublishedAuthors( [ $users[0] ] );
+			$this->assertPublishedPostsQuery( $args, [ $users[1] ] );
+			$this->assertPublishedPostsQuery( array_merge( $args, [ 'has_published_posts' => [ 'page' ] ] ), [ $users[0] ] );
+			wp_update_post(
+				[
+					'ID'        => $first,
+					'post_type' => 'ep_private_test',
+				]
+			);
+			$this->syncPublishedAuthors( [ $users[1] ] );
+			$this->assertPublishedPostsQuery( $args, [] );
+			$this->assertPublishedPostsQuery( array_merge( $args, [ 'has_published_posts' => [ 'ep_private_test' ] ] ), [ $users[1] ] );
+			$this->assertPublishedPostsQuery( array_merge( $args, [ 'has_published_posts' => true ] ), [ $users[0] ] );
+		} finally {
+			unregister_post_type( 'ep_private_test' );
+		}
+	}
+
+	/**
+	 * Ignore ordinary edits and revisions; recompute the final state once per queued author.
+	 */
+	public function testPublishedAuthorsQueueAndScheduledPublication() {
+		$indexable           = ElasticPress\Indexables::factory()->get( 'user' );
+		$manager             = $indexable->sync_manager;
+		$users               = [
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+		];
+		$manager->sync_queue = [];
+		$post_id             = $this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'publish',
+			]
+		);
+		$this->syncPublishedAuthors( [ $users[0] ] );
+		wp_update_post(
+			[
+				'ID'           => $post_id,
+				'post_title'   => 'A changed title',
+				'post_content' => 'A changed body',
+			]
+		);
+		$this->factory->post->create(
+			[
+				'post_type'   => 'revision',
+				'post_status' => 'inherit',
+				'post_parent' => $post_id,
+				'post_author' => $users[1],
+			]
+		);
+		$draft = $this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'draft',
+			]
+		);
+		wp_update_post(
+			[
+				'ID'          => $draft,
+				'post_author' => $users[1],
+				'post_type'   => 'page',
+			]
+		);
+		$this->syncPublishedAuthors( [] );
+		wp_update_post(
+			[
+				'ID'          => $post_id,
+				'post_author' => $users[1],
+			]
+		);
+		wp_update_post(
+			[
+				'ID'          => $post_id,
+				'post_author' => $users[0],
+			]
+		);
+		$this->assertCount( 2, $manager->get_sync_queue() );
+		$this->syncPublishedAuthors( $users );
+		$args = [
+			'has_published_posts' => [ 'post' ],
+			'include'             => $users,
+		];
+		$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+		$future = $this->factory->post->create(
+			[
+				'post_author' => $users[1],
+				'post_status' => 'future',
+				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+			]
+		);
+		$this->syncPublishedAuthors( [] );
+		$current_user = get_current_user_id();
+		wp_set_current_user( 0 );
+		try {
+			wp_publish_post( $future ); // The same publication path used by WordPress cron.
+			$this->syncPublishedAuthors( [ $users[1] ] );
+		} finally {
+			wp_set_current_user( $current_user );
+		}
+		$this->assertPublishedPostsQuery( $args, $users );
+	}
+
+	/**
+	 * Deletion must remain correct even when adding to the queue immediately flushes it.
+	 */
+	public function testPublishedAuthorsImmediateFlushAndUserDeletion() {
+		global $coauthors_plus;
+
+		$indexable = ElasticPress\Indexables::factory()->get( 'user' );
+		$manager   = $indexable->sync_manager;
+		$users     = [
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+			$this->ep_factory->user->create( [ 'role' => 'author' ] ),
+		];
+		// The bundled Co-Authors Plus deletion hook expects its author term to exist.
+		$coauthors_plus->update_author_term( get_userdata( $users[0] ) );
+		$manager->sync_queue = [];
+		$post_id             = $this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'publish',
+			]
+		);
+		$this->syncPublishedAuthors( [ $users[0] ] );
+		add_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		try {
+			wp_delete_post( $post_id, true );
+			ElasticPress\Elasticsearch::factory()->refresh_indices();
+			$this->assertPublishedPostsQuery(
+				[
+					'has_published_posts' => true,
+					'include'             => $users,
+				],
+				[]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+				]
+			);
+			$this->assertTrue( wp_delete_user( $users[0], $users[1] ) );
+			$manager->queue_deferred_authors();
+			$manager->index_sync_queue();
+		} finally {
+			remove_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		}
+		ElasticPress\Elasticsearch::factory()->refresh_indices();
+		$this->assertPublishedPostsQuery(
+			[
+				'has_published_posts' => true,
+				'include'             => $users,
+			],
+			[ $users[1] ]
+		);
+
+		if ( ! is_multisite() ) {
+			$this->assertEmpty( $indexable->get( $users[0] ) );
+		}
+	}
+
+	/**
+	 * Post-driven refreshes honor both sync kill filters.
+	 */
+	public function testPublishedAuthorsSyncKill() {
+		$user_id             = $this->ep_factory->user->create( [ 'role' => 'author' ] );
+		$manager             = ElasticPress\Indexables::factory()->get( 'user' )->sync_manager;
+		$manager->sync_queue = [];
+
+		foreach ( [ 'ep_sync_indexable_kill', 'ep_user_sync_kill' ] as $filter ) {
+			add_filter( $filter, '__return_true' );
+			try {
+				$this->factory->post->create(
+					[
+						'post_author' => $user_id,
+						'post_status' => 'publish',
+					]
+				);
+			} finally {
+				remove_filter( $filter, '__return_true' );
+			}
+			$this->assertEmpty( $manager->get_sync_queue() );
+		}
+	}
+
+	/**
+	 * Membership and bulk reassignment refresh both users after the SQL update.
+	 *
+	 * @group multisite
+	 */
+	public function testPublishedAuthorsMultisiteMembership() {
+		if ( ! is_multisite() || ! defined( 'EP_IS_NETWORK' ) || ! EP_IS_NETWORK ) {
+			$this->markTestSkipped( 'Requires network activation.' );
+		}
+
+		$indexable           = ElasticPress\Indexables::factory()->get( 'user' );
+		$manager             = $indexable->sync_manager;
+		$users               = $this->factory->user->create_many( 3, [ 'role' => 'author' ] );
+		$home_id             = get_current_blog_id();
+		$site_id             = $this->factory->blog->create();
+		$manager->sync_queue = [];
+		$this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'publish',
+			]
+		);
+		switch_to_blog( $site_id );
+		try {
+			add_user_to_blog( $site_id, $users[0], 'author' );
+			add_user_to_blog( $site_id, $users[1], 'author' );
+			$this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users[2],
+					'post_status' => 'publish',
+				]
+			);
+		} finally {
+			restore_current_blog();
+		}
+		$this->syncPublishedAuthors( $users );
+		$args = [
+			'blog_id'             => $site_id,
+			'has_published_posts' => [ 'post' ],
+			'include'             => $users,
+		];
+		$this->assertPublishedPostsQuery( $args, [ $users[0] ] );
+		add_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		try {
+			$this->assertTrue( remove_user_from_blog( $users[0], $site_id, $users[1] ) );
+		} finally {
+			remove_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		}
+		$this->assertSame( '/ep116-test', apply_filters( 'wp_redirect', '/ep116-test', 302 ) );
+		$this->syncPublishedAuthors( [] );
+		$this->assertPublishedPostsQuery( $args, [ $users[1] ] );
+		$this->assertPublishedPostsQuery( array_merge( $args, [ 'blog_id' => $home_id ] ), [ $users[0] ] );
+		add_user_to_blog( $site_id, $users[2], 'author' );
+		$this->syncPublishedAuthors( [ $users[2] ] );
+		$this->assertPublishedPostsQuery( $args, [ $users[1], $users[2] ] );
+		remove_user_from_blog( $users[2], $site_id );
+		$this->syncPublishedAuthors( [ $users[2] ] );
+		$this->assertPublishedPostsQuery( $args, [ $users[1] ] );
+		$this->assertContains( $site_id . ':post', $indexable->get( $users[2] )['published_post_types'] );
+	}
+
+	/**
+	 * Deleting a site clears its tokens even for authors who are no longer members.
+	 *
+	 * @group multisite
+	 * @expectedDeprecated delete_blog
+	 */
+	public function testPublishedAuthorsSiteDeletion() {
+		if ( ! is_multisite() || ! defined( 'EP_IS_NETWORK' ) || ! EP_IS_NETWORK ) {
+			$this->markTestSkipped( 'Requires network activation.' );
+		}
+
+		$indexable           = ElasticPress\Indexables::factory()->get( 'user' );
+		$manager             = $indexable->sync_manager;
+		$users               = $this->factory->user->create_many( 3, [ 'role' => 'author' ] );
+		$site_id             = $this->factory->blog->create();
+		$manager->sync_queue = [];
+		$this->factory->post->create(
+			[
+				'post_author' => $users[0],
+				'post_status' => 'publish',
+			]
+		);
+		switch_to_blog( $site_id );
+		try {
+			add_user_to_blog( $site_id, $users[0], 'author' );
+			add_user_to_blog( $site_id, $users[1], 'author' );
+			$this->factory->post->create(
+				[
+					'post_author' => $users[0],
+					'post_status' => 'publish',
+				]
+			);
+			$this->factory->post->create(
+				[
+					'post_author' => $users[2],
+					'post_status' => 'publish',
+				]
+			);
+		} finally {
+			restore_current_blog();
+		}
+		$this->syncPublishedAuthors( $users );
+		add_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		try {
+			wpmu_delete_blog( $site_id, true );
+		} finally {
+			remove_action( 'ep_after_add_to_queue', [ $manager, 'index_sync_queue' ] );
+		}
+		$this->assertNull( get_site( $site_id ) );
+		$this->assertArrayNotHasKey( $site_id, $manager->sync_queue );
+		$this->syncPublishedAuthors( [] );
+
+		foreach ( $users as $user_id ) {
+			$this->assertNotContains( $site_id . ':post', $indexable->get( $user_id )['published_post_types'] );
+		}
+
+		$this->assertPublishedPostsQuery(
+			[
+				'has_published_posts' => true,
+				'include'             => $users,
+			],
+			[ $users[0] ]
+		);
+	}
+
+	/**
 	 * Published types include all published content, once per site and type.
 	 */
 	public function testPreparePublishedPostTypes() {
