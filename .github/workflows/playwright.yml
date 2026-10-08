@@ -47,7 +47,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: elasticpress-labs
-    
+
     - name: Set path variable
       run: |
         echo "WORKING_DIR=$(pwd)" >> $GITHUB_ENV
