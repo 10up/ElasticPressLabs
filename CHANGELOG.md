@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+### Fixed
+* Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered.
+
 ## [2.5.1] - 2026-05-11
 
 ### Added
@@ -51,7 +54,6 @@ All notable changes to this project will be documented in this file, per [the Ke
 * Add Patchstack security-reporting FAQ. Props [@jeffpaul](https://github.com/jeffpaul) via [#174](https://github.com/10up/ElasticPressLabs/pull/174).
 * Set explicit `permissions` on GitHub Actions workflows. Props [@jeffpaul](https://github.com/jeffpaul) via [#178](https://github.com/10up/ElasticPressLabs/pull/178).
 * Add `ep_user_sync_kill` filter in Users `action_queue_meta_sync`. Props [@burhandodhy](https://github.com/burhandodhy) and [@yarovikov](https://github.com/yarovikov) via [#183](https://github.com/10up/ElasticPressLabs/pull/183).
-
 ## [2.5.0] - 2025-11-05
 
 ### Added
