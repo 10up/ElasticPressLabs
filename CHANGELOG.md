@@ -14,8 +14,21 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+## [2.5.2] - 2026-XX-XX
+
 ### Fixed
-* Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered.
+* Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered. Props [@rickalee](https://github.com/rickalee) via [#211](https://github.com/10up/ElasticPressLabs/pull/211).
+* [Vector Embeddings] Chunk overlap only applied to the first chunks of a text. Props [@felipeelia](https://github.com/felipeelia) via [#208](https://github.com/10up/ElasticPressLabs/pull/208).
+
+### Security
+* Updated Node.js to v24 and npm packages, including `10up-toolkit` 7. Props [@ZacharyRener](https://github.com/ZacharyRener) via [#214](https://github.com/10up/ElasticPressLabs/pull/214).
+* Pinned `fast-uri` to 3.1.8 (CVE-2026-86472). Props [@rickalee](https://github.com/rickalee) via [#213](https://github.com/10up/ElasticPressLabs/pull/213).
+* Bumped `postcss` from 8.5.6 to 8.5.14. Props [@dependabot](https://github.com/dependabot) via [#200](https://github.com/10up/ElasticPressLabs/pull/200).
+* Bumped `wp-coding-standards/wpcs` from 3.1.0 to 3.4.1. Props [@dependabot](https://github.com/dependabot) via [#207](https://github.com/10up/ElasticPressLabs/pull/207).
+* Bumped `ws`, `js-yaml`, `brace-expansion`, `http-proxy-middleware`, `immutable`, `svgo`, `compression`, `proxy-addr`, `websocket-driver`, and other npm packages. Props [@dependabot](https://github.com/dependabot) via [#215](https://github.com/10up/ElasticPressLabs/pull/215).
+
+### Developer
+* Fixed failing unit tests. Props [@ZacharyRener](https://github.com/ZacharyRener) via [#206](https://github.com/10up/ElasticPressLabs/pull/206).
 
 ## [2.5.1] - 2026-05-11
 
@@ -216,6 +229,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.5.2]: https://github.com/10up/ElasticPressLabs/compare/2.5.1...2.5.2
 [2.5.1]: https://github.com/10up/ElasticPressLabs/compare/2.5.0...2.5.1
 [2.5.0]: https://github.com/10up/ElasticPressLabs/compare/2.4.0...2.5.0
 [2.4.0]: https://github.com/10up/ElasticPressLabs/compare/2.3.1...2.4.0

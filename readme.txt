@@ -2,8 +2,8 @@
 Contributors:      10up
 Tags:              Elasticsearch, ElasticPress, search, boolean, Co-Authors Plus
 Requires at least: 6.0
-Tested up to:      7.0
-Stable tag:        2.5.1
+Tested up to:      7.1
+Stable tag:        2.5.2
 Requires PHP:      7.4
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,6 +33,25 @@ This plugin provides a simple interface to enable and disable features.
 Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 == Changelog ==
+
+= 2.5.2 - 2026-XX-XX =
+
+__Fixed:__
+
+* Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered. Props [@rickalee](https://github.com/rickalee).
+* [Vector Embeddings] Chunk overlap only applied to the first chunks of a text. Props [@felipeelia](https://github.com/felipeelia).
+
+__Security:__
+
+* Updated Node.js to v24 and npm packages, including `10up-toolkit` 7. Props [@ZacharyRener](https://github.com/ZacharyRener).
+* Pinned `fast-uri` to 3.1.8 (CVE-2026-86472). Props [@rickalee](https://github.com/rickalee).
+* Bumped `postcss` from 8.5.6 to 8.5.14. Props [@dependabot](https://github.com/dependabot).
+* Bumped `wp-coding-standards/wpcs` from 3.1.0 to 3.4.1. Props [@dependabot](https://github.com/dependabot).
+* Bumped `ws`, `js-yaml`, `brace-expansion`, `http-proxy-middleware`, `immutable`, `svgo`, `compression`, `proxy-addr`, `websocket-driver`, and other npm packages. Props [@dependabot](https://github.com/dependabot).
+
+__Developer:__
+
+* Fixed failing unit tests. Props [@ZacharyRener](https://github.com/ZacharyRener).
 
 = 2.5.1 - 2026-05-11 =
 
