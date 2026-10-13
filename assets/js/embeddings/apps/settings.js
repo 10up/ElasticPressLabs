@@ -74,7 +74,7 @@ export default () => {
 					)}
 					<TabPanel
 						className="ep-vector-embedding-settings__tabs"
-						activeClass="ep-vector-embedding-settings__tabs__tab--active"
+						activeClass="ep-vector-embedding-settings__tab--active"
 						onSelect={(val) => setCurrentTab(val)}
 						initialTabName={postTypes[0].key}
 						orientation={is2columns ? 'vertical' : 'horizontal'}

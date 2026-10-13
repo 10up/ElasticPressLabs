@@ -22,6 +22,7 @@ function setup() {
 
 	add_action( 'init', $n( 'i18n' ) );
 	add_action( 'init', $n( 'init' ) );
+	add_action( 'init', $n( 'register_react_jsx_runtime' ), 1 );
 	add_action( 'admin_enqueue_scripts', $n( 'admin_scripts' ) );
 
 	add_action( 'plugins_loaded', $n( 'maybe_load_features' ), 11 );
@@ -53,6 +54,24 @@ function i18n() {
  */
 function init() {
 	do_action( 'ep_labs_init' );
+}
+
+/**
+ * Register the `react-jsx-runtime` script handle on WordPress versions that do not ship it.
+ *
+ * @see https://github.com/10up/ElasticPress/blob/develop/includes/dashboard.php#L82
+ * @return void
+ */
+function register_react_jsx_runtime() {
+	if ( wp_script_is( 'react-jsx-runtime', 'registered' ) ) {
+		return;
+	}
+
+	wp_register_script( 'react-jsx-runtime', false, [ 'react' ], '18', true );
+	wp_add_inline_script(
+		'react-jsx-runtime',
+		'window.ReactJSXRuntime=window.ReactJSXRuntime||{Fragment:window.React.Fragment,jsx:function(type,config,maybeKey){var props=Object.assign({},config);if(maybeKey!==undefined){props.key=maybeKey;}return window.React.createElement(type,props);},jsxs:function(type,config,maybeKey){var props=Object.assign({},config);if(maybeKey!==undefined){props.key=maybeKey;}return window.React.createElement(type,props);}};'
+	);
 }
 
 /**
