@@ -70,6 +70,7 @@
     "react-loading-skeleton": "^3.5.0"
   },
   "overrides": {
-    "@babel/runtime": "^7.27.6"
+    "@babel/runtime": "^7.27.6",
+    "fast-uri": "3.1.8"
   }
 }
