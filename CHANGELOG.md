@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
-## [2.5.2] - 2026-XX-XX
+## [2.5.2] - 2026-10-14
 
 ### Fixed
 * Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered. Props [@rickalee](https://github.com/rickalee) via [#211](https://github.com/10up/ElasticPressLabs/pull/211).

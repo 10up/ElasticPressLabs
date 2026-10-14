@@ -43,7 +43,7 @@ Please report security bugs found in the source code of the ElasticPress Labs pl
 
 == Changelog ==
 
-= 2.5.2 - 2026-XX-XX =
+= 2.5.2 - 2026-10-14 =
 
 __Fixed:__
 
