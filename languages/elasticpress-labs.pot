@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ElasticPress Labs 2.5.1\n"
+"Project-Id-Version: ElasticPress Labs 2.5.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress-labs\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-07T12:28:08+00:00\n"
+"POT-Creation-Date: 2026-10-14T15:28:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: elasticpress-labs\n"
@@ -168,27 +168,27 @@ msgstr ""
 msgid "%1$s signifies slop if used on a phrase. eg.: \"modern art\"~2. Signifies fuzziness if used on a word: eg: modern~1"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:73
+#: includes/classes/Feature/CoAuthorsPlus.php:69
 msgid "Co-Authors Plus"
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:227
+#: includes/classes/Feature/CoAuthorsPlus.php:223
 msgid "Add support for the Co-Authors Plus plugin in the Admin Post List screen by Author name."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:239
+#: includes/classes/Feature/CoAuthorsPlus.php:235
 msgid "If using the Co-Authors Plus plugin and the Protected Content feature, enable this feature to visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:260
+#: includes/classes/Feature/CoAuthorsPlus.php:256
 msgid "When enabled, this feature integrates ElasticPress with Co-Authors Plus to enhance author-related queries on the frontend. If \"Protected Content\" is activated, visit the Admin Post List screen by Author name <code>wp-admin/edit.php?author_name=&lt;name&gt;</code> and see correct results."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:278
+#: includes/classes/Feature/CoAuthorsPlus.php:277
 msgid "You need to have Co-Authors Plus installed and activated."
 msgstr ""
 
-#: includes/classes/Feature/CoAuthorsPlus.php:281
+#: includes/classes/Feature/CoAuthorsPlus.php:280
 msgid "You need to activate the Protected Content Feature to this feature work properly."
 msgstr ""
 
@@ -328,8 +328,8 @@ msgstr ""
 #: includes/classes/Feature/SearchTemplates.php:52
 #: includes/classes/Feature/SearchTemplates.php:119
 #: assets/js/search-templates/index.js:25
-#: dist/js/search-templates-script.js:2624
-#: dist/js/search-templates-script.js:2083
+#: dist/js/search-templates-script.js:1253
+#: dist/js/search-templates-script.js:729
 msgid "Search Templates"
 msgstr ""
 
@@ -355,7 +355,7 @@ msgstr ""
 msgid "ElasticPress.io Search Templates"
 msgstr ""
 
-#: includes/classes/Feature/SearchTemplates.php:258
+#: includes/classes/Feature/SearchTemplates.php:259
 msgid "Manage search templates"
 msgstr ""
 
@@ -619,42 +619,90 @@ msgstr ""
 msgid "Template name."
 msgstr ""
 
-#: includes/classes/REST/VectorEmbeddingSettings.php:71
-msgid "Chunking settings."
+#: includes/classes/REST/VectorEmbeddingSettings.php:88
+msgid "Taxonomy name."
 msgstr ""
 
-#: includes/classes/REST/VectorEmbeddingSettings.php:75
-msgid "Mode of the embeddings."
+#: includes/classes/REST/VectorEmbeddingSettings.php:95
+msgid "Taxonomy label."
 msgstr ""
 
-#: includes/classes/REST/VectorEmbeddingSettings.php:79
+#: includes/classes/REST/VectorEmbeddingSettings.php:99
+msgid "IDs of the terms whose posts are included."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:108
+msgid "IDs of the terms whose posts are excluded."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:117
+msgid "Whether the taxonomy rules are enabled."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:137
+msgid "Chunk size, in words."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:144
+msgid "Chunk overlap, in words."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:151
 msgid "Post type configurations."
 msgstr ""
 
-#: includes/classes/REST/VectorEmbeddingSettings.php:85
+#: includes/classes/REST/VectorEmbeddingSettings.php:159
 msgid "Post type key."
 msgstr ""
 
-#: includes/classes/REST/VectorEmbeddingSettings.php:89
+#: includes/classes/REST/VectorEmbeddingSettings.php:165
+msgid "Post type label."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:169
+msgid "Whether posts of this type can be embedded."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:174
+msgid "Whether posts are embedded automatically or only when flagged."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:180
+msgid "Whether post meta flags posts for inclusion or exclusion."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:185
+msgid "Meta keys that flag posts for inclusion."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:189
+msgid "Meta keys that flag posts for exclusion."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:193
+msgid "Fields used to generate the embeddings."
+msgstr ""
+
+#: includes/classes/REST/VectorEmbeddingSettings.php:196
 msgid "Taxonomies settings."
 msgstr ""
 
 #. translators: 1: Maximum number of failures, 2: Time remaining
-#: includes/classes/Traits/DisableAfterFailures.php:97
+#: includes/classes/Traits/DisableAfterFailures.php:100
 #, php-format
 msgid "The feature has been temporarily disabled after %1$d failures. It will be re-enabled in %2$s. Alternatively, you can <a href=\"%3$s\">reset the counter and re-activate the feature now</a>."
 msgstr ""
 
-#: includes/functions/core.php:212
+#: includes/functions/core.php:231
 msgid "AI"
 msgstr ""
 
-#: includes/functions/core.php:223
+#: includes/functions/core.php:242
 msgid "ElasticPress Labs needs ElasticPress to work."
 msgstr ""
 
 #. translators: Min. EP version
-#: includes/functions/core.php:238
+#: includes/functions/core.php:257
 #, php-format
 msgid "ElasticPress Labs needs at least ElasticPress %s to work properly."
 msgstr ""
@@ -710,9 +758,9 @@ msgstr ""
 #: assets/js/embeddings/apps/settings.js:31
 #: assets/js/embeddings/components/pages/indexing.js:18
 #: dist/js/embeddings-script.js:58
-#: dist/js/embeddings-script.js:838
+#: dist/js/embeddings-script.js:852
 #: dist/js/embeddings-script.js:31
-#: dist/js/embeddings-script.js:510
+#: dist/js/embeddings-script.js:514
 msgid "Indexing"
 msgstr ""
 
@@ -789,188 +837,188 @@ msgid "Select from the post fields below. Additional meta keys can be added to t
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedded-fields.js:75
-#: dist/js/embeddings-script.js:391
-#: dist/js/embeddings-script.js:247
+#: dist/js/embeddings-script.js:398
+#: dist/js/embeddings-script.js:249
 msgid "Add Custom Fields"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:18
-#: dist/js/embeddings-script.js:441
-#: dist/js/embeddings-script.js:273
+#: dist/js/embeddings-script.js:448
+#: dist/js/embeddings-script.js:275
 msgid "Manual"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:19
-#: dist/js/embeddings-script.js:444
-#: dist/js/embeddings-script.js:274
+#: dist/js/embeddings-script.js:451
+#: dist/js/embeddings-script.js:276
 msgid "Automatic"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:25
-#: dist/js/embeddings-script.js:462
-#: dist/js/embeddings-script.js:280
+#: dist/js/embeddings-script.js:469
+#: dist/js/embeddings-script.js:282
 msgid "This setting controls which posts will be indexed with vector embedding data."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:30
-#: dist/js/embeddings-script.js:469
-#: dist/js/embeddings-script.js:285
+#: dist/js/embeddings-script.js:476
+#: dist/js/embeddings-script.js:287
 msgid "Modes"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:33
-#: dist/js/embeddings-script.js:487
-#: dist/js/embeddings-script.js:288
+#: dist/js/embeddings-script.js:494
+#: dist/js/embeddings-script.js:290
 msgid "Automatic (Default): Posts are indexed based on taxonomy terms and post meta. Configure rules to include or exclude posts automatically."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:39
-#: dist/js/embeddings-script.js:494
-#: dist/js/embeddings-script.js:294
+#: dist/js/embeddings-script.js:501
+#: dist/js/embeddings-script.js:296
 msgid "Manual: Editors will manually select which posts will qualify for vector embedding."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:46
-#: dist/js/embeddings-script.js:501
-#: dist/js/embeddings-script.js:301
+#: dist/js/embeddings-script.js:508
+#: dist/js/embeddings-script.js:303
 msgid "Choose the mode that best fits your needs. If unsure, the automatic mode ensures consistent indexing based on predefined rules"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:53
-#: dist/js/embeddings-script.js:509
-#: dist/js/embeddings-script.js:308
+#: dist/js/embeddings-script.js:516
+#: dist/js/embeddings-script.js:310
 msgid "Embedding Mode"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:56
-#: dist/js/embeddings-script.js:510
-#: dist/js/embeddings-script.js:311
+#: dist/js/embeddings-script.js:517
+#: dist/js/embeddings-script.js:313
 msgid "Posts be will indexed according to the configuration below."
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/embedding-mode.js:60
-#: dist/js/embeddings-script.js:510
-#: dist/js/embeddings-script.js:315
+#: dist/js/embeddings-script.js:517
+#: dist/js/embeddings-script.js:317
 msgid "Users will manually select which posts will qualify for vector embedding"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:19
-#: dist/js/embeddings-script.js:574
-#: dist/js/embeddings-script.js:349
+#: dist/js/embeddings-script.js:581
+#: dist/js/embeddings-script.js:351
 msgid "Post Meta"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:21
-#: dist/js/embeddings-script.js:575
-#: dist/js/embeddings-script.js:351
+#: dist/js/embeddings-script.js:582
+#: dist/js/embeddings-script.js:353
 msgid "Post Meta Fields"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:37
-#: dist/js/embeddings-script.js:596
-#: dist/js/embeddings-script.js:367
+#: dist/js/embeddings-script.js:603
+#: dist/js/embeddings-script.js:369
 msgid "Include posts that have any of these meta keys"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/meta-inclusion.js:49
-#: dist/js/embeddings-script.js:616
-#: dist/js/embeddings-script.js:379
+#: dist/js/embeddings-script.js:623
+#: dist/js/embeddings-script.js:381
 msgid "Exclude posts that have any of these meta keys"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:21
-#: dist/js/embeddings-script.js:681
-#: dist/js/embeddings-script.js:412
+#: dist/js/embeddings-script.js:688
+#: dist/js/embeddings-script.js:414
 msgid "Taxonomies"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:41
-#: dist/js/embeddings-script.js:711
-#: dist/js/embeddings-script.js:431
+#: dist/js/embeddings-script.js:725
+#: dist/js/embeddings-script.js:434
 msgid "Include posts that have any of these terms"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:60
-#: dist/js/embeddings-script.js:731
-#: dist/js/embeddings-script.js:450
+#: dist/js/embeddings-script.js:745
+#: dist/js/embeddings-script.js:453
 msgid "Exclude posts that have any of these terms"
 msgstr ""
 
 #: assets/js/embeddings/components/fieldsets/taxonomy-inclusion.js:83
-#: dist/js/embeddings-script.js:748
-#: dist/js/embeddings-script.js:472
+#: dist/js/embeddings-script.js:762
+#: dist/js/embeddings-script.js:476
 msgid "No public taxonomies are registered to this post type."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/indexing.js:22
-#: dist/js/embeddings-script.js:846
-#: dist/js/embeddings-script.js:514
+#: dist/js/embeddings-script.js:860
+#: dist/js/embeddings-script.js:518
 msgid "Chunk Size (in words)"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/indexing.js:30
-#: dist/js/embeddings-script.js:858
-#: dist/js/embeddings-script.js:521
+#: dist/js/embeddings-script.js:873
+#: dist/js/embeddings-script.js:526
 msgid "Chunk Overlap (in words)"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:36
-#: dist/js/embeddings-script.js:958
-#: dist/js/embeddings-script.js:567
+#: dist/js/embeddings-script.js:974
+#: dist/js/embeddings-script.js:573
 msgid "Allow Vector Embedding"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:37
-#: dist/js/embeddings-script.js:959
-#: dist/js/embeddings-script.js:568
+#: dist/js/embeddings-script.js:975
+#: dist/js/embeddings-script.js:574
 msgid "Enable or disable vector embeddings for this post type."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:49
-#: dist/js/embeddings-script.js:969
-#: dist/js/embeddings-script.js:580
+#: dist/js/embeddings-script.js:985
+#: dist/js/embeddings-script.js:586
 msgid "Indexing Criteria"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:53
-#: dist/js/embeddings-script.js:991
-#: dist/js/embeddings-script.js:584
+#: dist/js/embeddings-script.js:1007
+#: dist/js/embeddings-script.js:590
 msgid "Rules"
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:56
-#: dist/js/embeddings-script.js:1009
-#: dist/js/embeddings-script.js:587
+#: dist/js/embeddings-script.js:1025
+#: dist/js/embeddings-script.js:593
 msgid "Include: If you specify terms or fields to include, only posts with those terms or fields will be included. All others will be excluded."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:62
-#: dist/js/embeddings-script.js:1016
-#: dist/js/embeddings-script.js:593
+#: dist/js/embeddings-script.js:1032
+#: dist/js/embeddings-script.js:599
 msgid "Exclude: If you specify terms or fields to exclude, posts with those terms and fields will be left out, while all others will be included."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:68
-#: dist/js/embeddings-script.js:1023
-#: dist/js/embeddings-script.js:599
+#: dist/js/embeddings-script.js:1039
+#: dist/js/embeddings-script.js:605
 msgid "Both Include & Exclude: If both are set, excluded terms and fields take priority — posts with those terms will always be left out, even if they match the included terms."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:74
-#: dist/js/embeddings-script.js:1030
-#: dist/js/embeddings-script.js:605
+#: dist/js/embeddings-script.js:1046
+#: dist/js/embeddings-script.js:611
 msgid "If no rules are set, all posts are included by default."
 msgstr ""
 
 #: assets/js/embeddings/components/pages/post-type.js:94
-#: dist/js/embeddings-script.js:1052
-#: dist/js/embeddings-script.js:625
+#: dist/js/embeddings-script.js:1068
+#: dist/js/embeddings-script.js:631
 msgid "Content Fields"
 msgstr ""
 
 #: assets/js/embeddings/index.js:27
-#: dist/js/embeddings-script.js:1629
-#: dist/js/embeddings-script.js:955
+#: dist/js/embeddings-script.js:1645
+#: dist/js/embeddings-script.js:961
 msgid "Manage Vector Embeddings"
 msgstr ""
 
