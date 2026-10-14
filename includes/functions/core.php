@@ -22,6 +22,7 @@ function setup() {
 
 	add_action( 'init', $n( 'i18n' ) );
 	add_action( 'init', $n( 'init' ) );
+	add_action( 'init', $n( 'register_react_jsx_runtime' ), 1 );
 	add_action( 'admin_enqueue_scripts', $n( 'admin_scripts' ) );
 
 	add_action( 'plugins_loaded', $n( 'maybe_load_features' ), 11 );
@@ -53,6 +54,24 @@ function i18n() {
  */
 function init() {
 	do_action( 'ep_labs_init' );
+}
+
+/**
+ * Register the `react-jsx-runtime` script handle on WordPress versions that do not ship it.
+ *
+ * @see https://github.com/10up/ElasticPress/blob/develop/includes/dashboard.php#L82
+ * @return void
+ */
+function register_react_jsx_runtime() {
+	if ( wp_script_is( 'react-jsx-runtime', 'registered' ) ) {
+		return;
+	}
+
+	wp_register_script( 'react-jsx-runtime', false, [ 'react' ], '18', true );
+	wp_add_inline_script(
+		'react-jsx-runtime',
+		'window.ReactJSXRuntime=window.ReactJSXRuntime||{Fragment:window.React.Fragment,jsx:function(type,config,maybeKey){var props=Object.assign({},config);if(maybeKey!==undefined){props.key=maybeKey;}return window.React.createElement(type,props);},jsxs:function(type,config,maybeKey){var props=Object.assign({},config);if(maybeKey!==undefined){props.key=maybeKey;}return window.React.createElement(type,props);}};'
+	);
 }
 
 /**
@@ -262,7 +281,50 @@ function setup_updater() {
 			$plugin_info->icons = array(
 				'svg' => ELASTICPRESS_LABS_URL . 'assets/img/logo-icon.svg',
 			);
-			return $plugin_info;
+			return add_screenshots_to_plugin_info( $plugin_info );
 		}
 	);
+}
+
+/**
+ * Add the screenshot images to the "Screenshots" tab of the plugin details.
+ *
+ * The update checker only gets the captions listed in the readme.txt file, as WordPress.org
+ * is the one that usually adds the images. The images are in the `.wordpress-org` folder of
+ * the GitHub repository, in the version being described.
+ *
+ * @since 2.5.2
+ * @param object $plugin_info The plugin information returned by the update checker.
+ * @return object
+ */
+function add_screenshots_to_plugin_info( $plugin_info ) {
+	if ( empty( $plugin_info->sections['screenshots'] ) || empty( $plugin_info->version ) ) {
+		return $plugin_info;
+	}
+
+	$base_url = sprintf(
+		'https://raw.githubusercontent.com/10up/ElasticPressLabs/%s/.wordpress-org/',
+		rawurlencode( $plugin_info->version )
+	);
+
+	$number = 0;
+
+	$plugin_info->sections['screenshots'] = preg_replace_callback(
+		'|<li>(.*?)</li>|s',
+		function ( $matches ) use ( $base_url, &$number ) {
+			++$number;
+
+			$image_url = $base_url . 'screenshot-' . $number . '.png';
+
+			return sprintf(
+				'<li><a href="%1$s"><img src="%1$s" alt="%2$s"></a><p>%3$s</p></li>',
+				esc_url( $image_url ),
+				esc_attr( wp_strip_all_tags( $matches[1] ) ),
+				$matches[1]
+			);
+		},
+		$plugin_info->sections['screenshots']
+	);
+
+	return $plugin_info;
 }

@@ -154,7 +154,8 @@ class SearchTemplates extends Feature {
 		);
 
 		$instant_results = \ElasticPress\Features::factory()->get_registered_feature( 'instant-results' );
-		$template        = json_decode( $instant_results->epio_get_search_template() );
+		$template        = $instant_results ? $instant_results->epio_get_search_template() : null;
+		$template        = is_string( $template ) ? json_decode( $template ) : null;
 
 		$index_name       = \ElasticPress\Indexables::factory()->get( 'post' )->get_index_name();
 		$endpoint_example = Utils\get_host() . "/api/v1/search/posts/{$index_name}?search={search_term}&template_name={template}";

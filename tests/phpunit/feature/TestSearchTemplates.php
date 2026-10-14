@@ -150,6 +150,11 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	 * @group search-templates
 	 */
 	public function test_set_settings_schema() {
+		$ep_host = function () {
+			return 'elasticpress.io/random-string';
+		};
+		add_filter( 'ep_host', $ep_host );
+
 		\ElasticPress\Features::factory()->activate_feature( 'search_templates' );
 
 		$expected = [
@@ -169,5 +174,65 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 		];
 
 		$this->assertSame( $expected, $this->get_feature()->get_settings_schema() );
+	}
+
+	/**
+	 * Load the scripts of the Search Templates screen, with a given response for the
+	 * request of the Instant Results default template.
+	 *
+	 * @since 2.5.2
+	 * @param array|\WP_Error $response The response of the request.
+	 * @return array The data passed to the script.
+	 */
+	protected function get_script_data( $response ) {
+		$intercept = function () use ( $response ) {
+			return $response;
+		};
+		add_filter( 'ep_do_intercept_request', $intercept );
+		add_filter( 'ep_intercept_remote_request', '__return_true' );
+
+		$GLOBALS['wp_scripts'] = new \WP_Scripts(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		set_current_screen( 'elasticpress_page_elasticpress-search-templates' );
+
+		$this->get_feature()->scripts();
+
+		set_current_screen( 'front' );
+		remove_filter( 'ep_do_intercept_request', $intercept );
+		remove_filter( 'ep_intercept_remote_request', '__return_true' );
+
+		$data = wp_scripts()->get_data( 'ep_search_templates_scripts', 'data' );
+		$json = preg_replace( '/^var epSearchTemplates = (.*);$/s', '$1', $data );
+
+		return json_decode( $json, true );
+	}
+
+	/**
+	 * The screen loads without the default template when its request fails.
+	 *
+	 * @since 2.5.2
+	 * @group search-templates
+	 */
+	public function test_scripts_when_the_default_template_request_fails() {
+		$data = $this->get_script_data( new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out' ) );
+
+		$this->assertNull( $data['defaultTemplate'] );
+		$this->assertSame( 'elasticpress-labs/v1/search-templates', $data['restApiEndpoint'] );
+	}
+
+	/**
+	 * The default template is passed to the screen when its request works.
+	 *
+	 * @since 2.5.2
+	 * @group search-templates
+	 */
+	public function test_scripts_with_the_default_template() {
+		$data = $this->get_script_data(
+			[
+				'response' => [ 'code' => 200 ],
+				'body'     => wp_json_encode( [ 'query' => [ 'match_all' => (object) [] ] ] ),
+			]
+		);
+
+		$this->assertSame( [ 'query' => [ 'match_all' => [] ] ], $data['defaultTemplate'] );
 	}
 }
