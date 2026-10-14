@@ -180,6 +180,7 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	 * Load the scripts of the Search Templates screen, with a given response for the
 	 * request of the Instant Results default template.
 	 *
+	 * @since 2.5.2
 	 * @param array|\WP_Error $response The response of the request.
 	 * @return array The data passed to the script.
 	 */
@@ -208,6 +209,7 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	/**
 	 * The screen loads without the default template when its request fails.
 	 *
+	 * @since 2.5.2
 	 * @group search-templates
 	 */
 	public function test_scripts_when_the_default_template_request_fails() {
@@ -220,6 +222,7 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 	/**
 	 * The default template is passed to the screen when its request works.
 	 *
+	 * @since 2.5.2
 	 * @group search-templates
 	 */
 	public function test_scripts_with_the_default_template() {
