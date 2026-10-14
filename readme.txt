@@ -43,6 +43,7 @@ __Fixed:__
 
 __Security:__
 
+* [Vector Embeddings] Only users who can manage ElasticPress can save the Vector Embeddings settings, which are now validated against the settings the screen saves. Props [@cazy8](https://github.com/cazy8), [@jeffpaul](https://github.com/jeffpaul), and [@felipeelia](https://github.com/felipeelia).
 * Updated Node.js to v24 and npm packages, including `10up-toolkit` 7. Props [@ZacharyRener](https://github.com/ZacharyRener).
 * Pinned `fast-uri` to 3.1.8 (CVE-2026-86472). Props [@rickalee](https://github.com/rickalee).
 * Bumped `postcss` from 8.5.6 to 8.5.14. Props [@dependabot](https://github.com/dependabot).
