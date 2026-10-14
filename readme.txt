@@ -20,17 +20,26 @@ This plugin provides a simple interface to enable and disable features.
 
 == Screenshots ==
 
-1. Settings to allow boolean search operators in search queries.
-2. Settings to add Co-Authors Plus plugin support.
-3. Settings to include or exclude meta key patterns.
-4. Settings to change the version of the search algorithm between 3.4 and 3.5.
-5. Settings to index external content.
+1. Vector Embeddings: generate embeddings with OpenAI or an external process.
+2. Vector Embeddings settings: choose which posts are embedded and which fields are used.
+3. Semantic Search: search by meaning, using kNN queries.
+4. AI Search Summary: show an AI-generated summary of the search results.
+5. Boolean Search Operators: allow boolean operators in search queries.
+6. Search Algorithm Version: choose between default, 3.5, 4.0, and the kNN algorithms added by Semantic Search.
+7. Meta Key Pattern: include or exclude meta keys with regular expressions.
+8. External Content: index the content of paths or URLs stored in meta keys.
+9. Geo Location: search posts based on their location.
+10. Users: improve user search relevancy and query performance.
+11. Search Templates: use Elasticsearch queries stored in ElasticPress.io.
+12. Search Templates management: create and edit the templates stored in ElasticPress.io.
+13. Co-Authors Plus: support for the Co-Authors Plus plugin.
+14. WooCommerce Admin Subscription Search: search subscriptions in the admin.
 
 == Frequently Asked Questions ==
 
 = Where do I report security bugs found in this plugin? =
 
-Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+Please report security bugs found in the source code of the ElasticPress Labs plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 == Changelog ==
 

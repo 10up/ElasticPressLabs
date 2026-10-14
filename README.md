@@ -25,6 +25,10 @@ This plugin provides a simple interface to enable and disable features.
 
 ## Features
 
+### AI Search Summary
+
+Use the AI Search Summary block in your search results page to display an AI-generated summary of the search results.
+
 ### Boolean Search Operators
 
 Allow users to search using boolean operators such as AND, OR, NOT, and double quotes.
@@ -53,6 +57,10 @@ Change the search algorithm used by your site. Current options are:
 * *Version 3.5:* Search for the existence of all words in the search first, then return results based on how closely those words appear.
 * *Version 4.0:* Search for all search terms in one field first, then prioritize them over search terms matched in different fields. Used by default on ElasticPress 4.0+. 
 
+### Semantic Search
+
+Search by meaning instead of by keywords. Enable kNN search and select one of the kNN variations in the Search Algorithm Version feature. Requires the Vector Embeddings feature.
+
 ### Search Templates
 
 Search templates are Elasticsearch queries stored in [ElasticPress.io](https://www.elasticpress.io/) servers used by the [Search API](https://www.elasticpress.io/documentation/article/instant-results-post-search-api/).
@@ -61,32 +69,127 @@ Search templates are Elasticsearch queries stored in [ElasticPress.io](https://w
 
 Improve user search relevancy and query performance.
 
+### Vector Embeddings
+
+Store vector embeddings, a numerical representation of the indexed content that captures semantic relationships, generated with OpenAI or by an external process. Choose which post types, posts, and fields are embedded in the Vector Embeddings settings screen.
+
 ### WooCommerce Admin Subscription Search
 
 Integration with the WooCommerce Subscriptions plugin. 
 
 ## Screenshots
 
-1. Settings to allow boolean search operators in search queries.
-![](/.wordpress-org/screenshot-1.png)
+Grouped as in the ElasticPress Features screen.
 
-2. Settings to add Co-Authors Plus plugin support.
-![](/.wordpress-org/screenshot-2.png)
+### AI
 
-3. Settings to include or exclude meta key patterns.
-![](/.wordpress-org/screenshot-3.png)
+<details>
+<summary>1. Vector Embeddings: generate embeddings with OpenAI or an external process.</summary>
 
-4. Settings to change the version of the search algorithm between default, 3.5, and 4.0.
-![](/.wordpress-org/screenshot-4.png)
+![Vector Embeddings: generate embeddings with OpenAI or an external process.](.wordpress-org/screenshot-1.png)
 
-5. Settings to index external content.
-![](/.wordpress-org/screenshot-5.png)
+</details>
+
+<details>
+<summary>2. Vector Embeddings settings: choose which posts are embedded and which fields are used.</summary>
+
+![Vector Embeddings settings: choose which posts are embedded and which fields are used.](.wordpress-org/screenshot-2.png)
+
+</details>
+
+<details>
+<summary>3. Semantic Search: search by meaning, using kNN queries.</summary>
+
+![Semantic Search: search by meaning, using kNN queries.](.wordpress-org/screenshot-3.png)
+
+</details>
+
+<details>
+<summary>4. AI Search Summary: show an AI-generated summary of the search results.</summary>
+
+![AI Search Summary: show an AI-generated summary of the search results.](.wordpress-org/screenshot-4.png)
+
+</details>
+
+### Other
+
+<details>
+<summary>5. Boolean Search Operators: allow boolean operators in search queries.</summary>
+
+![Boolean Search Operators: allow boolean operators in search queries.](.wordpress-org/screenshot-5.png)
+
+</details>
+
+<details>
+<summary>6. Search Algorithm Version: choose between default, 3.5, 4.0, and the kNN algorithms added by Semantic Search.</summary>
+
+![Search Algorithm Version: choose between default, 3.5, 4.0, and the kNN algorithms added by Semantic Search.](.wordpress-org/screenshot-6.png)
+
+</details>
+
+<details>
+<summary>7. Meta Key Pattern: include or exclude meta keys with regular expressions.</summary>
+
+![Meta Key Pattern: include or exclude meta keys with regular expressions.](.wordpress-org/screenshot-7.png)
+
+</details>
+
+<details>
+<summary>8. External Content: index the content of paths or URLs stored in meta keys.</summary>
+
+![External Content: index the content of paths or URLs stored in meta keys.](.wordpress-org/screenshot-8.png)
+
+</details>
+
+<details>
+<summary>9. Geo Location: search posts based on their location.</summary>
+
+![Geo Location: search posts based on their location.](.wordpress-org/screenshot-9.png)
+
+</details>
+
+<details>
+<summary>10. Users: improve user search relevancy and query performance.</summary>
+
+![Users: improve user search relevancy and query performance.](.wordpress-org/screenshot-10.png)
+
+</details>
+
+<details>
+<summary>11. Search Templates: use Elasticsearch queries stored in ElasticPress.io.</summary>
+
+![Search Templates: use Elasticsearch queries stored in ElasticPress.io.](.wordpress-org/screenshot-11.png)
+
+</details>
+
+<details>
+<summary>12. Search Templates management: create and edit the templates stored in ElasticPress.io.</summary>
+
+![Search Templates management: create and edit the templates stored in ElasticPress.io.](.wordpress-org/screenshot-12.png)
+
+</details>
+
+### Third Party Plugins
+
+<details>
+<summary>13. Co-Authors Plus: support for the Co-Authors Plus plugin.</summary>
+
+![Co-Authors Plus: support for the Co-Authors Plus plugin.](.wordpress-org/screenshot-13.png)
+
+</details>
+
+<details>
+<summary>14. WooCommerce Admin Subscription Search: search subscriptions in the admin.</summary>
+
+![WooCommerce Admin Subscription Search: search subscriptions in the admin.](.wordpress-org/screenshot-14.png)
+
+</details>
 
 ## Frequently Asked Questions
 
 ### Where do I report security bugs found in this plugin?
 
-Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+Please report security bugs found in the source code of the ElasticPress Labs plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8c7c16e5-d9f1-48d7-9d44-1ec15688e8ed).  The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 ## Support Level
 
