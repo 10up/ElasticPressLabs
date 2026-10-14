@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Fixed
 * Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered. Props [@rickalee](https://github.com/rickalee) via [#211](https://github.com/10up/ElasticPressLabs/pull/211).
 * [Vector Embeddings] Chunk overlap only applied to the first chunks of a text. Props [@felipeelia](https://github.com/felipeelia) via [#208](https://github.com/10up/ElasticPressLabs/pull/208).
+* [Search Templates] Fatal error on the Search Templates screen when the request for the default template fails. Props [@felipeelia](https://github.com/felipeelia) via [#219](https://github.com/10up/ElasticPressLabs/pull/219).
 
 ### Security
 * [Vector Embeddings] Only users who can manage ElasticPress can save the Vector Embeddings settings, which are now validated against the settings the screen saves. Props [@cazy8](https://github.com/cazy8), [@jeffpaul](https://github.com/jeffpaul), and [@felipeelia](https://github.com/felipeelia) via [GHSA-2p6m-2xvh-9m2p](https://github.com/10up/ElasticPressLabs/security/advisories/GHSA-2p6m-2xvh-9m2p).

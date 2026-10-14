@@ -49,6 +49,7 @@ __Fixed:__
 
 * Avoid loading ElasticPress translations before the `init` action when the Co-Authors Plus feature is registered. Props [@rickalee](https://github.com/rickalee).
 * [Vector Embeddings] Chunk overlap only applied to the first chunks of a text. Props [@felipeelia](https://github.com/felipeelia).
+* [Search Templates] Fatal error on the Search Templates screen when the request for the default template fails. Props [@felipeelia](https://github.com/felipeelia).
 
 __Security:__
 
