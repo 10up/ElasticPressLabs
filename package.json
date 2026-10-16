@@ -61,7 +61,8 @@
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
-      "blocks-styles": "./assets/css/blocks.css"
+      "blocks-styles": "./assets/css/blocks.css",
+      "connection-test-script": "./assets/js/connection-test/index.js"
     },
     "wpDependencyExternals": true
   },
