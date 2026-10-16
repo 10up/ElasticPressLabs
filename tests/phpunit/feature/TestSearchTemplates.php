@@ -78,19 +78,19 @@ class TestSearchTemplates extends \WP_UnitTestCase {
 		$wp_rest_server = new \WP_REST_Server();
 		do_action( 'rest_api_init', $wp_rest_server );
 
-		$routes = $wp_rest_server->get_routes( 'elasticpress-labs/v1' );
-		$this->assertEmpty( $routes );
+		// Routes every Labs install has (the connection test), not the feature's.
+		$before = array_keys( $wp_rest_server->get_routes( 'elasticpress-labs/v1' ) );
+		$this->assertNotContains( '/elasticpress-labs/v1/search-templates', $before );
 
 		$this->get_feature()->setup_endpoint();
 
-		$routes = $wp_rest_server->get_routes( 'elasticpress-labs/v1' );
+		$routes = array_diff( array_keys( $wp_rest_server->get_routes( 'elasticpress-labs/v1' ) ), $before );
 		$this->assertSame(
 			[
-				'/elasticpress-labs/v1',
 				'/elasticpress-labs/v1/search-templates',
 				'/elasticpress-labs/v1/search-templates/(?P<template_name>[\w-]+)',
 			],
-			array_keys( $routes )
+			array_values( $routes )
 		);
 	}
 
