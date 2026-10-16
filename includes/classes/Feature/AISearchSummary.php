@@ -9,6 +9,8 @@
 namespace ElasticPressLabs\Feature;
 
 use ElasticPress\Feature;
+use ElasticPressLabs\ConnectionTest;
+use ElasticPressLabs\ConnectionTestable;
 use ElasticPressLabs\Utils;
 use ElasticPressLabs\Traits\LogRequest;
 use ElasticPressLabs\Traits\DisableAfterFailures;
@@ -22,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 2.5.0
  */
-class AISearchSummary extends Feature {
+class AISearchSummary extends Feature implements ConnectionTestable {
 	use DisableAfterFailures;
 	use LogRequest;
 
@@ -396,76 +398,48 @@ The following JSON object contains the URL and the page content. You should use 
 	 * @return string|\WP_Error
 	 */
 	public function ai_api_request( $prompt, $search_term ) {
-		$headers = [
-			'Authorization' => 'Bearer ' . $this->get_setting( 'api_key' ),
-			'Content-Type'  => 'application/json',
-		];
-
-		$body = [
-			'model'    => $this->get_setting( 'chat_model' ),
-			'messages' => [
-				[
-					'role'    => 'system',
-					'content' => $prompt,
-				],
-				[
-					'role'    => 'system',
-					/**
-					 * Filters the system prompt formatting for AI search summary.
-					 *
-					 * This filter allows customization of the system prompt that formats the AI response.
-					 *
-					 * @since 2.5.0
-					 * @hook ep_ai_search_summary_system_prompt_formatting
-					 * @param {string} $system_prompt The default system prompt formatting string.
-					 * @param {string} $prompt        The main system prompt being processed. By default, the one set in the plugin settings.
-					 * @param {string} $search_term   The search term used in the query.
-					 * @return {string} The modified system prompt formatting string.
-					 */
-					'content' => apply_filters(
-						'ep_ai_search_summary_system_prompt_formatting',
-						__( 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the "response" value, as it will be displayed using the values in "references".', 'elasticpress-labs' ),
-						$prompt,
-						$search_term
-					),
-				],
-				[
-					'role'    => 'user',
-					/**
-					 * Filters the user prompt for the AI search summary.
-					 *
-					 * @since 2.5.0
-					 * @hook ep_ai_search_summary_user_prompt
-					 * @param {string} $search_term The search term to be used as the user prompt.
-					 * @return {string} The filtered search term.
-					 */
-					'content' => apply_filters( 'ep_ai_search_summary_user_prompt', $search_term ),
-				],
-			],
-		];
-
-		$url = $this->get_setting( 'api_url' );
-
-		/**
-		 * Filter the options for the post request.
-		 *
-		 * @hook ep_ai_search_summary_request_options
-		 * @since 2.4.0
-		 *
-		 * @param {array} $options The options for the request.
-		 * @param {string} $url The URL for the request.
-		 *
-		 * @return {array} The options for the request.
-		 */
-		$options = apply_filters(
-			'ep_ai_search_summary_request_options',
+		$messages = [
 			[
-				'headers' => $headers,
-				'body'    => wp_json_encode( $body ),
-				'timeout' => 60, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+				'role'    => 'system',
+				'content' => $prompt,
 			],
-			$url
-		);
+			[
+				'role'    => 'system',
+				/**
+				 * Filters the system prompt formatting for AI search summary.
+				 *
+				 * This filter allows customization of the system prompt that formats the AI response.
+				 *
+				 * @since 2.5.0
+				 * @hook ep_ai_search_summary_system_prompt_formatting
+				 * @param {string} $system_prompt The default system prompt formatting string.
+				 * @param {string} $prompt        The main system prompt being processed. By default, the one set in the plugin settings.
+				 * @param {string} $search_term   The search term used in the query.
+				 * @return {string} The modified system prompt formatting string.
+				 */
+				'content' => apply_filters(
+					'ep_ai_search_summary_system_prompt_formatting',
+					__( 'Send your response as a JSON object with the following keys: "response" (the asnwer, in HTML format) and "references" (an array of objects with the URLs you used to build the response, having "url" and "title" as attributes). Do not wrap the response in any other tags or limiters like "```json". Make sure the JSON object returned is properly escaped. Do not append the list of URLs used to the "response" value, as it will be displayed using the values in "references".', 'elasticpress-labs' ),
+					$prompt,
+					$search_term
+				),
+			],
+			[
+				'role'    => 'user',
+				/**
+				 * Filters the user prompt for the AI search summary.
+				 *
+				 * @since 2.5.0
+				 * @hook ep_ai_search_summary_user_prompt
+				 * @param {string} $search_term The search term to be used as the user prompt.
+				 * @return {string} The filtered search term.
+				 */
+				'content' => apply_filters( 'ep_ai_search_summary_user_prompt', $search_term ),
+			],
+		];
+
+		$url     = $this->get_setting( 'api_url' );
+		$options = $this->get_request_options( $messages );
 
 		$response = $this->send_request_and_log( $url, $options, 'AI Search Summary', 'ai_search_summary' );
 		if ( is_wp_error( $response ) ) {
@@ -524,6 +498,7 @@ The following JSON object contains the URL and the page content. You should use 
 				'type'    => 'text',
 				'default' => $this->default_settings['chat_model'],
 			],
+			ConnectionTest::get_field( $this ),
 			[
 				'key'     => 'number_of_posts',
 				'label'   => __( 'Number of posts', 'elasticpress-labs' ),
@@ -539,6 +514,96 @@ The following JSON object contains the URL and the page content. You should use 
 				'default' => $this->default_settings['prompt'],
 			],
 		];
+
+		// ElasticPress versions without the button's field type get no entry.
+		$this->settings_schema = array_values( array_filter( $this->settings_schema ) );
+	}
+
+	/**
+	 * The connection settings the connection test reads.
+	 *
+	 * @since 2.6.0
+	 * @return string[]
+	 */
+	public function get_connection_fields(): array {
+		return [ 'api_key', 'api_url', 'chat_model' ];
+	}
+
+	/**
+	 * The HTTP options of a chat request (the connection test sends the same).
+	 *
+	 * @since 2.6.0
+	 * @param array $messages Chat messages.
+	 * @param array $settings Settings to use instead of the saved ones, such as the unsaved
+	 *                        values of a connection test.
+	 * @return array wp_remote_post options.
+	 */
+	public function get_request_options( array $messages, array $settings = [] ): array {
+		$settings = array_merge( $this->get_settings(), $settings );
+		$url      = (string) ( $settings['api_url'] ?? '' );
+		$options  = [
+			'headers' => [
+				'Authorization' => 'Bearer ' . (string) ( $settings['api_key'] ?? '' ),
+				'Content-Type'  => 'application/json',
+			],
+			'body'    => wp_json_encode(
+				[
+					'model'    => $settings['chat_model'] ?? '',
+					'messages' => $messages,
+				]
+			),
+			'timeout' => 60, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+		];
+
+		/**
+		 * Filter the options for the post request.
+		 *
+		 * @hook ep_ai_search_summary_request_options
+		 * @since 2.4.0
+		 *
+		 * @param {array} $options The options for the request.
+		 * @param {string} $url The URL for the request.
+		 *
+		 * @return {array} The options for the request.
+		 */
+		return (array) apply_filters( 'ep_ai_search_summary_request_options', $options, $url );
+	}
+
+	/**
+	 * Ask the chat model for a one-word reply with these settings.
+	 *
+	 * @since 2.6.0
+	 * @param array $settings Feature settings, with the unsaved connection fields.
+	 * @return string|\WP_Error
+	 */
+	public function test_connection( array $settings ) {
+		$model = trim( (string) ( $settings['chat_model'] ?? '' ) );
+
+		if ( '' === $model ) {
+			return new \WP_Error( 'ep_ai_search_summary_test_no_model', __( 'Fill in the chat model first.', 'elasticpress-labs' ) );
+		}
+
+		$url     = (string) ( $settings['api_url'] ?? '' );
+		$options = $this->get_request_options(
+			[
+				[
+					'role'    => 'user',
+					'content' => 'Reply with the word OK.',
+				],
+			],
+			$settings
+		);
+		$data    = ConnectionTest::send( $url, $options );
+
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
+		if ( ! isset( $data['choices'][0]['message'] ) ) {
+			return new \WP_Error( 'ep_ai_search_summary_test_no_reply', __( 'The service answered, but not with a chat reply. Check the API URL and the model.', 'elasticpress-labs' ) );
+		}
+
+		return __( 'Connected. The model replied.', 'elasticpress-labs' );
 	}
 
 	/**
