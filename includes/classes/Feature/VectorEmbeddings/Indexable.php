@@ -34,15 +34,17 @@ abstract class Indexable {
 	}
 
 	/**
-	 * Add a vector field to the Elasticsearch mapping.
+	 * Add the vector fields to the Elasticsearch mapping.
 	 *
+	 * Fields already in the mapping are kept as they are; only missing ones are added,
+	 * including missing sub-fields of `chunks` and `ep_embeddings_control`.
+	 *
+	 * @since 2.5.0
 	 * @param array $mapping      Current mapping.
 	 * @param bool  $quantization Whether to use quantization for the vector field. Default false.
 	 * @return array
 	 */
 	public function add_vector_mapping_field( array $mapping, bool $quantization = true ): array {
-		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
-
 		if ( ! isset( $mapping['mappings'], $mapping['mappings']['properties'] ) ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -52,55 +54,47 @@ abstract class Indexable {
 			return $mapping;
 		}
 
-		// Don't add the field if it already exists.
-		if ( isset( $mapping['mappings']['properties']['chunks'], $mapping['mappings']['properties']['ep_embeddings_control'] ) ) {
-			return $mapping;
-		}
-
-		// Add the default vector field mapping.
-		$mapping['mappings']['properties'] = array_merge(
+		$mapping['mappings']['properties'] = $this->merge_missing_properties(
 			$mapping['mappings']['properties'],
-			[
-				'ep_embeddings_control' => [
-					'properties' => [
-						'is_processing' => [
-							'type' => 'boolean',
-						],
-						'errors'        => [
-							'type' => 'text',
-						],
-						'text_chunks'   => [
-							'type' => 'text',
-						],
-					],
-				],
-				'chunks'                => [
-					'type'       => 'nested',
-					'properties' => [
-						'vector' => [
-							'type' => 'dense_vector',
-							'dims' => $this->feature->get_dimensions(),
-						],
-					],
-				],
-			]
+			$this->get_vector_mapping_properties( $quantization )
 		);
+
+		return $mapping;
+	}
+
+	/**
+	 * The mapping properties this feature adds.
+	 *
+	 * `chunks` holds one nested document per chunk:
+	 *
+	 * - `vector`: the embedding;
+	 * - `text`: the exact text that was embedded, returned with a matching chunk
+	 *   (in `_source` only, not searchable: post fields already cover keyword search);
+	 * - `hash`: identifies that text, so an unchanged chunk keeps its vector on resync;
+	 * - `type`: what the chunk comes from: `content`, `taxonomy`, or `meta`.
+	 *
+	 * @since 2.6.0
+	 * @param bool $quantization Whether to use quantization for the vector field.
+	 * @return array
+	 */
+	protected function get_vector_mapping_properties( bool $quantization ): array {
+		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
+
+		$vector = [
+			'type' => 'dense_vector',
+			'dims' => $this->feature->get_dimensions(),
+		];
 
 		// Add extra vector fields for newer versions of Elasticsearch.
 		if ( version_compare( $es_version, '8.0', '>=' ) ) {
 			// The index (true or false, default true) and similarity (l2_norm, dot_product or cosine) fields
 			// were added in 8.0. The similarity field must be set if index is true.
-			$mapping['mappings']['properties']['chunks']['properties']['vector'] = array_merge(
-				$mapping['mappings']['properties']['chunks']['properties']['vector'],
-				[
-					'index'      => true,
-					'similarity' => 'cosine',
-				]
-			);
+			$vector['index']      = true;
+			$vector['similarity'] = 'cosine';
 
 			// The element_type field was added in 8.6. This can be either float (default) or byte.
 			if ( version_compare( $es_version, '8.6', '>=' ) ) {
-				$mapping['mappings']['properties']['chunks']['properties']['vector']['element_type'] = 'float';
+				$vector['element_type'] = 'float';
 			}
 
 			// The int8_hnsw type was added in 8.12.
@@ -108,11 +102,201 @@ abstract class Indexable {
 				// This is supposed to result in better performance but slightly less accurate results.
 				// See https://www.elastic.co/guide/en/elasticsearch/reference/8.13/knn-search.html#knn-search-quantized-example.
 				// Can test with this on and off and compare results to see what works best.
-				$mapping['mappings']['properties']['chunks']['properties']['vector']['index_options']['type'] = 'int8_hnsw';
+				$vector['index_options']['type'] = 'int8_hnsw';
 			}
 		}
 
-		return $mapping;
+		return [
+			'ep_embeddings_control' => [
+				'properties' => [
+					'is_processing' => [
+						'type' => 'boolean',
+					],
+					'errors'        => [
+						'type' => 'text',
+					],
+					'text_chunks'   => [
+						'type' => 'text',
+					],
+				],
+			],
+			'chunks'                => [
+				'type'       => 'nested',
+				'properties' => [
+					'vector' => $vector,
+					'text'   => [
+						'type'  => 'text',
+						'index' => false,
+					],
+					'hash'   => [
+						'type'       => 'keyword',
+						'index'      => false,
+						'doc_values' => false,
+					],
+					'type'   => [
+						'type'  => 'keyword',
+						'index' => false,
+					],
+				],
+			],
+		];
+	}
+
+	/**
+	 * Add the target fields missing from existing mapping properties.
+	 *
+	 * Recurses into `properties`. A field that exists is never changed.
+	 *
+	 * @since 2.6.0
+	 * @param array $properties Existing properties.
+	 * @param array $target     Target properties.
+	 * @return array
+	 */
+	protected function merge_missing_properties( array $properties, array $target ): array {
+		foreach ( $target as $name => $definition ) {
+			if ( ! isset( $properties[ $name ] ) || ! is_array( $properties[ $name ] ) ) {
+				$properties[ $name ] = $definition;
+				continue;
+			}
+
+			if ( isset( $definition['properties'] ) && isset( $properties[ $name ]['properties'] ) && is_array( $properties[ $name ]['properties'] ) ) {
+				$properties[ $name ]['properties'] = $this->merge_missing_properties( $properties[ $name ]['properties'], $definition['properties'] );
+			}
+		}
+
+		return $properties;
+	}
+
+	/**
+	 * Compare the fields this indexable adds to the mapping with an index's stored mapping.
+	 *
+	 * Fields that are missing can be added to the existing index with `PUT _mapping`.
+	 * Fields whose stored definition differs (dimensions, similarity, index options) cannot:
+	 * they need the index to be recreated (a sync with `--setup`).
+	 *
+	 * @since 2.6.0
+	 * @param array $stored_properties `mappings.properties` of the stored index mapping.
+	 * @return array {
+	 *     @type array    $add       Properties to send with `PUT _mapping`. Empty when nothing is missing.
+	 *     @type string[] $added     Dotted paths of the fields in `$add`.
+	 *     @type string[] $conflicts Dotted paths of the settings that differ, e.g. `chunks.vector.dims`.
+	 * }
+	 */
+	public function get_mapping_changes( array $stored_properties ): array {
+		return $this->diff_mapping_properties( $this->get_vector_mapping_properties( true ), $stored_properties, '' );
+	}
+
+	/**
+	 * Recursively compare target mapping properties with stored ones.
+	 *
+	 * @since 2.6.0
+	 * @param array  $target Target properties.
+	 * @param array  $stored Stored properties.
+	 * @param string $prefix Dotted path of the parent field.
+	 * @return array See get_mapping_changes().
+	 */
+	protected function diff_mapping_properties( array $target, array $stored, string $prefix ): array {
+		$changes = [
+			'add'       => [],
+			'added'     => [],
+			'conflicts' => [],
+		];
+
+		foreach ( $target as $name => $definition ) {
+			$path = $prefix . $name;
+
+			if ( ! isset( $stored[ $name ] ) || ! is_array( $stored[ $name ] ) ) {
+				$changes['add'][ $name ] = $definition;
+				$changes['added'][]      = $path;
+				continue;
+			}
+
+			if ( isset( $definition['properties'] ) ) {
+				$target_type = $definition['type'] ?? 'object';
+				$stored_type = $stored[ $name ]['type'] ?? 'object';
+
+				if ( $target_type !== $stored_type ) {
+					$changes['conflicts'][] = "{$path}.type";
+					continue;
+				}
+
+				$sub = $this->diff_mapping_properties( $definition['properties'], $stored[ $name ]['properties'] ?? [], "{$path}." );
+
+				if ( $sub['add'] ) {
+					$changes['add'][ $name ] = array_merge(
+						isset( $definition['type'] ) ? [ 'type' => $definition['type'] ] : [],
+						[ 'properties' => $sub['add'] ]
+					);
+				}
+
+				$changes['added']     = array_merge( $changes['added'], $sub['added'] );
+				$changes['conflicts'] = array_merge( $changes['conflicts'], $sub['conflicts'] );
+				continue;
+			}
+
+			$changes['conflicts'] = array_merge(
+				$changes['conflicts'],
+				$this->diff_field_settings( $definition, $stored[ $name ], $path )
+			);
+		}
+
+		return $changes;
+	}
+
+	/**
+	 * Settings of a field definition that differ from the stored field.
+	 *
+	 * Only settings present in both are compared: Elasticsearch leaves out some defaults,
+	 * and adds others (like HNSW parameters) that the target does not set.
+	 *
+	 * @since 2.6.0
+	 * @param array  $target Target field definition.
+	 * @param array  $stored Stored field definition.
+	 * @param string $path   Dotted path of the field.
+	 * @return string[] Dotted paths of the differing settings.
+	 */
+	protected function diff_field_settings( array $target, array $stored, string $path ): array {
+		$conflicts = [];
+
+		foreach ( $target as $setting => $value ) {
+			if ( ! array_key_exists( $setting, $stored ) ) {
+				continue;
+			}
+
+			// ElasticPress.io sets the dimensions itself.
+			if ( 'dims' === $setting && (int) $value < 1 ) {
+				continue;
+			}
+
+			if ( is_array( $value ) ) {
+				$conflicts = array_merge(
+					$conflicts,
+					is_array( $stored[ $setting ] ) ? $this->diff_field_settings( $value, $stored[ $setting ], "{$path}.{$setting}" ) : [ "{$path}.{$setting}" ]
+				);
+				continue;
+			}
+
+			if ( $this->normalize_mapping_value( $value ) !== $this->normalize_mapping_value( $stored[ $setting ] ) ) {
+				$conflicts[] = "{$path}.{$setting}";
+			}
+		}
+
+		return $conflicts;
+	}
+
+	/**
+	 * Normalize a mapping value for comparison (Elasticsearch may return `"true"` or `1024` as strings).
+	 *
+	 * @since 2.6.0
+	 * @param mixed $value Value.
+	 * @return string
+	 */
+	protected function normalize_mapping_value( $value ): string {
+		if ( is_bool( $value ) ) {
+			return $value ? 'true' : 'false';
+		}
+
+		return is_scalar( $value ) ? (string) $value : wp_json_encode( $value );
 	}
 
 	/**
