@@ -74,4 +74,38 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 
 		return array_map( 'floatval', $search_term_vector );
 	}
+
+	/**
+	 * `inner_hits` for the `chunks` field: the best matching chunks of each post, with
+	 * their text and type (never their vectors).
+	 *
+	 * @since 2.6.0
+	 * @return array
+	 */
+	protected function get_chunks_inner_hits(): array {
+		/**
+		 * Filter how many matching chunks are returned per post.
+		 *
+		 * @hook ep_semantic_search_matched_chunks
+		 * @since 2.6.0
+		 * @param {int} $size Matching chunks per post. Default 3.
+		 * @return {int} New size.
+		 */
+		$size = (int) apply_filters( 'ep_semantic_search_matched_chunks', 3 );
+
+		return [
+			'size'    => max( 1, $size ),
+			'_source' => [ 'chunks.text', 'chunks.type' ],
+		];
+	}
+
+	/**
+	 * Whether the top-level `knn` search can return `inner_hits` (Elasticsearch 8.11+).
+	 *
+	 * @since 2.6.0
+	 * @return bool
+	 */
+	protected function supports_knn_inner_hits(): bool {
+		return version_compare( (string) \ElasticPress\Elasticsearch::factory()->get_elasticsearch_version(), '8.11', '>=' );
+	}
 }

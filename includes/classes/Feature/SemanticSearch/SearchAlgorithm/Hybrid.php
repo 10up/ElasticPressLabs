@@ -65,18 +65,24 @@ class Hybrid extends SearchAlgorithm {
 
 		$semantic_search_feature = \ElasticPress\Features::factory()->get_registered_feature( 'semantic_search' );
 
+		$knn = [
+			'field'          => 'chunks.vector',
+			'query_vector'   => $query_embedding,
+			'num_candidates' => 200,
+			'k'              => (int) $formatted_args['size'],
+		];
+
+		if ( $this->supports_knn_inner_hits() ) {
+			$knn['inner_hits'] = $this->get_chunks_inner_hits();
+		}
+
 		return [
 			'from'        => $formatted_args['from'],
 			'size'        => $formatted_args['size'],
 			'post_filter' => $formatted_args['post_filter'],
 			'min_score'   => $semantic_search_feature->get_min_score(),
 			'query'       => $formatted_args['query'],
-			'knn'         => [
-				'field'          => 'chunks.vector',
-				'query_vector'   => $query_embedding,
-				'num_candidates' => 200,
-				'k'              => (int) $formatted_args['size'],
-			],
+			'knn'         => $knn,
 		];
 	}
 }

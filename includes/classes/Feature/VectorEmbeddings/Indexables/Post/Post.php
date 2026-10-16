@@ -53,6 +53,9 @@ class Post extends Indexable {
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
 
+		// Search results do not carry every chunk; matching chunks come from `inner_hits`.
+		add_filter( 'ep_post_formatted_args', [ $this, 'exclude_chunks_from_source' ], 9999 );
+
 		$generator = $this->feature->get_setting( 'ep_embeddings_generator' );
 		if ( 'external' === $generator ) {
 			return;
@@ -91,6 +94,37 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
+	}
+
+	/**
+	 * Leave the chunks out of the `_source` of post search results.
+	 *
+	 * Every chunk's text (and, before Elasticsearch 9, its vector) would otherwise come
+	 * back with every hit. Queries that already choose their `_source` fields are left alone.
+	 *
+	 * @since 2.6.0
+	 * @param array $formatted_args Formatted Elasticsearch query.
+	 * @return array
+	 */
+	public function exclude_chunks_from_source( $formatted_args ) {
+		if ( ! is_array( $formatted_args ) ) {
+			return $formatted_args;
+		}
+
+		$source = $formatted_args['_source'] ?? null;
+
+		if ( null !== $source && ( ! is_array( $source ) || isset( $source['includes'] ) || isset( $source[0] ) ) ) {
+			return $formatted_args;
+		}
+
+		$excludes = array_merge( (array) ( $source['excludes'] ?? [] ), [ 'chunks', 'ep_embeddings_control' ] );
+
+		$formatted_args['_source'] = array_merge(
+			(array) $source,
+			[ 'excludes' => array_values( array_unique( $excludes ) ) ]
+		);
+
+		return $formatted_args;
 	}
 
 	/**
