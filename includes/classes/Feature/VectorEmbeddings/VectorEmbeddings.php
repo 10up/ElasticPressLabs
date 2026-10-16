@@ -146,6 +146,44 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * While the feature is on but temporarily disabled after failures, keep documents from
+	 * losing their vectors.
+	 *
+	 * The feature is not set up then, so without this a sync or a post save that starts in
+	 * that window would rewrite every document without its chunks, silently. Instead, posts
+	 * that should be embedded fail to prepare (reported as `prepare_document_error`, their
+	 * stored document untouched), and a new index still gets the `chunks` mapping.
+	 *
+	 * Hooked on `init` right after ElasticPress sets up the active features.
+	 *
+	 * @since 2.6.0
+	 */
+	public function maybe_add_breaker_guard() {
+		if ( ! $this->is_temporarily_disabled_after_failures() || 'external' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return;
+		}
+
+		$indexable                = new Indexables\Post\Post( $this );
+		$indexable->settings_page = new Settings();
+
+		add_filter( 'ep_post_mapping', [ $indexable, 'add_post_vector_field_mapping' ] );
+		add_filter( 'ep_post_sync_args_post_prepare_meta', [ $indexable, 'refuse_while_temporarily_disabled' ], 10, 2 );
+	}
+
+	/**
+	 * Whether the feature is turned on in the settings but disabled for now after too many
+	 * embedding failures.
+	 *
+	 * @since 2.6.0
+	 * @return bool
+	 */
+	public function is_temporarily_disabled_after_failures(): bool {
+		$settings = Utils\get_option( 'ep_feature_settings', [] );
+
+		return ! empty( $settings[ $this->slug ]['active'] ) && $this->should_disable_after_failures();
+	}
+
+	/**
 	 * Add the feature's fields to existing indices when the feature is activated.
 	 *
 	 * An index created before the feature was active has none of them.
