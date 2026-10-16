@@ -534,6 +534,26 @@ class Post extends Indexable {
 	}
 
 	/**
+	 * Refuse to prepare a post that should be embedded while the feature is temporarily
+	 * disabled after failures, so its stored document keeps its vectors.
+	 *
+	 * @since 2.6.0
+	 * @param array $args    Current sync args.
+	 * @param int   $post_id Post ID being synced.
+	 * @return array
+	 * @throws \Exception If the post should be embedded.
+	 */
+	public function refuse_while_temporarily_disabled( array $args, int $post_id ): array {
+		if ( $this->should_add_vector_field_to_post( $post_id ) ) {
+			throw new \Exception(
+				esc_html__( 'Vector Embeddings is temporarily disabled after repeated embedding failures. The post was not indexed, so it keeps its current vectors. Sync it again once the feature is re-enabled (or after resetting the failure counter).', 'elasticpress-labs' )
+			);
+		}
+
+		return $args;
+	}
+
+	/**
 	 * Whether or not we should add the vector field to the post.
 	 *
 	 * @param int $post_id The Post ID
