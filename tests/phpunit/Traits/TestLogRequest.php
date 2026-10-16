@@ -141,4 +141,44 @@ class TestLogRequest extends \WP_UnitTestCase {
 		$this->assertArrayHasKey( 'url', $log[1] );
 		$this->assertSame( $url, $log[1]['url'] );
 	}
+
+	/**
+	 * Requests are kept for the query log through one callback per class, so request objects
+	 * are not kept alive; nothing is kept when query logging is off.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_does_not_keep_request_objects() {
+		global $wp_filter;
+
+		$class = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$name = get_class( $class );
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			( new $name() )->call( "https://example.org/embeddings/{$i}" );
+		}
+
+		$callbacks = count( $wp_filter['ep_get_query_log']->callbacks[10] ?? [] );
+		$this->assertSame( 1, $callbacks );
+		$this->assertCount( 3, apply_filters( 'ep_get_query_log', [] ) );
+
+		add_filter( 'ep_disable_query_logging', '__return_true' );
+		( new $name() )->call( 'https://example.org/embeddings/off' );
+
+		$this->assertCount( 3, apply_filters( 'ep_get_query_log', [] ) );
+	}
 }
