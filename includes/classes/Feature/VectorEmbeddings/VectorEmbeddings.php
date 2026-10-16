@@ -914,6 +914,37 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * How content is split into chunks.
+	 *
+	 * - `paragraphs` (default): at paragraph and section boundaries, see Chunker.
+	 * - `words`: fixed windows of words with an overlap (chunk_content()), as before 2.6.0.
+	 *
+	 * ElasticPress.io chunks content on its side, so it always gets the `words` path
+	 * (which sends the whole content).
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	public function get_chunking_strategy(): string {
+		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return 'words';
+		}
+
+		/**
+		 * Filter how content is split into chunks.
+		 *
+		 * @hook ep_embeddings_chunking_strategy
+		 * @since 2.6.0
+		 * @param {string}           $strategy `paragraphs` (default) or `words`.
+		 * @param {VectorEmbeddings} $feature  Feature instance.
+		 * @return {string} New strategy.
+		 */
+		$strategy = apply_filters( 'ep_embeddings_chunking_strategy', 'paragraphs', $this );
+
+		return 'words' === $strategy ? 'words' : 'paragraphs';
+	}
+
+	/**
 	 * Chunk content into smaller pieces with an overlap.
 	 *
 	 * @param string $content      Content to chunk.
@@ -939,9 +970,13 @@ class VectorEmbeddings extends Feature {
 			/**
 			 * Filter a chunk of text.
 			 *
+			 * With the `paragraphs` chunking strategy, the chunk already starts with its
+			 * context line, and a second argument describes it.
+			 *
 			 * @hook ep_embeddings_chunk
-			 * @since 2.4.0
-			 * @param {string} $chunk The chunk being processed.
+			 * @since 2.4.0, 2.6.0 added $chunk_info (`paragraphs` strategy only)
+			 * @param {string} $chunk      The chunk being processed.
+			 * @param {array}  $chunk_info `type` (content, taxonomy, meta) and `headings` (heading path).
 			 * @return {string} The modified chunk.
 			 */
 			return (array) apply_filters( 'ep_embeddings_chunk', $content );

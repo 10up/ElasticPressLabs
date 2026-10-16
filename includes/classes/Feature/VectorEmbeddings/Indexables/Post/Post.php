@@ -8,6 +8,7 @@
 
 namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables\Post;
 
+use ElasticPressLabs\Feature\VectorEmbeddings\Chunker;
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
 use ElasticPressLabs\Utils;
 use ElasticPressLabs\Feature\VectorEmbeddings\Settings;
@@ -292,8 +293,13 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$post_chunks = $this->get_post_chunks( $post_id );
-		$embeddings  = $this->feature->get_embedding( $post_id, 'post', $post_chunks );
+		$chunk_items = $this->get_post_chunk_items( $post_id );
+
+		if ( ! $chunk_items ) {
+			return $args;
+		}
+
+		$embeddings = $this->feature->get_embedding( $post_id, 'post', wp_list_pluck( $chunk_items, 'text' ) );
 
 		if ( ! is_array( $embeddings ) ) {
 			if ( is_wp_error( $embeddings ) ) {
@@ -302,7 +308,7 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		return $this->add_chunks_field_value( $args, $embeddings );
+		return $this->add_chunks_field_value( $args, $embeddings, $chunk_items );
 	}
 
 	/**
@@ -330,7 +336,7 @@ class Post extends Indexable {
 	}
 
 	/**
-	 * Return a representation of a post.
+	 * Return a representation of a post: the text of each chunk to embed.
 	 *
 	 * By default includes the title, the slug, and the post content, but could also add
 	 * meta fields and taxonomy terms, for example.
@@ -339,8 +345,201 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function get_post_chunks( int $post_id ): array {
-		$fields = $this->settings_page->get_embedding_fields( $post_id );
-		$post   = get_post( $post_id );
+		return wp_list_pluck( $this->get_post_chunk_items( $post_id ), 'text' );
+	}
+
+	/**
+	 * The chunks of a post, with what each one comes from.
+	 *
+	 * With the `paragraphs` strategy, every chunk starts with a context line: the post
+	 * title and the heading path where the chunk starts ("Title › Methodology"), see the
+	 * `ep_embeddings_chunk_context` filter.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id The Post ID
+	 * @return array[] `[ 'text' => string, 'type' => 'content'|'taxonomy'|'meta' ]` per chunk.
+	 */
+	public function get_post_chunk_items( int $post_id ): array {
+		/*
+		 * Rendering a post's blocks registers Interactivity API state (a chart block can
+		 * add its whole dataset). On a page that state is printed once; during a sync it
+		 * would pile up for every post until the process runs out of memory. Each post is
+		 * rendered with a fresh Interactivity API instance, and the page's one is restored.
+		 */
+		$has_interactivity = class_exists( '\WP_Interactivity_API' );
+
+		if ( $has_interactivity ) {
+			$interactivity               = $GLOBALS['wp_interactivity'] ?? null;
+			$GLOBALS['wp_interactivity'] = new \WP_Interactivity_API();
+		}
+
+		try {
+			return $this->build_post_chunk_items( $post_id );
+		} finally {
+			if ( $has_interactivity ) {
+				$GLOBALS['wp_interactivity'] = $interactivity;
+			}
+		}
+	}
+
+	/**
+	 * Build the chunks of a post. See get_post_chunk_items().
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id The Post ID
+	 * @return array[]
+	 */
+	protected function build_post_chunk_items( int $post_id ): array {
+		$post = get_post( $post_id );
+
+		if ( ! $post ) {
+			return [];
+		}
+
+		$sources = [
+			'content' => $this->get_main_content( $post ),
+		];
+
+		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
+		if ( $taxonomies ) {
+			$sources['taxonomy'] = $this->get_post_terms( $post, $taxonomies );
+		}
+
+		$meta_fields = $this->get_embeddable_meta( $post_id, $post->post_type );
+		if ( $meta_fields ) {
+			$sources['meta'] = $this->get_post_meta( $post, $meta_fields );
+		}
+
+		$chunk_size   = $this->settings_page->get_chunk_size();
+		$overlap_size = $this->settings_page->get_chunk_overlap();
+		$items        = [];
+
+		if ( 'words' === $this->feature->get_chunking_strategy() ) {
+			foreach ( array_filter( $sources ) as $type => $text ) {
+				foreach ( $this->feature->chunk_content( $text, $chunk_size, $overlap_size ) as $chunk ) {
+					$items[] = [
+						'text' => $chunk,
+						'type' => $type,
+					];
+				}
+			}
+
+			return $items;
+		}
+
+		$chunker = new Chunker( $chunk_size, $overlap_size );
+
+		foreach ( array_filter( $sources ) as $type => $text ) {
+			$text = $this->feature->normalize_content( $text );
+
+			if ( 'content' === $type ) {
+				// The title is in every chunk's context line.
+				$text = $this->remove_title_section( $text );
+			}
+
+			$chunks = 'content' === $type ? $chunker->chunk_sections( $text ) : $chunker->chunk_labelled( $text );
+
+			foreach ( $chunks as $chunk ) {
+				$item = $this->prepare_chunk_item( $post, $chunk, $type );
+
+				if ( '' !== trim( $item['text'] ) ) {
+					$items[] = $item;
+				}
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Add the context line to a chunk and run the chunk filter.
+	 *
+	 * @since 2.6.0
+	 * @param \WP_Post $post  Post.
+	 * @param array    $chunk Chunk from the Chunker: `text` and `headings`.
+	 * @param string   $type  Chunk type.
+	 * @return array `text` and `type`.
+	 */
+	protected function prepare_chunk_item( \WP_Post $post, array $chunk, string $type ): array {
+		$chunk_info = [
+			'type'     => $type,
+			'headings' => $chunk['headings'],
+		];
+
+		// The title is part of the context when it is one of the embedded fields.
+		$title = in_array( 'post_title', $this->settings_page->get_embedding_fields( $post->ID ), true )
+			? html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' )
+			: '';
+
+		/**
+		 * Filter the context line parts of a chunk. They are joined with " › " and the
+		 * line is added before the chunk text.
+		 *
+		 * @hook ep_embeddings_chunk_context
+		 * @since 2.6.0
+		 * @param {array}    $parts      The post title (when it is an embedded field), then the heading path where the chunk starts.
+		 * @param {\WP_Post} $post       The post.
+		 * @param {array}    $chunk_info `type` (content, taxonomy, meta) and `headings`.
+		 * @return {array} New parts. Empty for no context line.
+		 */
+		$parts = (array) apply_filters( 'ep_embeddings_chunk_context', array_merge( [ $title ], $chunk['headings'] ), $post, $chunk_info );
+		$parts = array_filter( array_map( 'trim', array_map( 'strval', $parts ) ), 'strlen' );
+		$text  = $parts ? implode( ' › ', $parts ) . "\n" . $chunk['text'] : $chunk['text'];
+
+		/** This filter is documented in includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php */
+		$text = apply_filters( 'ep_embeddings_chunk', $text, $chunk_info );
+
+		return [
+			'text' => (string) $text,
+			'type' => $type,
+		];
+	}
+
+	/**
+	 * Remove the `# Title` section from normalized main content.
+	 *
+	 * With the `paragraphs` strategy the title is in every chunk's context line, so it is
+	 * not repeated in the text. A post with nothing but a title keeps it, so it still has
+	 * a chunk.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Normalized main content.
+	 * @return string
+	 */
+	protected function remove_title_section( string $text ): string {
+		$lines   = preg_split( '/\R/u', $text );
+		$kept    = [];
+		$skip    = false;
+		$content = false;
+
+		foreach ( (array) $lines as $line ) {
+			$trimmed = trim( $line );
+
+			if ( preg_match( '/^#\s+(.+)$/u', $trimmed, $matches ) ) {
+				$skip = 'Title' === trim( $matches[1] );
+			}
+
+			if ( $skip ) {
+				continue;
+			}
+
+			$kept[]  = $line;
+			$content = $content || ( '' !== $trimmed && 0 !== strpos( $trimmed, '#' ) );
+		}
+
+		return $content ? implode( "\n", $kept ) : $text;
+	}
+
+	/**
+	 * The title, summary, and content Labs chunks for a post.
+	 *
+	 * @since 2.6.0
+	 * @param \WP_Post $post The post.
+	 * @return string
+	 */
+	protected function get_main_content( \WP_Post $post ): string {
+		$post_id = $post->ID;
+		$fields  = $this->settings_page->get_embedding_fields( $post_id );
 
 		$main_content = '';
 
@@ -369,29 +568,7 @@ class Post extends Indexable {
 		 * @param {\WP_Post} $post         The post being processed.
 		 * @return {string} The final main content representation.
 		 */
-		$main_content = apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
-
-		$chunk_size   = $this->settings_page->get_chunk_size();
-		$overlap_size = $this->settings_page->get_chunk_overlap();
-		$chunks       = $this->feature->chunk_content( $main_content, $chunk_size, $overlap_size );
-
-		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
-		if ( $taxonomies ) {
-			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
-			if ( $post_terms_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str, $chunk_size, $overlap_size ) ];
-			}
-		}
-
-		$meta_fields = $this->get_embeddable_meta( $post_id, $post->post_type );
-		if ( $meta_fields ) {
-			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
-			if ( $post_meta_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str, $chunk_size, $overlap_size ) ];
-			}
-		}
-
-		return $chunks;
+		return (string) apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
 	}
 
 	/**
@@ -512,6 +689,30 @@ class Post extends Indexable {
 	}
 
 	/**
+	 * A meta value as text. Arrays and objects become a comma-separated list of their
+	 * scalar values (they used to become the word "Array").
+	 *
+	 * @since 2.6.0
+	 * @param mixed $value Meta value.
+	 * @return string
+	 */
+	protected function meta_value_to_text( $value ): string {
+		if ( is_object( $value ) ) {
+			$value = get_object_vars( $value );
+		}
+
+		if ( is_array( $value ) ) {
+			return implode( ', ', array_filter( array_map( [ $this, 'meta_value_to_text' ], $value ), 'strlen' ) );
+		}
+
+		if ( is_bool( $value ) || null === $value ) {
+			return '';
+		}
+
+		return is_scalar( $value ) ? trim( (string) $value ) : '';
+	}
+
+	/**
 	 * Get the representation of the post meta.
 	 *
 	 * @param \WP_Post $post        The post object
@@ -522,9 +723,9 @@ class Post extends Indexable {
 		$meta_str = '';
 		$values   = [];
 		foreach ( $meta_fields as $meta_field ) {
-			$values[ $meta_field ] = get_post_meta( $post->ID, $meta_field, true );
+			$values[ $meta_field ] = $this->meta_value_to_text( get_post_meta( $post->ID, $meta_field, true ) );
 		}
-		$values = array_filter( $values );
+		$values = array_filter( $values, 'strlen' );
 
 		if ( ! empty( $values ) ) {
 			$meta_str .= "# Metadata\n";
