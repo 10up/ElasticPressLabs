@@ -11,6 +11,7 @@ namespace ElasticPressLabsTest;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Features;
 use ElasticPress\Indexables;
+use ElasticPressLabs\Feature\Chat\Pipeline;
 use ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm\Hybrid;
 use ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm\Knn;
 use ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm\KnnCosine;
@@ -248,11 +249,11 @@ class TestSemanticSearchChunks extends \WP_UnitTestCase {
 
 	/**
 	 * A kNN search returns the chunks that matched as `$post->matched_chunks`, best first,
-	 * with their position in the post.
+	 * with their position in the post, and Chat joins them in reading order as the passage.
 	 *
 	 * @group vector-embeddings
 	 */
-	public function test_search_returns_matching_chunks() {
+	public function test_search_returns_matching_chunk_and_chat_passage() {
 		$post_id = self::factory()->post->create(
 			[
 				'post_title'   => 'Cash',
@@ -306,6 +307,94 @@ class TestSemanticSearchChunks extends \WP_UnitTestCase {
 		$this->assertCount( min( 3, count( $chunks ) ), $matched );
 		$this->assertArrayNotHasKey( 'chunks', $documents[0] );
 
+		$passages = ( new Pipeline() )->to_passages( $query->posts );
+		$reading  = array_filter(
+			$matched,
+			static function ( $chunk ) {
+				return in_array( $chunk['type'], [ 'content', 'meta' ], true );
+			}
+		);
+
+		usort(
+			$reading,
+			static function ( $a, $b ) {
+				return $a['offset'] <=> $b['offset'];
+			}
+		);
+
 		$this->assertSame( array_search( $target['text'], array_column( $chunks, 'text' ), true ), $matched[0]['offset'] );
+		$this->assertSame( implode( "\n\n", array_column( $reading, 'text' ) ), $passages[0]['excerpt'] );
+		// The best match is the last chunk of the post, so it closes the passage.
+		$this->assertStringEndsWith( $target['text'], $passages[0]['excerpt'] );
+	}
+
+	/**
+	 * Without matching chunks (keyword search, older index), Chat keeps the post excerpt;
+	 * taxonomy chunks are not passage text by default (see TestChatPassages).
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_chat_passage_falls_back_to_excerpt() {
+		$post = get_post(
+			self::factory()->post->create(
+				[
+					'post_title'   => 'Cash',
+					'post_excerpt' => 'Short summary.',
+				]
+			)
+		);
+
+		$this->assertSame( 'Short summary.', ( new Pipeline() )->to_passages( [ $post ] )[0]['excerpt'] );
+
+		$post->matched_chunks = [
+			[
+				'text' => "Cash\n# Taxonomy Terms\n## category: Economy",
+				'type' => 'taxonomy',
+			],
+		];
+
+		$this->assertSame( 'Short summary.', ( new Pipeline() )->to_passages( [ $post ] )[0]['excerpt'] );
+
+		$post->matched_chunks[] = [
+			'text' => "Cash › Method\n## Method\n| Year | All |",
+			'type' => 'content',
+		];
+
+		$this->assertSame( "Cash › Method\n## Method\n| Year | All |", ( new Pipeline() )->to_passages( [ $post ] )[0]['excerpt'] );
+	}
+
+	/**
+	 * Chat's retrieval embeds the question once and reuses the vector for a repeat (a Retry)
+	 * within the cache time; with no cache, it embeds every time.
+	 *
+	 * @group vector-embeddings
+	 * @group chat
+	 */
+	public function test_chat_retrieval_reuses_the_question_vector() {
+		$calls = [];
+		add_filter(
+			'pre_http_request',
+			static function ( $response, $args, $url ) use ( &$calls ) {
+				if ( self::API_URL === $url ) {
+					$calls[] = json_decode( $args['body'], true )['input'];
+				}
+
+				return $response;
+			},
+			5,
+			3
+		);
+
+		$retriever = new \ElasticPressLabs\Feature\Chat\Retriever();
+
+		$retriever->search( 'How many adults use cash?' );
+		$retriever->search( 'How many adults use cash?' );
+
+		$this->assertCount( 1, $calls );
+
+		add_filter( 'ep_chat_query_vector_ttl', '__return_zero' );
+		$retriever->search( 'How many adults use cash?' );
+
+		$this->assertCount( 2, $calls );
 	}
 }

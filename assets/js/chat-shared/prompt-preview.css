@@ -1,0 +1,14 @@
+.ep-chat-prompt-preview {
+	margin-top: 12px;
+}
+
+.ep-chat-prompt-preview__prompt {
+	background: #f6f7f7;
+	border: 1px solid var(--wp-components-color-gray-300, #ddd);
+	font-size: 13px;
+	line-height: 1.6;
+	margin: 12px 0 0;
+	padding: 16px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
