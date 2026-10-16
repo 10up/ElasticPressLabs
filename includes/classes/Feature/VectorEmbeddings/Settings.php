@@ -24,6 +24,14 @@ class Settings {
 	const SETTINGS_KEY = 'ep_vector_embeddings_settings';
 
 	/**
+	 * Settings, loaded once per instance.
+	 *
+	 * @since 2.6.0
+	 * @var array|null
+	 */
+	protected $settings = null;
+
+	/**
 	 * WordPress Hooks
 	 */
 	public function setup() {
@@ -232,10 +240,9 @@ class Settings {
 	 * @return array
 	 */
 	public function get_settings() {
-		static $settings;
-
-		if ( ! $settings ) {
-			$settings = get_option(
+		// Cached per instance, not per request, so saved changes are seen by new instances.
+		if ( null === $this->settings ) {
+			$this->settings = get_option(
 				self::SETTINGS_KEY,
 				[
 					'postTypeConfig' => $this->get_default_post_type_config(),
@@ -245,7 +252,7 @@ class Settings {
 			);
 		}
 
-		return $settings;
+		return $this->settings;
 	}
 
 	/**
@@ -286,50 +293,54 @@ class Settings {
 	}
 
 	/**
-	 * Check if a post is embeddable based on taxonomy and post meta conditions.
+	 * Check if a post is embeddable based on its post type settings, the per-post
+	 * flags, and the Indexing Criteria (taxonomy and meta include / exclude rules).
 	 *
 	 * @param int $post_id The ID of the post to check.
 	 * @return bool True if the post is embeddable, false otherwise.
 	 */
 	public function is_embeddable( $post_id ) {
-		/**
-		 * Override the embeddable status of a post.
-		 *
-		 * @param bool $embeddable The embeddable status of the post.
-		 * @param int $post_id The ID of the post to check.
-		 *
-		 * @since 2.5.0
-		 * @return bool
-		 */
-		$embeddable = apply_filters( 'ep_embeddings_is_embeddable', null, $post_id );
-		if ( has_filter( 'ep_embeddings_is_embeddable' ) ) {
-			return $embeddable;
-		}
+		$embeddable = $this->compute_embeddable( (int) $post_id );
 
+		/**
+		 * Filter whether a post is embeddable.
+		 *
+		 * Receives the result of the post type settings and Indexing Criteria, so a
+		 * callback can adjust it instead of replacing every check.
+		 *
+		 * @hook ep_embeddings_is_embeddable
+		 * @since 2.5.0, 2.6.0 receives the computed value instead of null
+		 * @param {bool} $embeddable Whether the post is embeddable.
+		 * @param {int}  $post_id    The ID of the post to check.
+		 * @return {bool} Whether the post is embeddable.
+		 */
+		return (bool) apply_filters( 'ep_embeddings_is_embeddable', $embeddable, $post_id );
+	}
+
+	/**
+	 * Whether a post is embeddable, before the `ep_embeddings_is_embeddable` filter.
+	 *
+	 * - Manual mode: only posts flagged to be included.
+	 * - Automatic mode: posts flagged to be excluded are skipped; then an exclude
+	 *   rule wins over an include rule; with include rules for this post type, only
+	 *   matching posts are embedded; without them, every post is.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	protected function compute_embeddable( int $post_id ): bool {
 		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
-		if ( empty( $config ) ) {
+		if ( empty( $config ) || empty( $config['embeddable'] ) ) {
 			return false;
 		}
 
-		if ( ! $config['embeddable'] ) {
-			return false;
+		if ( 'manual' === ( $config['embeddingMode'] ?? 'automatic' ) ) {
+			return (bool) get_post_meta( $post_id, 'ep_embedding_include', true );
 		}
 
-		[
-			'embeddable'    => $embeddable,
-			'embeddingMode' => $embedding_mode
-		] = $config;
-
-		if ( 'manual' === $embedding_mode ) {
-			return get_post_meta( $post_id, 'ep_embedding_include', true );
-		}
-
-		if ( 'automatic' === $embedding_mode ) {
-			return ! get_post_meta( $post_id, 'ep_embedding_exclude', true );
-		}
-
-		if ( ! $embeddable ) {
+		if ( get_post_meta( $post_id, 'ep_embedding_exclude', true ) ) {
 			return false;
 		}
 
@@ -341,125 +352,173 @@ class Settings {
 			return true;
 		}
 
-		$default = $this->get_default_inclusion_rule();
+		return ! $this->has_include_rules( $config );
+	}
 
-		return $default;
+	/**
+	 * Enabled taxonomy rules of a post type, with term IDs as integers.
+	 *
+	 * @since 2.6.0
+	 * @param array $config Post type configuration.
+	 * @return array[] Each with `name`, `termsInclude`, and `termsExclude`.
+	 */
+	protected function get_taxonomy_rules( array $config ): array {
+		$rules = [];
+
+		foreach ( (array) ( $config['taxonomies'] ?? [] ) as $taxonomy ) {
+			if ( empty( $taxonomy['name'] ) || ( isset( $taxonomy['enabled'] ) && ! $taxonomy['enabled'] ) ) {
+				continue;
+			}
+
+			$rules[] = [
+				'name'         => (string) $taxonomy['name'],
+				'termsInclude' => array_map( 'intval', (array) ( $taxonomy['termsInclude'] ?? [] ) ),
+				'termsExclude' => array_map( 'intval', (array) ( $taxonomy['termsExclude'] ?? [] ) ),
+			];
+		}
+
+		return $rules;
+	}
+
+	/**
+	 * Meta keys of a post type rule list, when meta rules are turned on.
+	 *
+	 * @since 2.6.0
+	 * @param array  $config Post type configuration.
+	 * @param string $key    `fieldsIndexingInclude` or `fieldsIndexingExclude`.
+	 * @return string[]
+	 */
+	protected function get_meta_rules( array $config, string $key ): array {
+		if ( empty( $config['enableFieldsIndexing'] ) ) {
+			return [];
+		}
+
+		return array_values( array_filter( array_map( 'strval', (array) ( $config[ $key ] ?? [] ) ) ) );
+	}
+
+	/**
+	 * Whether a post type has any include rule (taxonomy terms or meta keys).
+	 *
+	 * @since 2.6.0
+	 * @param array $config Post type configuration.
+	 * @return bool
+	 */
+	protected function has_include_rules( array $config ): bool {
+		foreach ( $this->get_taxonomy_rules( $config ) as $rule ) {
+			if ( ! empty( $rule['termsInclude'] ) ) {
+				return true;
+			}
+		}
+
+		return [] !== $this->get_meta_rules( $config, 'fieldsIndexingInclude' );
+	}
+
+	/**
+	 * Whether a post has a term from any of the given lists.
+	 *
+	 * @since 2.6.0
+	 * @param int    $post_id   Post ID.
+	 * @param string $rule_list `termsInclude` or `termsExclude`.
+	 * @return bool
+	 */
+	protected function has_term_in_rules( int $post_id, string $rule_list ): bool {
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		foreach ( $this->get_taxonomy_rules( $config ) as $rule ) {
+			if ( empty( $rule[ $rule_list ] ) ) {
+				continue;
+			}
+
+			$terms = get_the_terms( $post_id, $rule['name'] );
+
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				continue;
+			}
+
+			foreach ( $terms as $term ) {
+				if ( in_array( (int) $term->term_id, $rule[ $rule_list ], true ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether a post has a truthy value for any of the given meta rule keys.
+	 *
+	 * @since 2.6.0
+	 * @param int    $post_id Post ID.
+	 * @param string $key     `fieldsIndexingInclude` or `fieldsIndexingExclude`.
+	 * @return bool
+	 */
+	protected function has_meta_in_rules( int $post_id, string $key ): bool {
+		$config = $this->get_post_type_config( get_post_type( $post_id ) );
+
+		if ( empty( $config ) ) {
+			return false;
+		}
+
+		foreach ( $this->get_meta_rules( $config, $key ) as $field ) {
+			if ( get_post_meta( $post_id, $field, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
 	 * Check if a post is excluded by taxonomy conditions.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Ignores taxonomy rules turned off on the settings screen.
 	 * @param int $post_id The ID of the post to check.
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_taxonomy( $post_id ) {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
-		$taxonomies = $config['taxonomies'] ?? [];
-
-		foreach ( $taxonomies as $taxonomy ) {
-			$terms = get_the_terms( $post_id, $taxonomy['name'] );
-
-			if ( ! $terms || is_wp_error( $terms ) ) {
-				continue;
-			}
-
-			foreach ( $terms as $term ) {
-				if ( in_array( $term->term_id, $taxonomy['termsExclude'], true ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
+		return $this->has_term_in_rules( (int) $post_id, 'termsExclude' );
 	}
 
 	/**
 	 * Check if a post is included by taxonomy conditions.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Ignores taxonomy rules turned off on the settings screen.
 	 * @param int $post_id The ID of the post to check.
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_taxonomy( $post_id ) {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
-		$taxonomies = $config['taxonomies'] ?? [];
-
-		foreach ( $taxonomies as $taxonomy ) {
-			$terms = get_the_terms( $post_id, $taxonomy['name'] );
-
-			if ( ! $terms || is_wp_error( $terms ) ) {
-				continue;
-			}
-
-			foreach ( $terms as $term ) {
-				if ( in_array( $term->term_id, $taxonomy['termsInclude'], true ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
+		return $this->has_term_in_rules( (int) $post_id, 'termsInclude' );
 	}
 
 	/**
 	 * Check if a post is excluded by meta conditions.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Only applies when field indexing is turned on.
 	 * @param int $post_id The ID of the post to check.
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_meta( $post_id ) {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
-		$fields_indexing_exclude = $config['fieldsIndexingExclude'] ?? [];
-
-		foreach ( $fields_indexing_exclude as $field ) {
-			$value = get_post_meta( $post_id, $field, true );
-
-			if ( $value ) {
-				return true;
-			}
-		}
-
-		return false;
+		return $this->has_meta_in_rules( (int) $post_id, 'fieldsIndexingExclude' );
 	}
 
 	/**
 	 * Check if a post is included by meta conditions.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Only applies when field indexing is turned on.
 	 * @param int $post_id The ID of the post to check.
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_meta( $post_id ) {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
-		$fields_indexing_include = $config['fieldsIndexingInclude'] ?? [];
-
-		foreach ( $fields_indexing_include as $field ) {
-			$value = get_post_meta( $post_id, $field, true );
-
-			if ( $value ) {
-				return true;
-			}
-		}
-
-		return false;
+		return $this->has_meta_in_rules( (int) $post_id, 'fieldsIndexingInclude' );
 	}
 
 	/**
@@ -523,35 +582,26 @@ class Settings {
 	 *     - Posts with "Tag B" are always excluded, even if they are in "Category A".
 	 *     - Only posts in "Category A" that do not have "Tag B" are included.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 No longer used to decide whether a post is embedded; checks the include rules of every post type.
 	 * @return bool Whether to include posts by default.
 	 */
 	public function get_default_inclusion_rule() {
-		if ( empty( $this->get_settings()['postTypeConfig'] ) ) {
-			return false; // No rules set - posts are not included by default
+		$post_types = (array) ( $this->get_settings()['postTypeConfig'] ?? [] );
+
+		if ( empty( $post_types ) ) {
+			return false; // No rules set - posts are not included by default.
 		}
 
-		$has_include_rules = false;
-
-		// Check each post type config for taxonomy rules
-		foreach ( $this->get_settings()['postTypeConfig'] as $post_type_config ) {
-			if ( empty( $post_type_config['taxonomies'] ) ) {
-				return true;
-			}
-
-			foreach ( $post_type_config['taxonomies'] as $taxonomy ) {
-				// Check for include rules
-				if ( ! empty( $taxonomy['termsInclude'] ) ) {
-					$has_include_rules = true;
-				}
+		// Kept for backward compatibility: true when no post type has an include rule.
+		// Embedding decisions use the rules of the post's own type (see compute_embeddable()).
+		foreach ( $post_types as $post_type_config ) {
+			if ( $this->has_include_rules( (array) $post_type_config ) ) {
+				return false;
 			}
 		}
 
-		// if post meta is set to include, return true
-		if ( ! empty( $this->get_settings()['fieldsIndexingInclude'] ) ) {
-			$has_include_rules = true;
-		}
-
-		return ! $has_include_rules;
+		return true;
 	}
 
 	/**

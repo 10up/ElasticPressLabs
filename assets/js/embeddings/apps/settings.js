@@ -65,9 +65,9 @@ export default () => {
 			<Panel>
 				<PanelBody>
 					{embeddingsFiltered && (
-						<Notice status="warning" isDismissible={false}>
+						<Notice status="info" isDismissible={false}>
 							{__(
-								'This configuration is currently filtered via the `ep_embeddings_is_embeddable` filter. Changes made here will not be applied.',
+								'A plugin adjusts this configuration with the `ep_embeddings_is_embeddable` filter, so some posts may be embedded differently than set here.',
 								'elasticpress-labs',
 							)}
 						</Notice>
