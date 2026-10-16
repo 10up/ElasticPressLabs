@@ -17,6 +17,7 @@ use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
 use ElasticPressLabs\Traits\DisableAfterFailures;
+use ElasticPressLabs\Upgrades;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -136,6 +137,191 @@ class VectorEmbeddings extends Feature {
 	 */
 	public function pre_handle_feature_activation() {
 		$this->setup_failures_count();
+	}
+
+	/**
+	 * Add the feature's fields to existing indices when the feature is activated.
+	 *
+	 * An index created before the feature was active has none of them.
+	 *
+	 * @since 2.6.0
+	 */
+	public function post_activation() {
+		parent::post_activation();
+
+		$this->ensure_mapping();
+	}
+
+	/**
+	 * Add the fields this feature needs to the existing indices, without recreating them.
+	 *
+	 * Only while the feature is active: an index can stay without the fields until the
+	 * feature is activated (`post_activation()` calls this again then).
+	 *
+	 * Missing fields (all of them, if the index was created while the feature was off) are
+	 * added with `PUT _mapping`. Fields whose definition differs, like the vector dimensions,
+	 * cannot be changed in place: those indices need a sync with `--setup`.
+	 *
+	 * @since 2.6.0
+	 * @param bool $dry_run Report what would change, without changing anything.
+	 * @return array `[ 'status' => 'applied'|'pending'|'skipped'|'failed', 'message' => string ]`
+	 */
+	public function ensure_mapping( bool $dry_run = false ): array {
+		if ( ! $this->is_active() ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				'message' => __( 'Vector Embeddings is not active. Its fields are added when it is activated.', 'elasticpress-labs' ),
+			];
+		}
+
+		if ( ! Elasticsearch::factory()->get_elasticsearch_version( true ) ) {
+			return [
+				'status'  => Upgrades::FAILED,
+				'message' => __( 'Could not connect to Elasticsearch.', 'elasticpress-labs' ),
+			];
+		}
+
+		$results = [];
+
+		foreach ( $this->get_mapping_indexables() as $slug => $indexable ) {
+			$ep_indexable = \ElasticPress\Indexables::factory()->get( $slug );
+
+			if ( $ep_indexable ) {
+				$results[] = $this->ensure_index_mapping( $ep_indexable->get_index_name(), $indexable, $dry_run );
+			}
+		}
+
+		if ( ! $results ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				'message' => __( 'No index to update.', 'elasticpress-labs' ),
+			];
+		}
+
+		// The most important status wins.
+		$statuses = wp_list_pluck( $results, 'status' );
+		$status   = Upgrades::SKIPPED;
+
+		foreach ( [ Upgrades::FAILED, Upgrades::APPLIED, Upgrades::PENDING ] as $candidate ) {
+			if ( in_array( $candidate, $statuses, true ) ) {
+				$status = $candidate;
+				break;
+			}
+		}
+
+		return [
+			'status'  => $status,
+			'message' => implode( ' ', wp_list_pluck( $results, 'message' ) ),
+		];
+	}
+
+	/**
+	 * The indexables whose mapping this feature changes, keyed by ElasticPress indexable slug.
+	 *
+	 * Built on demand when the feature has not been set up (it is being activated).
+	 *
+	 * @since 2.6.0
+	 * @return Indexable[]
+	 */
+	protected function get_mapping_indexables(): array {
+		if ( ! empty( $this->indexables ) ) {
+			return $this->indexables;
+		}
+
+		return [
+			'post' => new Indexables\Post\Post( $this ),
+		];
+	}
+
+	/**
+	 * Add the missing fields to one index.
+	 *
+	 * @since 2.6.0
+	 * @param string    $index     Index name.
+	 * @param Indexable $indexable Vector Embeddings indexable.
+	 * @param bool      $dry_run   Report only.
+	 * @return array `status` and `message`.
+	 */
+	protected function ensure_index_mapping( string $index, Indexable $indexable, bool $dry_run ): array {
+		$elasticsearch = Elasticsearch::factory();
+
+		if ( ! $elasticsearch->index_exists( $index ) ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Index %s does not exist yet. It gets the fields when it is created.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$mapping = $elasticsearch->get_mapping( $index );
+
+		if ( ! isset( $mapping[ $index ]['mappings'] ) ) {
+			return [
+				'status'  => Upgrades::FAILED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Could not read the mapping of index %s.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$changes = $indexable->get_mapping_changes( (array) ( $mapping[ $index ]['mappings']['properties'] ?? [] ) );
+
+		if ( $changes['conflicts'] ) {
+			return [
+				'status'  => Upgrades::FAILED,
+				'message' => sprintf(
+					/* translators: 1: index name, 2: list of mapping settings */
+					__( 'Index %1$s: %2$s differ from what Vector Embeddings needs and cannot be changed in place. Run a full sync with --setup to recreate the index.', 'elasticpress-labs' ),
+					$index,
+					implode( ', ', $changes['conflicts'] )
+				),
+			];
+		}
+
+		if ( ! $changes['add'] ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Index %s is up to date.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$added = implode( ', ', $changes['added'] );
+
+		if ( $dry_run ) {
+			return [
+				'status'  => Upgrades::PENDING,
+				/* translators: 1: index name, 2: list of fields */
+				'message' => sprintf( __( 'Index %1$s: would add %2$s.', 'elasticpress-labs' ), $index, $added ),
+			];
+		}
+
+		$response = $elasticsearch->remote_request(
+			$index . '/_mapping',
+			[
+				'method'  => 'PUT',
+				'body'    => wp_json_encode( [ 'properties' => $changes['add'] ] ),
+				'timeout' => 30,
+			],
+			[],
+			'put_mapping'
+		);
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$body   = is_wp_error( $response ) ? [] : json_decode( wp_remote_retrieve_body( $response ), true );
+			$reason = is_wp_error( $response ) ? $response->get_error_message() : ( $body['error']['reason'] ?? wp_remote_retrieve_response_message( $response ) );
+
+			return [
+				'status'  => Upgrades::FAILED,
+				/* translators: 1: index name, 2: error message */
+				'message' => sprintf( __( 'Index %1$s: could not update the mapping: %2$s', 'elasticpress-labs' ), $index, $reason ),
+			];
+		}
+
+		return [
+			'status'  => Upgrades::APPLIED,
+			/* translators: 1: index name, 2: list of fields */
+			'message' => sprintf( __( 'Index %1$s: added %2$s.', 'elasticpress-labs' ), $index, $added ),
+		];
 	}
 
 	/**
