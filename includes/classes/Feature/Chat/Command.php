@@ -86,4 +86,80 @@ class Command extends WP_CLI_Command {
 		WP_CLI::log( '' );
 		fwrite( STDERR, sprintf( "Exported %d conversations.\n", $count ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 	}
+
+	/**
+	 * Show what the AI-generated query knows about the post index: the fields it may use and the
+	 * terms of the listed taxonomies. Both are cached; `--rebuild` reads them again from
+	 * Elasticsearch and the database.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--rebuild]
+	 * : Clear the cache first.
+	 *
+	 * [--format=<format>]
+	 * : Output format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     $ wp elasticpress-labs chat index-schema
+	 *     $ wp elasticpress-labs chat index-schema --rebuild --format=json
+	 *
+	 * @subcommand index-schema
+	 * @param array $args       Positional CLI args.
+	 * @param array $assoc_args Associative CLI args.
+	 * @return void
+	 */
+	public function index_schema( $args, $assoc_args ) {
+		unset( $args );
+
+		$schema = new Index_Schema();
+
+		if ( ! empty( $assoc_args['rebuild'] ) ) {
+			$schema->clear();
+		}
+
+		$fields = $schema->get_fields();
+		$terms  = $schema->get_terms();
+
+		if ( ! $fields ) {
+			WP_CLI::error( 'The post index mapping could not be read.' );
+		}
+
+		if ( 'json' === ( $assoc_args['format'] ?? 'table' ) ) {
+			WP_CLI::log(
+				(string) wp_json_encode(
+					[
+						'fields' => $fields,
+						'terms'  => $terms,
+					],
+					JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+				)
+			);
+
+			return;
+		}
+
+		$rows = [];
+
+		foreach ( $fields as $path => $field ) {
+			$rows[] = [
+				'field' => $path,
+				'type'  => $field['type'],
+				'note'  => $field['note'],
+			];
+		}
+
+		WP_CLI\Utils\format_items( 'table', $rows, [ 'field', 'type', 'note' ] );
+
+		foreach ( $terms as $taxonomy => $list ) {
+			WP_CLI::log( sprintf( '%s (%d terms): %s', $taxonomy, count( $list ), implode( ', ', array_keys( $list ) ) ) );
+		}
+	}
 }
