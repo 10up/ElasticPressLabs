@@ -25,6 +25,16 @@ class Post extends Indexable {
 	public $settings_page;
 
 	/**
+	 * Vectors already stored for posts being indexed: `[ post_id => [ hash => vector ] ]`.
+	 *
+	 * Filled once per batch (see prefetch_stored_vectors()) and cleared after it.
+	 *
+	 * @since 2.6.0
+	 * @var array
+	 */
+	protected $stored_vectors = [];
+
+	/**
 	 * Setup hooks
 	 */
 	public function setup() {
@@ -55,6 +65,12 @@ class Post extends Indexable {
 			add_filter( 'ep_embeddings_dimensions', [ $this, 'set_epio_dimensions' ] );
 		} else {
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+
+			// Reuse the vectors of unchanged chunks: load the stored ones once per batch.
+			add_action( 'ep_pre_prepare_documents', [ $this, 'prefetch_stored_vectors' ], 10, 2 );
+			add_action( 'ep_after_bulk_index', [ $this, 'clear_stored_vectors' ] );
+			add_action( 'ep_after_bulk_index_dynamically', [ $this, 'clear_stored_vectors' ] );
+			add_action( 'ep_after_index_post', [ $this, 'clear_stored_vectors' ] );
 		}
 	}
 
@@ -299,16 +315,188 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$embeddings = $this->feature->get_embedding( $post_id, 'post', wp_list_pluck( $chunk_items, 'text' ) );
+		// Chunks whose hash is already stored keep their vector; only the others are embedded.
+		$stored  = $this->get_stored_vectors( $post_id );
+		$missing = [];
 
-		if ( ! is_array( $embeddings ) ) {
-			if ( is_wp_error( $embeddings ) ) {
-				throw new \Exception( wp_kses_post( $embeddings->get_error_message() ) );
+		foreach ( $chunk_items as $index => $item ) {
+			$hash = $this->feature->get_chunk_hash( $item['text'] );
+
+			$chunk_items[ $index ]['hash'] = $hash;
+
+			if ( ! isset( $stored[ $hash ] ) ) {
+				$missing[ $hash ] = $item['text'];
 			}
-			return $args;
 		}
 
-		return $this->add_chunks_field_value( $args, $embeddings, $chunk_items );
+		$new_vectors = [];
+
+		if ( $missing ) {
+			$embeddings = $this->feature->get_embedding( $post_id, 'post', array_values( $missing ) );
+
+			if ( ! is_array( $embeddings ) ) {
+				if ( is_wp_error( $embeddings ) ) {
+					throw new \Exception( wp_kses_post( $embeddings->get_error_message() ) );
+				}
+				return $args;
+			}
+
+			if ( count( $embeddings ) !== count( $missing ) ) {
+				throw new \Exception( esc_html__( 'The embedding service returned a different number of vectors than chunks sent.', 'elasticpress-labs' ) );
+			}
+
+			$new_vectors = array_combine( array_keys( $missing ), array_values( $embeddings ) );
+		}
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::debug(
+				sprintf(
+					/* translators: 1: post ID, 2: reused chunks, 3: total chunks */
+					__( 'Post %1$d: reused %2$d of %3$d chunk vectors.', 'elasticpress-labs' ),
+					$post_id,
+					count( $chunk_items ) - count( $missing ),
+					count( $chunk_items )
+				)
+			);
+		}
+
+		$vectors = array_map(
+			function ( $item ) use ( $stored, $new_vectors ) {
+				return $stored[ $item['hash'] ] ?? $new_vectors[ $item['hash'] ];
+			},
+			$chunk_items
+		);
+
+		return $this->add_chunks_field_value( $args, $vectors, $chunk_items );
+	}
+
+	/**
+	 * Load the stored vectors of the posts about to be indexed, in one request.
+	 *
+	 * Runs on the `ep_pre_prepare_documents` action (ElasticPress 5.4+). Without it, each
+	 * post is looked up when it is prepared.
+	 *
+	 * @since 2.6.0
+	 * @param array  $object_ids IDs of the objects about to be prepared.
+	 * @param string $slug       Indexable slug.
+	 */
+	public function prefetch_stored_vectors( $object_ids, $slug ) {
+		if ( 'post' !== $slug ) {
+			return;
+		}
+
+		$this->load_stored_vectors( array_map( 'absint', (array) $object_ids ) );
+	}
+
+	/**
+	 * Forget the stored vectors after a batch.
+	 *
+	 * @since 2.6.0
+	 */
+	public function clear_stored_vectors() {
+		$this->stored_vectors = [];
+	}
+
+	/**
+	 * Stored vectors of a post, keyed by chunk hash.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id Post ID.
+	 * @return array
+	 */
+	protected function get_stored_vectors( int $post_id ): array {
+		if ( ! array_key_exists( $post_id, $this->stored_vectors ) ) {
+			$this->load_stored_vectors( [ $post_id ] );
+		}
+
+		return $this->stored_vectors[ $post_id ] ?? [];
+	}
+
+	/**
+	 * Load the chunk hashes and vectors stored for posts.
+	 *
+	 * Nothing is loaded during a full reindex (the index was just recreated). A failed
+	 * request loads nothing: every chunk is embedded again.
+	 *
+	 * @since 2.6.0
+	 * @param int[] $post_ids Post IDs.
+	 */
+	protected function load_stored_vectors( array $post_ids ) {
+		$post_ids = array_values( array_diff( array_filter( $post_ids ), array_keys( $this->stored_vectors ) ) );
+
+		if ( ! $post_ids ) {
+			return;
+		}
+
+		foreach ( $post_ids as $post_id ) {
+			$this->stored_vectors[ $post_id ] = [];
+		}
+
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+
+		if ( ! $indexable || $indexable->is_full_reindexing() ) {
+			return;
+		}
+
+		foreach ( $this->fetch_stored_chunks( $indexable->get_index_name(), $post_ids ) as $post_id => $source ) {
+			foreach ( (array) ( $source['chunks'] ?? [] ) as $chunk ) {
+				if ( ! empty( $chunk['hash'] ) && ! empty( $chunk['vector'] ) && is_array( $chunk['vector'] ) ) {
+					$this->stored_vectors[ (int) $post_id ][ (string) $chunk['hash'] ] = $chunk['vector'];
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the stored chunk hashes and vectors of documents with one `_mget`.
+	 *
+	 * The fields are named in `_source_includes`: Elasticsearch 9 leaves dense vectors out of
+	 * `_source` unless a request names them.
+	 *
+	 * @since 2.6.0
+	 * @param string $index    Index name.
+	 * @param int[]  $post_ids Post IDs.
+	 * @return array `[ post_id => _source ]`
+	 */
+	protected function fetch_stored_chunks( string $index, array $post_ids ): array {
+		$fields        = [ 'chunks.hash', 'chunks.vector' ];
+		$elasticsearch = \ElasticPress\Elasticsearch::factory();
+
+		try {
+			// ElasticPress 5.4+ can ask for source fields.
+			if ( ( new \ReflectionMethod( $elasticsearch, 'get_documents' ) )->getNumberOfParameters() >= 4 ) {
+				$documents = $elasticsearch->get_documents( $index, 'post', $post_ids, $fields );
+
+				return is_array( $documents ) ? $documents : [];
+			}
+
+			$response = $elasticsearch->remote_request(
+				$index . '/_mget?_source_includes=' . implode( ',', $fields ),
+				[
+					'method' => 'POST',
+					'body'   => wp_json_encode( [ 'ids' => $post_ids ] ),
+				],
+				[],
+				'post'
+			);
+		} catch ( \Throwable $th ) {
+			return [];
+		}
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return [];
+		}
+
+		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
+		$documents = [];
+
+		foreach ( (array) ( $body['docs'] ?? [] ) as $doc ) {
+			if ( ! empty( $doc['found'] ) && isset( $doc['_id'], $doc['_source'] ) ) {
+				$documents[ (int) $doc['_id'] ] = $doc['_source'];
+			}
+		}
+
+		return $documents;
 	}
 
 	/**
