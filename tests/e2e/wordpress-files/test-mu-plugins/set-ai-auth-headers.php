@@ -223,6 +223,19 @@ function epl_chat_e2e_search( $payload ) {
 add_filter( 'ep_chat_message_meta', 'epl_chat_e2e_search' );
 
 /**
+ * Optional e2e AI-generated query: `epl_chat_e2e_register_ai_query` registers the algorithm, which
+ * Chat registers only when Semantic Search is on.
+ *
+ * @return void
+ */
+function epl_chat_e2e_register_ai_query() {
+	if ( get_option( 'epl_chat_e2e_register_ai_query' ) && class_exists( '\\ElasticPressLabs\\Feature\\Chat\\AI_Query' ) ) {
+		\ElasticPress\SearchAlgorithms::factory()->register( new \ElasticPressLabs\Feature\Chat\AI_Query() );
+	}
+}
+add_action( 'init', 'epl_chat_e2e_register_ai_query', 1 );
+
+/**
  * Optional e2e clarifying options: `epl_chat_e2e_clarify` is the clarify reply.
  *
  * @param mixed $pre Short-circuit value.

@@ -201,6 +201,14 @@ class Chat extends Feature implements ConnectionTestable {
 		$abilities = new Abilities();
 		$abilities->setup();
 
+		$index_schema = new Index_Schema();
+		$index_schema->setup();
+
+		$query_generator = new Query_Generator();
+		$query_generator->setup();
+
+		AI_Query::register();
+
 		add_action( 'rest_api_init', [ $this, 'setup_endpoint' ] );
 	}
 
