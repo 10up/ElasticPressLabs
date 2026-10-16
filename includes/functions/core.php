@@ -217,6 +217,13 @@ function maybe_load_features() {
 
 	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
 	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
+
+	$upgrades = new \ElasticPressLabs\Upgrades();
+	$upgrades->setup();
+
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		\WP_CLI::add_command( 'elasticpress-labs', '\ElasticPressLabs\Command' );
+	}
 }
 
 /**
