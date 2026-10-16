@@ -133,6 +133,65 @@ class SemanticSearch extends Feature {
 			add_filter( 'ep_query_request_args', [ $this, 'add_vector_embeddings_header' ], 10, 6 );
 			add_action( 'wp_enqueue_scripts', [ $this, 'add_autosuggest_http_header' ] );
 		}
+
+		// The chunks that matched the search, from the algorithms' `inner_hits`.
+		add_filter( 'ep_retrieve_the_post', [ $this, 'add_matched_chunks' ], 10, 2 );
+		add_filter( 'ep_search_post_return_args', [ $this, 'add_matched_chunks_return_arg' ] );
+	}
+
+	/**
+	 * Copy the chunks that matched a search from the hit's `inner_hits` to the document.
+	 *
+	 * Each one is `[ 'text' => string, 'type' => string, 'score' => float, 'offset' => int ]`,
+	 * best first. Posts get them as `$post->matched_chunks`.
+	 *
+	 * @since 2.6.0
+	 * @param array $document Document retrieved from Elasticsearch.
+	 * @param array $hit      Raw Elasticsearch hit.
+	 * @return array
+	 */
+	public function add_matched_chunks( $document, $hit ) {
+		$inner_hits = $hit['inner_hits']['chunks']['hits']['hits'] ?? [];
+
+		if ( ! is_array( $document ) || empty( $inner_hits ) || ! is_array( $inner_hits ) ) {
+			return $document;
+		}
+
+		$document['matched_chunks'] = array_values(
+			array_filter(
+				array_map(
+					function ( $inner_hit ) {
+						if ( ! isset( $inner_hit['_source']['text'] ) ) {
+							return null;
+						}
+
+						return [
+							'text'   => (string) $inner_hit['_source']['text'],
+							'type'   => (string) ( $inner_hit['_source']['type'] ?? '' ),
+							'score'  => (float) ( $inner_hit['_score'] ?? 0 ),
+							'offset' => (int) ( $inner_hit['_nested']['offset'] ?? 0 ),
+						];
+					},
+					$inner_hits
+				)
+			)
+		);
+
+		return $document;
+	}
+
+	/**
+	 * Keep `matched_chunks` on the post objects built from search results.
+	 *
+	 * @since 2.6.0
+	 * @param array $properties Post properties.
+	 * @return array
+	 */
+	public function add_matched_chunks_return_arg( $properties ) {
+		$properties   = (array) $properties;
+		$properties[] = 'matched_chunks';
+
+		return $properties;
 	}
 
 	/**
