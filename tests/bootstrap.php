@@ -78,6 +78,10 @@ function load_plugin() {
 }
 tests_add_filter( 'muplugins_loaded', __NAMESPACE__ . '\load_plugin' );
 
+// Chat tests fake every model call, so the site has no AI provider: tell Chat it has one.
+// Tests of the requirement itself remove this filter.
+tests_add_filter( 'ep_chat_ai_available', '__return_true' );
+
 /**
  * Setup WooCommerce for tests
  *
@@ -133,3 +137,5 @@ require_once $_tests_dir . '/includes/bootstrap.php';
 require_once __DIR__ . '/phpunit/BaseTestCase.php';
 require_once __DIR__ . '/phpunit/factory/PostFactory.php';
 require_once __DIR__ . '/phpunit/factory/UserFactory.php';
+require_once __DIR__ . '/phpunit/feature/Chat/Fixtures/FixtureRerankProvider.php';
+require_once __DIR__ . '/phpunit/feature/Chat/Fixtures/ReverseRerankProvider.php';

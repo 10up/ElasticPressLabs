@@ -1,0 +1,24 @@
+/* Chat settings on the ElasticPress features screen. */
+
+/* A heading and / or one line of text at the start of a box or a part of it. */
+.ep-chat-settings-subheading {
+	margin: 0;
+
+	& .ep-chat-settings-heading {
+		display: block;
+		font-size: 13px;
+		margin-bottom: 4px;
+	}
+
+	& .ep-chat-settings-intro {
+		color: var(--wp-components-color-gray-700, #757575);
+		display: block;
+	}
+}
+
+/* One line under each option of a radio choice. */
+.ep-chat-choice-description {
+	color: var(--wp-components-color-gray-700, #757575);
+	display: block;
+	font-size: 12px;
+}

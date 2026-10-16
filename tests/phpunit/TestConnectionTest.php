@@ -1,6 +1,6 @@
 <?php
 /**
- * Test the "Test connection" buttons
+ * Test the "Test connection" buttons and Chat's AI provider requirement
  *
  * @since 2.6.0
  * @package ElasticPressLabsTest
@@ -8,11 +8,14 @@
 
 namespace ElasticPressLabsTest;
 
+use ElasticPress\FeatureRequirementsStatus;
 use ElasticPress\Features;
+use ElasticPress\Utils;
 use ElasticPressLabs\ConnectionTest;
+use ElasticPressLabs\Feature\Chat\Models;
 
 /**
- * Connection tests of Vector Embeddings and AI Search Summary.
+ * Connection tests of Chat's re-ranker, Vector Embeddings, and AI Search Summary.
  */
 class TestConnectionTest extends BaseTestCase {
 	/**
@@ -120,6 +123,50 @@ class TestConnectionTest extends BaseTestCase {
 		wp_set_current_user( $this->factory->user->create( [ 'role' => 'administrator' ] ) );
 
 		$this->assertSame( 400, $this->test( 'search', [] )->get_status() );
+	}
+
+	/**
+	 * The re-ranker test sends the form's unsaved connection fields, and nothing else of the form.
+	 *
+	 * @group connection-test
+	 */
+	public function test_chat_rerank() {
+		$this->reply(
+			200,
+			[
+				'results' => [
+					[
+						'index'           => 0,
+						'relevance_score' => 0.9,
+					],
+					[
+						'index'           => 1,
+						'relevance_score' => 0.1,
+					],
+				],
+			]
+		);
+
+		$response = $this->test(
+			'chat',
+			[
+				'rerank_api_url' => 'https://rerank.test/v1/rerank',
+				'rerank_api_key' => 'unsaved-key',
+				'rerank_model'   => 'rerank-model',
+				'retrieve_count' => '99',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['success'] );
+		$this->assertSame( 'Connected. The re-ranker scored the test passages.', $response->get_data()['message'] );
+		$this->assertSame( 'https://rerank.test/v1/rerank', $this->requests[0]['url'] );
+		$this->assertSame( 'Bearer unsaved-key', $this->requests[0]['headers']['Authorization'] );
+		$this->assertSame( 'rerank-model', $this->requests[0]['body']['model'] );
+		$this->assertSame( 20, $this->requests[0]['timeout'], 'The test sends what a re-rank request sends.' );
+
+		// Nothing was saved.
+		$this->assertSame( '', (string) Features::factory()->get_registered_feature( 'chat' )->get_setting( 'rerank_api_url' ) );
 	}
 
 	/**
@@ -300,6 +347,7 @@ class TestConnectionTest extends BaseTestCase {
 		$this->assertSame( $supported, ConnectionTest::is_supported() );
 
 		$where = [
+			'chat'              => 'chat_rerank',
 			'vector_embeddings' => 'ep_embeddings_openai',
 			'ai_search_summary' => '',
 		];
@@ -331,5 +379,82 @@ class TestConnectionTest extends BaseTestCase {
 				$this->assertSame( $field['key'], $keys[ array_search( 'chat_model', $keys, true ) + 1 ], 'The button comes right after the chat model.' );
 			}
 		}
+	}
+
+	/**
+	 * Without an AI provider Chat is temporarily disabled (not turned off), with a link to set
+	 * one up; the check reads stored credentials.
+	 *
+	 * @group chat
+	 * @group connection-test
+	 */
+	public function test_chat_needs_an_ai_provider() {
+		add_filter(
+			'ep_feature_active',
+			static fn( $active, $settings, $feature ) => $feature && 'vector_embeddings' === $feature->slug ? true : $active,
+			10,
+			3
+		);
+
+		$chat = Features::factory()->get_registered_feature( 'chat' );
+
+		$this->assertSame( FeatureRequirementsStatus::MANUALLY_ENABLED, $chat->requirements_status()->code );
+
+		add_filter( 'ep_chat_ai_available', '__return_false', 20 );
+
+		$status = $chat->requirements_status();
+
+		$this->assertSame( FeatureRequirementsStatus::TEMPORARILY_DISABLED, $status->code );
+		$this->assertStringContainsString( 'options-connectors.php', $status->message );
+
+		remove_filter( 'ep_chat_ai_available', '__return_false', 20 );
+
+		// Before WordPress registers its connectors, nothing is known: Chat stays set up, as
+		// ElasticPress sets up features before that (on every request).
+		remove_filter( 'ep_chat_ai_available', '__return_true' );
+
+		global $wp_actions;
+
+		$fired = $wp_actions['wp_connectors_init'] ?? null;
+		unset( $wp_actions['wp_connectors_init'] );
+
+		$this->assertTrue( Models::is_ai_available() );
+
+		if ( null !== $fired ) {
+			$wp_actions['wp_connectors_init'] = $fired; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		}
+
+		add_filter( 'ep_chat_ai_available', '__return_true' );
+
+		// The credential check behind it.
+		$set_up = new \ReflectionMethod( Models::class, 'is_connector_set_up' );
+		$set_up->setAccessible( true );
+
+		$key = [
+			'type'           => 'ai_provider',
+			'authentication' => [
+				'method'        => 'api_key',
+				'setting_name'  => 'connectors_ai_fixture_api_key',
+				'constant_name' => 'EPL_TEST_FIXTURE_API_KEY',
+				'env_var_name'  => 'EPL_TEST_FIXTURE_API_KEY',
+			],
+		];
+
+		$this->assertFalse( $set_up->invoke( null, $key ) );
+
+		update_option( 'connectors_ai_fixture_api_key', 'stored' );
+
+		$this->assertTrue( $set_up->invoke( null, $key ) );
+
+		$key['plugin']['is_active'] = '__return_false';
+
+		$this->assertFalse( $set_up->invoke( null, $key ) );
+		$this->assertTrue( $set_up->invoke( null, [ 'authentication' => [ 'method' => 'none' ] ] ) );
+
+		unset( $key['plugin'] );
+		Utils\update_option( 'connectors_ai_fixture_api_key', '' );
+		delete_option( 'connectors_ai_fixture_api_key' );
+
+		$this->assertFalse( $set_up->invoke( null, $key ) );
 	}
 }
