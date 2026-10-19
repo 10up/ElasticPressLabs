@@ -56,17 +56,20 @@ trait LogRequest {
 		$formatted_request['args']['ep_query_type'] = $ep_query_type;
 		$formatted_request['time_finish']           = microtime( true );
 		$formatted_request['request']               = $response;
+		$formatted_request['args']                  = $this->redact_secrets( $formatted_request['args'] );
 
 		$this->formatted_request = $formatted_request;
 
 		/*
 		 * Like ElasticPress, keep requests for the query log only when debugging. One callback
 		 * per class reads them all: a callback per request would keep every request object
-		 * (and its response) alive for as long as the process runs, e.g. a whole sync.
+		 * (and its response) alive for as long as the process runs. During a sync, the list is
+		 * emptied whenever ElasticPress frees memory between batches.
 		 */
 		if ( $this->should_add_to_query_log() ) {
-			static::$query_log_requests[] = $formatted_request;
-			add_filter( 'ep_get_query_log', [ static::class, 'add_requests_to_query_log' ] );
+			self::$query_log_requests[] = $formatted_request;
+			add_filter( 'ep_get_query_log', [ self::class, 'add_requests_to_query_log' ] );
+			add_action( 'ep_stop_the_insanity', [ self::class, 'clear_query_log_requests' ] );
 		}
 
 		do_action( 'ep_remote_request', $formatted_request, $ep_query_type_slug );
@@ -93,7 +96,39 @@ trait LogRequest {
 	 * @return array The query log.
 	 */
 	public static function add_requests_to_query_log( $query_log ) {
-		return array_merge( (array) $query_log, static::$query_log_requests );
+		return array_merge( (array) $query_log, self::$query_log_requests );
+	}
+
+	/**
+	 * Forget the requests kept for the query log.
+	 *
+	 * @since 2.6.0
+	 * @return void
+	 */
+	public static function clear_query_log_requests() {
+		self::$query_log_requests = [];
+	}
+
+	/**
+	 * Replace the `Authorization` header of request options, so the API key is not shown in the
+	 * query log or stored with failed queries.
+	 *
+	 * @since 2.6.0
+	 * @param array $options Request options.
+	 * @return array
+	 */
+	protected function redact_secrets( array $options ): array {
+		if ( empty( $options['headers'] ) || ! is_array( $options['headers'] ) ) {
+			return $options;
+		}
+
+		foreach ( array_keys( $options['headers'] ) as $name ) {
+			if ( 'authorization' === strtolower( (string) $name ) ) {
+				$options['headers'][ $name ] = '[redacted]';
+			}
+		}
+
+		return $options;
 	}
 
 	/**

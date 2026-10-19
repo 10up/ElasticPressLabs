@@ -181,4 +181,96 @@ class TestLogRequest extends \WP_UnitTestCase {
 
 		$this->assertCount( 3, apply_filters( 'ep_get_query_log', [] ) );
 	}
+
+	/**
+	 * Test the list is emptied when ElasticPress frees memory during a sync.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_is_emptied_between_sync_batches() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$requester->call( 'https://example.org/embeddings/1' );
+		$requester->call( 'https://example.org/embeddings/2' );
+		$this->assertCount( 2, apply_filters( 'ep_get_query_log', [] ) );
+
+		do_action( 'ep_stop_the_insanity' );
+		$this->assertCount( 0, apply_filters( 'ep_get_query_log', [] ) );
+
+		$requester->call( 'https://example.org/embeddings/3' );
+		$this->assertCount( 1, apply_filters( 'ep_get_query_log', [] ) );
+	}
+
+	/**
+	 * Test the API key is not kept in the query log or passed to `ep_remote_request`.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_authorization_header_is_redacted() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param array $options Options.
+			 * @return array
+			 */
+			public function call( $options ) {
+				return $this->send_request_and_log( 'https://example.org/embeddings', $options, 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$sent = [];
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args ) use ( &$sent ) {
+				$sent[] = $args['headers'];
+				return $preempt;
+			},
+			5,
+			2
+		);
+
+		$remote = [];
+		add_action(
+			'ep_remote_request',
+			function ( $request ) use ( &$remote ) {
+				$remote[] = $request['args']['headers'];
+			}
+		);
+
+		$requester->call( [ 'headers' => [ 'Authorization' => 'Bearer secret-key' ] ] );
+		$requester->call(
+			[
+				'headers' => [
+					'authorization' => 'Bearer secret-key',
+					'Content-Type'  => 'application/json',
+				],
+			]
+		);
+
+		$this->assertSame( 'Bearer secret-key', $sent[0]['Authorization'] );
+
+		$log = apply_filters( 'ep_get_query_log', [] );
+		$this->assertSame( '[redacted]', $log[0]['args']['headers']['Authorization'] );
+		$this->assertSame( '[redacted]', $log[1]['args']['headers']['authorization'] );
+		$this->assertSame( 'application/json', $log[1]['args']['headers']['Content-Type'] );
+		$this->assertSame( '[redacted]', $remote[0]['Authorization'] );
+		$this->assertStringNotContainsString( 'secret-key', wp_json_encode( $log ) );
+	}
 }
