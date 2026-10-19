@@ -20,6 +20,9 @@ use ElasticPressLabs\Traits\DisableAfterFailures;
 use ElasticPressLabs\Upgrades;
 use WP_Error;
 
+use function ElasticPressLabs\Utils\preg_replace_callback_safe;
+use function ElasticPressLabs\Utils\preg_replace_safe;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -651,37 +654,32 @@ class VectorEmbeddings extends Feature {
 	 * @return string
 	 */
 	public function normalize_content( string $content = '' ): string {
-		$content = apply_filters( 'the_content', $content );
+		$content = (string) apply_filters( 'the_content', $content );
 
 		// Remove code and markup that is never read as text (scripts, structured data, styles),
 		// with its contents: the later steps replace tags with separators, after which
 		// wp_strip_all_tags() could no longer find these elements and would keep their contents.
-		$pre_content = $content;
-		$content     = preg_replace( '#<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>#is', '', $content );
-		if ( null === $content ) {
-			$content = $pre_content;
-		}
+		// Every step keeps the text as it was when its pattern fails (backtrack limit, invalid
+		// UTF-8), so a post is never embedded empty.
+		$content = preg_replace_safe( '#<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>#is', '', $content );
 
 		// Strip shortcodes but keep internal caption text.
-		// Revert it if shortcodes are not balanced and preg_replace errors out.
-		$pre_content = $content;
-		$content     = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
-		if ( null === $content ) {
-			$content = $pre_content;
-		}
+		$content = preg_replace_safe( '#\[.+\](.+)\[/.+\]#', '$1', $content );
 
 		// Replace HTML linebreaks with newlines.
-		$content = preg_replace( '#<br\s?/?>#i', "\n\n", $content );
+		$content = preg_replace_safe( '#<br\s?/?>#i', "\n\n", $content );
+
+		$separator = $this->get_separator_pattern();
 
 		// Tables become Markdown, so each figure keeps its row and column labels.
 		$content = $this->tables_to_markdown( $content );
 
 		// Headings become Markdown heading lines, so chunks can follow the sections.
-		$content = $this->headings_to_markdown( $content );
+		$content = $this->headings_to_markdown( $content, $separator );
 
 		// Keep text from separate elements apart, so table cells, list items, and chart
 		// labels do not run together ("2026" + "12" + "46" must not become "20261246").
-		$content = $this->separate_elements( $content );
+		$content = $this->separate_elements( $content, $separator );
 
 		// Strip all HTML tags.
 		$content = wp_strip_all_tags( $content );
@@ -690,7 +688,7 @@ class VectorEmbeddings extends Feature {
 		$content = html_entity_decode( $content, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		// Non-breaking and other Unicode spaces become plain spaces.
-		$content = preg_replace( '/[\x{00A0}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]/u', ' ', $content );
+		$content = preg_replace_safe( '/[\x{00A0}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]/u', ' ', $content );
 
 		return $content;
 	}
@@ -723,13 +721,19 @@ class VectorEmbeddings extends Feature {
 		$guard   = 0;
 
 		while ( $guard++ < 50 && preg_match( $pattern, $content ) ) {
-			$content = (string) preg_replace_callback(
+			$converted = preg_replace_callback_safe(
 				$pattern,
 				function ( $found ) {
 					return "\n\n" . $this->table_to_markdown( $found[0] ) . "\n\n";
 				},
 				$content
 			);
+
+			if ( $converted === $content ) {
+				break;
+			}
+
+			$content = $converted;
 		}
 
 		return $content;
@@ -749,7 +753,7 @@ class VectorEmbeddings extends Feature {
 	protected function table_to_markdown( string $html ): string {
 		$document = new \DOMDocument();
 		$previous = libxml_use_internal_errors( true );
-		$loaded   = $document->loadHTML( '<?xml encoding="utf-8"?><html><body>' . $html . '</body></html>' );
+		$loaded   = $document->loadHTML( '<?xml encoding="utf-8"?><html><body>' . $html . '</body></html>', LIBXML_NONET );
 		libxml_clear_errors();
 		libxml_use_internal_errors( $previous );
 
@@ -827,7 +831,7 @@ class VectorEmbeddings extends Feature {
 	 * @return string
 	 */
 	protected function markdown_cell( string $text ): string {
-		$text = trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
+		$text = trim( preg_replace_safe( '/\s+/u', ' ', $text ) );
 		$text = str_replace( '|', '\\|', $text );
 
 		return htmlspecialchars( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
@@ -840,14 +844,17 @@ class VectorEmbeddings extends Feature {
 	 * sections Labs writes around the content (`# Title`, `# Summary`, `# Content`).
 	 *
 	 * @since 2.6.0
-	 * @param string $content HTML.
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
 	 * @return string
 	 */
-	protected function headings_to_markdown( string $content ): string {
-		return (string) preg_replace_callback(
+	protected function headings_to_markdown( string $content, string $separator = '' ): string {
+		$separator = '' !== $separator ? $separator : $this->get_separator_pattern();
+
+		return preg_replace_callback_safe(
 			'#<h([1-6])\b[^>]*>(.*?)</h\1\s*>#is',
-			function ( $found ) {
-				$text = trim( (string) preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $this->separate_elements( $found[2] ) ) ) );
+			function ( $found ) use ( $separator ) {
+				$text = trim( preg_replace_safe( '/\s+/u', ' ', wp_strip_all_tags( $this->separate_elements( $found[2], $separator ) ) ) );
 
 				if ( '' === $text ) {
 					return "\n";
@@ -866,14 +873,26 @@ class VectorEmbeddings extends Feature {
 	 * inline formatting tags listed here, which sit inside words and sentences.
 	 *
 	 * @since 2.6.0
-	 * @param string $content HTML.
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
 	 * @return string
 	 */
-	protected function separate_elements( string $content ): string {
+	protected function separate_elements( string $content, string $separator = '' ): string {
 		$block = 'address|article|aside|blockquote|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hgroup|hr|li|main|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul';
 
-		$content = preg_replace( '#</?(?:' . $block . ')\b[^>]*>#i', "\n", $content );
+		$content = preg_replace_safe( '#</?(?:' . $block . ')\b[^>]*>#i', "\n", $content );
 
+		return preg_replace_safe( '' !== $separator ? $separator : $this->get_separator_pattern(), ' ', $content );
+	}
+
+	/**
+	 * Pattern of the tags that get a space in separate_elements(): every tag but the
+	 * inline formatting ones.
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	protected function get_separator_pattern(): string {
 		/**
 		 * Filters the inline tags that join text without a separator when content is
 		 * prepared for embeddings. Every other tag gets a space.
@@ -889,11 +908,9 @@ class VectorEmbeddings extends Feature {
 		);
 		$inline = implode( '|', array_map( 'preg_quote', array_filter( array_map( 'strval', $inline ) ) ) );
 
-		$pattern = '' !== $inline
+		return '' !== $inline
 			? '#<(?!/?(?:' . $inline . ')\b)/?[a-z][a-z0-9-]*\b[^>]*>#i'
 			: '#</?[a-z][a-z0-9-]*\b[^>]*>#i';
-
-		return (string) preg_replace( $pattern, ' ', $content );
 	}
 
 	/**

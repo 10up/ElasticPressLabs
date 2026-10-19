@@ -206,6 +206,47 @@ class TestVectorEmbeddings extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test content that is not valid UTF-8 keeps its text: the steps whose pattern fails
+	 * leave it as it was instead of emptying it.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_normalize_content_keeps_invalid_utf8_text() {
+		$normalized = $this->get_feature()->normalize_content( "<h2>Caf\xE9 menu</h2><p>Prices&nbsp;in <strong>Euro</strong></p><table><tr><th>Item</th></tr><tr><td>Tea</td></tr></table>" );
+
+		$this->assertStringContainsString( 'menu', $normalized );
+		$this->assertStringContainsString( 'Prices', $normalized );
+		$this->assertStringContainsString( 'Euro', $normalized );
+		$this->assertStringContainsString( 'Tea', $normalized );
+	}
+
+	/**
+	 * Test a pattern that hits the backtrack limit (an unclosed heading or table in a long
+	 * post) leaves the rest of the content alone.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_normalize_content_survives_backtrack_limit() {
+		$limit = ini_get( 'pcre.backtrack_limit' );
+		ini_set( 'pcre.backtrack_limit', '1000' ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+
+		try {
+			$body    = str_repeat( '<p>Body text.</p>', 500 );
+			$heading = $this->normalized( '<p>Intro</p><h2>Unclosed heading' . $body . '<p>End</p>' );
+			$table   = $this->normalized( '<p>Intro</p><table><tr><td>Open</td></tr>' . $body . '<p>End</p>' );
+		} finally {
+			ini_set( 'pcre.backtrack_limit', $limit ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		}
+
+		$this->assertStringStartsWith( 'Intro', $heading );
+		$this->assertStringEndsWith( 'End', $heading );
+		$this->assertStringStartsWith( 'Intro', $table );
+		$this->assertStringEndsWith( 'End', $table );
+	}
+
+	/**
 	 * Test the inline tag list can be changed.
 	 *
 	 * @since 2.6.0

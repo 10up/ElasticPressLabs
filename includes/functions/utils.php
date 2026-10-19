@@ -244,3 +244,35 @@ function get_asset_info( $slug, $attribute = null ) {
 
 	return $asset;
 }
+
+/**
+ * `preg_replace()` that returns the subject unchanged when the pattern fails, for example
+ * on the backtrack limit or on invalid UTF-8 with the `u` modifier, instead of `null`.
+ *
+ * @since 2.6.0
+ * @param string          $pattern     Pattern.
+ * @param string|string[] $replacement Replacement.
+ * @param string          $subject     Subject.
+ * @return string
+ */
+function preg_replace_safe( string $pattern, $replacement, string $subject ): string {
+	$result = preg_replace( $pattern, $replacement, $subject );
+
+	return null === $result ? $subject : $result;
+}
+
+/**
+ * `preg_replace_callback()` that returns the subject unchanged when the pattern fails,
+ * instead of `null`.
+ *
+ * @since 2.6.0
+ * @param string   $pattern  Pattern.
+ * @param callable $callback Callback.
+ * @param string   $subject  Subject.
+ * @return string
+ */
+function preg_replace_callback_safe( string $pattern, callable $callback, string $subject ): string {
+	$result = preg_replace_callback( $pattern, $callback, $subject );
+
+	return null === $result ? $subject : $result;
+}
