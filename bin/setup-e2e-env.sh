@@ -89,8 +89,19 @@ if [ ! -z $EP_BRANCH ]; then
 		sudo chmod -R 767 .
 		# Husky's prepare hook also invokes git and is not needed to build assets.
 		npm pkg set scripts.prepare=" "
-		HUSKY=0 npm ci
-		npm run build
+		# Build with the Node version ElasticPress asks for in its .nvmrc, which can be newer
+		# than the one Labs uses (both use engine-strict). The subshell keeps Labs' version.
+		(
+			NVM_SCRIPT="${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+			if [ -f .nvmrc ] && [ -s "$NVM_SCRIPT" ]; then
+				. "$NVM_SCRIPT"
+				nvm install
+			elif [ -f .nvmrc ]; then
+				echo "nvm not found: building ElasticPress with Node $(node -v) instead of $(cat .nvmrc)."
+			fi
+			HUSKY=0 npm ci
+			npm run build
+		)
 	popd
 fi
 
