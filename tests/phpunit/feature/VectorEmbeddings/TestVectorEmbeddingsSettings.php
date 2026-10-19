@@ -126,6 +126,25 @@ class TestVectorEmbeddingsSettings extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Password-protected posts are not embedded, in either mode, unless the filter says so.
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_password_protected_posts_are_not_embedded() {
+		$post_id = $this->factory()->post->create( [ 'post_password' => 'secret' ] );
+
+		$this->post_type_config = [ $this->config( 'post' ) ];
+		$this->assertFalse( $this->embeddable( $post_id ) );
+
+		$this->post_type_config = [ $this->config( 'post', [ 'embeddingMode' => 'manual' ] ) ];
+		update_post_meta( $post_id, 'ep_embedding_include', 1 );
+		$this->assertFalse( $this->embeddable( $post_id ) );
+
+		add_filter( 'ep_embeddings_is_embeddable', '__return_true' );
+		$this->assertTrue( $this->embeddable( $post_id ) );
+	}
+
+	/**
 	 * Test taxonomy include and exclude rules apply in automatic mode.
 	 *
 	 * @group vector-embeddings

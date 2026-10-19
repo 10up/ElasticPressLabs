@@ -320,6 +320,8 @@ class Settings {
 	/**
 	 * Whether a post is embeddable, before the `ep_embeddings_is_embeddable` filter.
 	 *
+	 * - Password-protected posts never are: their text would be stored with the chunks and
+	 *   returned by searches, past the password. A site that wants them can still use the filter.
 	 * - Manual mode: only posts flagged to be included.
 	 * - Automatic mode: posts flagged to be excluded are skipped; then an exclude
 	 *   rule wins over an include rule; with include rules for this post type, only
@@ -330,6 +332,10 @@ class Settings {
 	 * @return bool
 	 */
 	protected function compute_embeddable( int $post_id ): bool {
+		if ( '' !== (string) get_post_field( 'post_password', $post_id ) ) {
+			return false;
+		}
+
 		$config = $this->get_post_type_config( get_post_type( $post_id ) );
 
 		if ( empty( $config ) || empty( $config['embeddable'] ) ) {
