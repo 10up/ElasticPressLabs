@@ -167,6 +167,13 @@ class Settings {
 			'min'     => 1,
 			'max'     => 10,
 		],
+		'max_per_hour'        => [
+			'type'    => 'int',
+			'shared'  => false,
+			'default' => 30,
+			'min'     => 0,
+			'max'     => 1000,
+		],
 		'retry_after'         => [
 			'type'    => 'int',
 			'shared'  => false,
@@ -488,6 +495,7 @@ class Settings {
 			'passage_chunks'      => __( 'Sections per report', 'elasticpress-labs' ),
 			'passage_word_budget' => __( 'Word budget', 'elasticpress-labs' ),
 			'max_in_flight'       => __( 'Questions at once per person', 'elasticpress-labs' ),
+			'max_per_hour'        => __( 'Questions per hour per person', 'elasticpress-labs' ),
 			'retry_after'         => __( 'Wait before retrying (seconds)', 'elasticpress-labs' ),
 		];
 
@@ -658,6 +666,7 @@ class Settings {
 			'passage_chunks'      => __( 'How many of each report’s best-matching sections the model reads (1 to 10).', 'elasticpress-labs' ),
 			'passage_word_budget' => __( 'The most words the model reads for one question (500 to 20,000).', 'elasticpress-labs' ),
 			'max_in_flight'       => __( 'Questions one person can have waiting for an answer (1 to 10).', 'elasticpress-labs' ),
+			'max_per_hour'        => __( 'Questions one person can ask in an hour, with any chat bot (0 for no limit).', 'elasticpress-labs' ),
 			'retry_after'         => __( 'How long a person over that limit waits before asking again (1 to 300).', 'elasticpress-labs' ),
 		];
 
@@ -680,6 +689,7 @@ class Settings {
 			'history_messages'    => __( 'They help the model understand a follow-up question. 0 sends none.', 'elasticpress-labs' ),
 			'summary_enabled'     => __( 'After each answer, a model call updates the summary: the topics covered and search keywords, without figures. Each summary is an extra model call.', 'elasticpress-labs' ),
 			'summary_model'       => __( 'A small, fast model works well.', 'elasticpress-labs' ),
+			'max_per_hour'        => __( 'Each question calls the AI provider several times, and the provider bills each call. Every question counts, whatever its answer. Up to 1,000.', 'elasticpress-labs' ),
 			'intent_enabled'      => __( 'A model call answers questions about the assistant itself with a fixed reply, declines questions that are unclear or outside what the site covers without searching, and rewrites follow-up questions into one standalone search. The answer model still reads the person’s own words. Each question is an extra model call.', 'elasticpress-labs' ),
 			'intent_model'        => __( 'Used by “Understand the question” and “Offer clarifying choices”. The reader waits for it, so a small, fast model works well.', 'elasticpress-labs' ),
 			'search_algorithm'    => __( 'Only Chat uses this; site search keeps its own algorithm. With “AI-generated query”, a model reads the question and a description of the search index and writes the query; each question is an extra model call, and the reader is told when the fallback search ran.', 'elasticpress-labs' ),

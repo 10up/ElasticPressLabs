@@ -262,6 +262,12 @@ class Chat extends Feature implements ConnectionTestable {
 			];
 		}
 
+		$this->settings_schema[] = [
+			'key'   => 'cost_note',
+			'label' => '<div class="notice notice-info inline"><p>' . esc_html__( 'Each question calls your AI provider several times (to read the question, write the answer, and run the optional checks), and the provider bills each call. By default, anyone who can write posts can ask. Use the hourly limit under Advanced to keep usage in check.', 'elasticpress-labs' ) . '</p></div>',
+			'type'  => 'markup',
+		];
+
 		$models      = Models::get_list();
 		$model_type  = $this->supports_field_type( 'combobox' ) ? 'combobox' : 'select';
 		$model_notes = '';
@@ -360,7 +366,7 @@ class Chat extends Feature implements ConnectionTestable {
 		// Advanced.
 		$this->settings_schema[] = $this->get_subheading( 'chat_advanced_intro', '', __( 'Most sites do not need to change these.', 'elasticpress-labs' ), 'chat_advanced' );
 
-		foreach ( [ 'passage_chunks', 'passage_word_budget', 'max_in_flight', 'retry_after' ] as $key ) {
+		foreach ( [ 'passage_chunks', 'passage_word_budget', 'max_in_flight', 'max_per_hour', 'retry_after' ] as $key ) {
 			$this->settings_schema[] = $this->get_number_field( $key, 'chat_advanced' );
 		}
 	}

@@ -76,6 +76,25 @@ class Admission {
 	}
 
 	/**
+	 * Most questions one user can ask in an hour, or 0 for no limit.
+	 *
+	 * @param int $user_id User ID.
+	 * @return int
+	 */
+	public function get_max_per_hour( int $user_id ): int {
+		/**
+		 * Filters how many Chat questions one user can ask in an hour. 0 means no limit.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_max_questions_per_hour
+		 * @param {int} $max     Limit. Default: the Chat feature's setting (30).
+		 * @param {int} $user_id User ID.
+		 * @return {int} Filtered limit.
+		 */
+		return max( 0, (int) apply_filters( 'ep_chat_max_questions_per_hour', (int) Settings::get( 'max_per_hour' ), $user_id ) );
+	}
+
+	/**
 	 * Seconds a rate-limited user should wait before trying again.
 	 *
 	 * @param int $user_id User ID.
@@ -173,7 +192,7 @@ class Admission {
 		$max = $this->get_max_in_flight( $user_id );
 
 		if ( $count < $max ) {
-			return true;
+			return $this->check_hourly_cap( $user_id );
 		}
 
 		$retry_after = $this->get_retry_after( $user_id );
@@ -190,6 +209,67 @@ class Admission {
 			[
 				'status'      => 429,
 				'retry_after' => $retry_after,
+			]
+		);
+	}
+
+	/**
+	 * Refuse a user who asked the most questions allowed in the last hour.
+	 *
+	 * Every question counts, whatever its outcome: each one calls the AI provider. The wait
+	 * lasts until the oldest of those questions is an hour old.
+	 *
+	 * @param int $user_id User ID.
+	 * @return true|\WP_Error
+	 */
+	protected function check_hourly_cap( int $user_id ) {
+		$max = $this->get_max_per_hour( $user_id );
+
+		if ( ! $max ) {
+			return true;
+		}
+
+		$asked = get_comments(
+			[
+				'user_id'       => $user_id,
+				'type'          => Storage::COMMENT_TYPE_QUESTION,
+				'status'        => 'all',
+				'no_found_rows' => true,
+				'number'        => $max,
+				'orderby'       => 'comment_date_gmt',
+				'order'         => 'DESC',
+				'date_query'    => [
+					[
+						'column'    => 'comment_date_gmt',
+						'after'     => gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ),
+						'inclusive' => true,
+					],
+				],
+			]
+		);
+
+		if ( count( $asked ) < $max ) {
+			return true;
+		}
+
+		// The oldest of the newest $max questions decides when one more is allowed.
+		$oldest  = (int) strtotime( end( $asked )->comment_date_gmt . ' UTC' );
+		$wait    = max( MINUTE_IN_SECONDS, $oldest + HOUR_IN_SECONDS - time() );
+		$minutes = (int) ceil( $wait / MINUTE_IN_SECONDS );
+
+		return new \WP_Error(
+			self::ERROR_RATE_LIMITED,
+			esc_html(
+				sprintf(
+					/* translators: 1: Questions per hour, 2: Minutes to wait. */
+					_n( 'You have asked %1$d questions in the last hour, the most allowed. Try again in %2$d minute.', 'You have asked %1$d questions in the last hour, the most allowed. Try again in %2$d minutes.', $minutes, 'elasticpress-labs' ),
+					$max,
+					$minutes
+				)
+			),
+			[
+				'status'      => 429,
+				'retry_after' => $wait,
 			]
 		);
 	}

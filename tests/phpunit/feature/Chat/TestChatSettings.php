@@ -192,6 +192,7 @@ class TestChatSettings extends BaseTestCase {
 			'passage_chunks'      => [ 1, 10 ],
 			'passage_word_budget' => [ 500, 20000 ],
 			'max_in_flight'       => [ 1, 10 ],
+			'max_per_hour'        => [ 0, 1000 ],
 			'retry_after'         => [ 1, 300 ],
 		];
 
@@ -284,6 +285,7 @@ class TestChatSettings extends BaseTestCase {
 			'passage_chunks'      => 'chat_advanced',
 			'passage_word_budget' => 'chat_advanced',
 			'max_in_flight'       => 'chat_advanced',
+			'max_per_hour'        => 'chat_advanced',
 			'retry_after'         => 'chat_advanced',
 		];
 
