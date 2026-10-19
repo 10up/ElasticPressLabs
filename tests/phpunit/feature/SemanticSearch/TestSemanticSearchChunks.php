@@ -203,6 +203,7 @@ class TestSemanticSearchChunks extends \WP_UnitTestCase {
 	public function test_algorithms_request_matching_chunks() {
 		$args     = [ 'ep_vectors' => [ 1.0, 2.0, 3.0 ] ];
 		$expected = [
+			'name'    => 'ep_matched_chunks',
 			'size'    => 3,
 			'_source' => [ 'chunks.text', 'chunks.type' ],
 		];
@@ -224,6 +225,54 @@ class TestSemanticSearchChunks extends \WP_UnitTestCase {
 
 		$knn = ( new Knn() )->get_es_query( $this->get_formatted_args(), $args, $this->get_search_query() );
 		$this->assertSame( 1, $knn['knn']['inner_hits']['size'] );
+	}
+
+	/**
+	 * Test only content chunks reach `$post->matched_chunks` by default, and the types filter
+	 * changes that. Only the named inner hits are read.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_matched_chunk_types_filter() {
+		$feature = Features::factory()->get_registered_feature( 'semantic_search' );
+		$hits    = [
+			'hits' => [
+				'hits' => [
+					[
+						'_score'  => 0.9,
+						'_nested' => [ 'offset' => 3 ],
+						'_source' => [
+							'text' => 'Private meta value',
+							'type' => 'meta',
+						],
+					],
+					[
+						'_score'  => 0.8,
+						'_nested' => [ 'offset' => 0 ],
+						'_source' => [
+							'text' => 'Content text',
+							'type' => 'content',
+						],
+					],
+				],
+			],
+		];
+
+		$document = $feature->add_matched_chunks( [], [ 'inner_hits' => [ 'ep_matched_chunks' => $hits ] ] );
+		$this->assertSame( [ 'Content text' ], array_column( $document['matched_chunks'], 'text' ) );
+
+		$this->assertSame( [], $feature->add_matched_chunks( [], [ 'inner_hits' => [ 'chunks' => $hits ] ] ) );
+
+		add_filter(
+			'ep_semantic_search_matched_chunk_types',
+			function () {
+				return [ 'content', 'meta' ];
+			}
+		);
+
+		$document = $feature->add_matched_chunks( [], [ 'inner_hits' => [ 'ep_matched_chunks' => $hits ] ] );
+		$this->assertSame( [ 'Private meta value', 'Content text' ], array_column( $document['matched_chunks'], 'text' ) );
 	}
 
 	/**

@@ -145,23 +145,37 @@ class SemanticSearch extends Feature {
 	 * Each one is `[ 'text' => string, 'type' => string, 'score' => float, 'offset' => int ]`,
 	 * best first. Posts get them as `$post->matched_chunks`.
 	 *
+	 * Only content chunks by default: meta chunks can hold values that are not meant to be
+	 * shown, and posts from a search reach themes and other plugins.
+	 *
 	 * @since 2.6.0
 	 * @param array $document Document retrieved from Elasticsearch.
 	 * @param array $hit      Raw Elasticsearch hit.
 	 * @return array
 	 */
 	public function add_matched_chunks( $document, $hit ) {
-		$inner_hits = $hit['inner_hits']['chunks']['hits']['hits'] ?? [];
+		$inner_hits = $hit['inner_hits'][ SearchAlgorithm\SearchAlgorithm::MATCHED_CHUNKS ]['hits']['hits'] ?? [];
 
 		if ( ! is_array( $document ) || empty( $inner_hits ) || ! is_array( $inner_hits ) ) {
 			return $document;
 		}
 
+		/**
+		 * Filter the chunk types a search returns in `$post->matched_chunks`.
+		 *
+		 * @hook ep_semantic_search_matched_chunk_types
+		 * @since 2.6.0
+		 * @param {array} $types    Chunk types: `content`, `taxonomy`, `meta`. Default `[ 'content' ]`.
+		 * @param {array} $document Document retrieved from Elasticsearch.
+		 * @return {array} New types.
+		 */
+		$types = array_flip( array_map( 'strval', (array) apply_filters( 'ep_semantic_search_matched_chunk_types', [ 'content' ], $document ) ) );
+
 		$document['matched_chunks'] = array_values(
 			array_filter(
 				array_map(
-					function ( $inner_hit ) {
-						if ( ! isset( $inner_hit['_source']['text'] ) ) {
+					function ( $inner_hit ) use ( $types ) {
+						if ( ! isset( $inner_hit['_source']['text'] ) || ! isset( $types[ (string) ( $inner_hit['_source']['type'] ?? '' ) ] ) ) {
 							return null;
 						}
 

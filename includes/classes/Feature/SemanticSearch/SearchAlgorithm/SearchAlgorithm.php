@@ -13,6 +13,13 @@ namespace ElasticPressLabs\Feature\SemanticSearch\SearchAlgorithm;
  */
 abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 	/**
+	 * Name of the `inner_hits` with the matching chunks.
+	 *
+	 * @since 2.6.0
+	 */
+	const MATCHED_CHUNKS = 'ep_matched_chunks';
+
+	/**
 	 * Generate the whole ES query
 	 *
 	 * @param array     $formatted_args Formatted Elasticsearch query
@@ -79,12 +86,18 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 	 * `inner_hits` for the `chunks` field: the best matching chunks of each post, with
 	 * their text and type (never their vectors).
 	 *
+	 * They are named, so another `knn` clause with its own `inner_hits` does not clash with
+	 * them (Elasticsearch fails the search when two have the same name).
+	 *
 	 * @since 2.6.0
 	 * @return array
 	 */
 	protected function get_chunks_inner_hits(): array {
 		/**
 		 * Filter how many matching chunks are returned per post.
+		 *
+		 * Elasticsearch 8.11 and 8.12 return only the best chunk for the `knn` and `hybrid`
+		 * algorithms, whatever this is.
 		 *
 		 * @hook ep_semantic_search_matched_chunks
 		 * @since 2.6.0
@@ -94,6 +107,7 @@ abstract class SearchAlgorithm extends \ElasticPress\SearchAlgorithm {
 		$size = (int) apply_filters( 'ep_semantic_search_matched_chunks', 3 );
 
 		return [
+			'name'    => self::MATCHED_CHUNKS,
 			'size'    => max( 1, $size ),
 			'_source' => [ 'chunks.text', 'chunks.type' ],
 		];
