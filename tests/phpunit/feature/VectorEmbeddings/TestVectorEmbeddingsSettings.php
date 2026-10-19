@@ -269,4 +269,59 @@ class TestVectorEmbeddingsSettings extends \WP_UnitTestCase {
 		$this->post_type_config = [ $this->config( 'post', [ 'embeddable' => false ] ) ];
 		$this->assertFalse( ( new Settings() )->is_post_type_embeddable( 'post' ) );
 	}
+
+	/**
+	 * Test settings saved during a request are seen by an instance created before.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_same_instance_sees_saved_settings() {
+		remove_all_filters( 'pre_option_' . Settings::SETTINGS_KEY );
+
+		$settings = new Settings();
+
+		update_option( Settings::SETTINGS_KEY, [ 'postTypeConfig' => [ $this->config( 'post' ) ] ] );
+		$this->assertTrue( $settings->is_post_type_embeddable( 'post' ) );
+
+		update_option( Settings::SETTINGS_KEY, [ 'postTypeConfig' => [ $this->config( 'post', [ 'embeddable' => false ] ) ] ] );
+		$this->assertFalse( $settings->is_post_type_embeddable( 'post' ) );
+	}
+
+	/**
+	 * Test the default settings, used while nothing is saved, are only built once per instance.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_default_settings_are_built_once() {
+		remove_all_filters( 'pre_option_' . Settings::SETTINGS_KEY );
+		delete_option( Settings::SETTINGS_KEY );
+
+		$settings = new class() extends Settings {
+			/**
+			 * Times the default post type configuration was built.
+			 *
+			 * @var int
+			 */
+			public $builds = 0;
+
+			/**
+			 * Count the builds.
+			 *
+			 * @return array
+			 */
+			public function get_default_post_type_config() {
+				++$this->builds;
+
+				return parent::get_default_post_type_config();
+			}
+		};
+
+		$settings->get_settings();
+		$settings->get_settings();
+
+		$this->assertSame( 1, $settings->builds );
+		$this->assertSame( 100, $settings->get_settings()['chunkSize'] );
+	}
 }

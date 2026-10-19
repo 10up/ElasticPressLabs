@@ -24,12 +24,12 @@ class Settings {
 	const SETTINGS_KEY = 'ep_vector_embeddings_settings';
 
 	/**
-	 * Settings, loaded once per instance.
+	 * Default settings, built once per instance, as they go through every post type and taxonomy.
 	 *
 	 * @since 2.6.0
 	 * @var array|null
 	 */
-	protected $settings = null;
+	protected $default_settings = null;
 
 	/**
 	 * WordPress Hooks
@@ -240,19 +240,22 @@ class Settings {
 	 * @return array
 	 */
 	public function get_settings() {
-		// Cached per instance, not per request, so saved changes are seen by new instances.
-		if ( null === $this->settings ) {
-			$this->settings = get_option(
-				self::SETTINGS_KEY,
-				[
-					'postTypeConfig' => $this->get_default_post_type_config(),
-					'chunkSize'      => 100,
-					'chunkOverlap'   => 50,
-				]
-			);
+		// Not cached here: WordPress caches options, and saved changes are then seen right away.
+		$settings = get_option( self::SETTINGS_KEY, false );
+
+		if ( false !== $settings ) {
+			return $settings;
 		}
 
-		return $this->settings;
+		if ( null === $this->default_settings ) {
+			$this->default_settings = [
+				'postTypeConfig' => $this->get_default_post_type_config(),
+				'chunkSize'      => 100,
+				'chunkOverlap'   => 50,
+			];
+		}
+
+		return $this->default_settings;
 	}
 
 	/**
@@ -350,11 +353,11 @@ class Settings {
 			return false;
 		}
 
-		if ( $this->is_excluded_by_taxonomy( $post_id ) || $this->is_excluded_by_meta( $post_id ) ) {
+		if ( $this->has_term_in_rules( $post_id, $config, 'termsExclude' ) || $this->has_meta_in_rules( $post_id, $config, 'fieldsIndexingExclude' ) ) {
 			return false;
 		}
 
-		if ( $this->is_included_by_taxonomy( $post_id ) || $this->is_included_by_meta( $post_id ) ) {
+		if ( $this->has_term_in_rules( $post_id, $config, 'termsInclude' ) || $this->has_meta_in_rules( $post_id, $config, 'fieldsIndexingInclude' ) ) {
 			return true;
 		}
 
@@ -424,16 +427,11 @@ class Settings {
 	 *
 	 * @since 2.6.0
 	 * @param int    $post_id   Post ID.
+	 * @param array  $config    Configuration of the post's post type.
 	 * @param string $rule_list `termsInclude` or `termsExclude`.
 	 * @return bool
 	 */
-	protected function has_term_in_rules( int $post_id, string $rule_list ): bool {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
+	protected function has_term_in_rules( int $post_id, array $config, string $rule_list ): bool {
 		foreach ( $this->get_taxonomy_rules( $config ) as $rule ) {
 			if ( empty( $rule[ $rule_list ] ) ) {
 				continue;
@@ -460,16 +458,11 @@ class Settings {
 	 *
 	 * @since 2.6.0
 	 * @param int    $post_id Post ID.
+	 * @param array  $config  Configuration of the post's post type.
 	 * @param string $key     `fieldsIndexingInclude` or `fieldsIndexingExclude`.
 	 * @return bool
 	 */
-	protected function has_meta_in_rules( int $post_id, string $key ): bool {
-		$config = $this->get_post_type_config( get_post_type( $post_id ) );
-
-		if ( empty( $config ) ) {
-			return false;
-		}
-
+	protected function has_meta_in_rules( int $post_id, array $config, string $key ): bool {
 		foreach ( $this->get_meta_rules( $config, $key ) as $field ) {
 			if ( get_post_meta( $post_id, $field, true ) ) {
 				return true;
@@ -488,7 +481,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_taxonomy( $post_id ) {
-		return $this->has_term_in_rules( (int) $post_id, 'termsExclude' );
+		return $this->has_term_in_rules( (int) $post_id, $this->get_post_type_config( get_post_type( $post_id ) ), 'termsExclude' );
 	}
 
 	/**
@@ -500,7 +493,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_taxonomy( $post_id ) {
-		return $this->has_term_in_rules( (int) $post_id, 'termsInclude' );
+		return $this->has_term_in_rules( (int) $post_id, $this->get_post_type_config( get_post_type( $post_id ) ), 'termsInclude' );
 	}
 
 	/**
@@ -512,7 +505,7 @@ class Settings {
 	 * @return bool True if the post is excluded, false otherwise.
 	 */
 	public function is_excluded_by_meta( $post_id ) {
-		return $this->has_meta_in_rules( (int) $post_id, 'fieldsIndexingExclude' );
+		return $this->has_meta_in_rules( (int) $post_id, $this->get_post_type_config( get_post_type( $post_id ) ), 'fieldsIndexingExclude' );
 	}
 
 	/**
@@ -524,7 +517,7 @@ class Settings {
 	 * @return bool True if the post is included, false otherwise.
 	 */
 	public function is_included_by_meta( $post_id ) {
-		return $this->has_meta_in_rules( (int) $post_id, 'fieldsIndexingInclude' );
+		return $this->has_meta_in_rules( (int) $post_id, $this->get_post_type_config( get_post_type( $post_id ) ), 'fieldsIndexingInclude' );
 	}
 
 	/**
