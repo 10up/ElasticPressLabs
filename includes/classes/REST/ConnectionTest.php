@@ -73,14 +73,51 @@ class ConnectionTest {
 			);
 		}
 
+		$interval = $this->get_interval();
+		$wait_key = 'ep_labs_connection_test_' . get_current_user_id();
+
+		if ( $interval > 0 ) {
+			if ( get_transient( $wait_key ) ) {
+				return new \WP_Error(
+					'ep_labs_connection_test_too_soon',
+					esc_html__( 'Wait a few seconds before testing again.', 'elasticpress-labs' ),
+					[ 'status' => 429 ]
+				);
+			}
+
+			set_transient( $wait_key, 1, $interval );
+		}
+
 		$unsaved  = is_array( $request['settings'] ) ? $request['settings'] : [];
-		$settings = $feature->get_settings();
+		$saved    = $feature->get_settings();
+		$settings = $saved;
 
 		// Only the connection fields: the test never sees (or saves) anything else from the form.
 		foreach ( $feature->get_connection_fields() as $key ) {
-			if ( array_key_exists( $key, $unsaved ) && is_scalar( $unsaved[ $key ] ) ) {
-				$settings[ $key ] = sanitize_text_field( (string) $unsaved[ $key ] );
+			if ( ! array_key_exists( $key, $unsaved ) || ! is_scalar( $unsaved[ $key ] ) ) {
+				continue;
 			}
+
+			$value = trim( (string) $unsaved[ $key ] );
+
+			if ( ! preg_match( '#^https?://#i', $value ) ) {
+				$settings[ $key ] = sanitize_text_field( $value );
+				continue;
+			}
+
+			$value = esc_url_raw( $value );
+
+			// The saved URL is tested as it is: the feature's own requests already go there.
+			if ( (string) ( $saved[ $key ] ?? '' ) !== $value && ! $this->is_url_allowed( $value, $feature ) ) {
+				return rest_ensure_response(
+					[
+						'success' => false,
+						'message' => __( 'Save the settings before testing this URL. A URL that is not saved yet is only tested when it is a public address on a standard port.', 'elasticpress-labs' ),
+					]
+				);
+			}
+
+			$settings[ $key ] = $value;
 		}
 
 		$result = $feature->test_connection( $settings );
@@ -100,5 +137,48 @@ class ConnectionTest {
 				'message' => (string) $result,
 			]
 		);
+	}
+
+	/**
+	 * Whether the test may call a URL that is not saved yet.
+	 *
+	 * By default, only a public address on a standard port (see wp_http_validate_url()), so the
+	 * test cannot be used to reach the site's internal network with values nobody saved.
+	 *
+	 * @param string             $url     URL from the form.
+	 * @param ConnectionTestable $feature Feature being tested.
+	 * @return bool
+	 */
+	protected function is_url_allowed( string $url, ConnectionTestable $feature ): bool {
+		$allowed = false !== wp_http_validate_url( $url );
+
+		/**
+		 * Filters whether the connection test may call a URL that is not saved yet.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_labs_connection_test_url_allowed
+		 * @param {bool}               $allowed Whether the URL is a public address on a standard port.
+		 * @param {string}             $url     URL from the form.
+		 * @param {ConnectionTestable} $feature Feature being tested.
+		 * @return {bool} New value.
+		 */
+		return (bool) apply_filters( 'ep_labs_connection_test_url_allowed', $allowed, $url, $feature );
+	}
+
+	/**
+	 * Seconds a user waits between two tests.
+	 *
+	 * @return int
+	 */
+	protected function get_interval(): int {
+		/**
+		 * Filters how many seconds a user waits between two connection tests. 0 turns it off.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_labs_connection_test_interval
+		 * @param {int} $interval Seconds. Default 3.
+		 * @return {int} New value.
+		 */
+		return max( 0, (int) apply_filters( 'ep_labs_connection_test_interval', 3 ) );
 	}
 }

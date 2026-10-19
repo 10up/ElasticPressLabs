@@ -181,7 +181,7 @@ class ConnectionTest {
 		$data = json_decode( $body, true );
 
 		if ( $code < 200 || $code >= 300 ) {
-			$detail = self::get_error_detail( is_array( $data ) ? $data : [], $body );
+			$detail = self::get_error_detail( is_array( $data ) ? $data : [] );
 
 			return new \WP_Error(
 				'ep_labs_connection_http_' . $code,
@@ -201,13 +201,13 @@ class ConnectionTest {
 	}
 
 	/**
-	 * The service's own error message, from the usual JSON shapes, or the start of the body.
+	 * The service's own error message, from the usual JSON shapes. Never the raw body: the
+	 * test must not become a way to read what an address answers.
 	 *
-	 * @param array  $data Decoded body.
-	 * @param string $body Raw body.
-	 * @return string
+	 * @param array $data Decoded body.
+	 * @return string Empty when the reply has no error message.
 	 */
-	protected static function get_error_detail( array $data, string $body ): string {
+	protected static function get_error_detail( array $data ): string {
 		$candidates = [
 			$data['error']['message'] ?? null,
 			$data['error'] ?? null,
@@ -221,7 +221,7 @@ class ConnectionTest {
 			}
 		}
 
-		return self::shorten( wp_strip_all_tags( $body ) );
+		return '';
 	}
 
 	/**

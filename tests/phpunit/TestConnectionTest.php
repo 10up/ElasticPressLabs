@@ -36,6 +36,11 @@ class TestConnectionTest extends BaseTestCase {
 		do_action( 'rest_api_init', $wp_rest_server );
 
 		wp_set_current_user( $this->factory->user->create( [ 'role' => 'administrator' ] ) );
+
+		// The test hosts do not resolve, and a test sends several requests in a row. See
+		// test_unsaved_urls_must_be_public_and_tests_wait() for both checks.
+		add_filter( 'ep_labs_connection_test_url_allowed', '__return_true' );
+		add_filter( 'ep_labs_connection_test_interval', '__return_zero' );
 	}
 
 	/**
@@ -177,6 +182,67 @@ class TestConnectionTest extends BaseTestCase {
 
 		$this->assertFalse( $this->test( 'vector_embeddings', $settings )->get_data()['success'] );
 		$this->assertFalse( get_transient( 'ep_vector_embeddings_failures' ) );
+	}
+
+	/**
+	 * A URL that is not saved yet is only called when it is a public address on a standard
+	 * port, while the saved URL is called as it is. Replies never echo the raw body, and a user
+	 * waits between two tests.
+	 *
+	 * @group connection-test
+	 */
+	public function test_unsaved_urls_must_be_public_and_tests_wait() {
+		remove_filter( 'ep_labs_connection_test_url_allowed', '__return_true' );
+
+		$this->reply( 200, [ 'data' => [ [ 'embedding' => [ 0.1, 0.2, 0.3 ] ] ] ] );
+
+		$settings = [
+			'ep_embeddings_api_url'         => 'http://127.0.0.1:4000/v1/embeddings',
+			'ep_embeddings_embedding_model' => 'embed-model',
+			'ep_embeddings_dimensions'      => '3',
+		];
+
+		foreach ( [ 'http://127.0.0.1:4000/v1/embeddings', 'http://10.0.0.5/v1/embeddings', 'http://169.254.169.254/latest/meta-data/' ] as $url ) {
+			$data = $this->test( 'vector_embeddings', array_merge( $settings, [ 'ep_embeddings_api_url' => $url ] ) )->get_data();
+
+			$this->assertFalse( $data['success'], $url );
+			$this->assertStringStartsWith( 'Save the settings before testing this URL.', $data['message'], $url );
+		}
+
+		$this->assertSame( [], $this->requests, 'No request was sent.' );
+
+		// Once saved, the same internal URL is tested.
+		$all_settings                      = \ElasticPress\Utils\get_option( 'ep_feature_settings', [] );
+		$all_settings['vector_embeddings'] = array_merge( (array) ( $all_settings['vector_embeddings'] ?? [] ), [ 'ep_embeddings_api_url' => 'http://127.0.0.1:4000/v1/embeddings' ] );
+		\ElasticPress\Utils\update_option( 'ep_feature_settings', $all_settings );
+
+		$this->assertTrue( $this->test( 'vector_embeddings', $settings )->get_data()['success'] );
+		$this->assertSame( 'http://127.0.0.1:4000/v1/embeddings', $this->requests[0]['url'] );
+
+		// An error page is reported by its status only.
+		remove_all_filters( 'pre_http_request' );
+		add_filter(
+			'pre_http_request',
+			static function () {
+				return [
+					'headers'  => [],
+					'body'     => '<html><body>Internal admin: secret-token-123</body></html>',
+					'response' => [
+						'code'    => 502,
+						'message' => 'Bad Gateway',
+					],
+					'cookies'  => [],
+				];
+			}
+		);
+
+		$this->assertSame( 'The service answered with HTTP 502.', $this->test( 'vector_embeddings', $settings )->get_data()['message'] );
+
+		// A user waits between two tests.
+		remove_filter( 'ep_labs_connection_test_interval', '__return_zero' );
+
+		$this->assertSame( 200, $this->test( 'vector_embeddings', $settings )->get_status() );
+		$this->assertSame( 429, $this->test( 'vector_embeddings', $settings )->get_status() );
 	}
 
 	/**
