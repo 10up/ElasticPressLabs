@@ -390,11 +390,11 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The hash covers the text, the model, and the dimensions.
+	 * The hash covers the text, the API URL, the model, and the dimensions.
 	 *
 	 * @group vector-embeddings
 	 */
-	public function test_chunk_hash_covers_text_model_and_dimensions() {
+	public function test_chunk_hash_covers_text_url_model_and_dimensions() {
 		$feature = Features::factory()->get_registered_feature( 'vector_embeddings' );
 		$hash    = $feature->get_chunk_hash( 'Some text' );
 
@@ -405,6 +405,15 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 		$this->assertNotSame( $hash, $feature->get_chunk_hash( 'Some text' ) );
 
 		$this->model = 'model-a';
+		$this->assertSame( $hash, $feature->get_chunk_hash( 'Some text' ) );
+
+		$url_filter = function () {
+			return 'https://other.example.org/v1/embeddings';
+		};
+		add_filter( 'ep_embeddings_api_url', $url_filter );
+		$this->assertNotSame( $hash, $feature->get_chunk_hash( 'Some text' ) );
+		remove_filter( 'ep_embeddings_api_url', $url_filter );
+
 		add_filter(
 			'ep_embeddings_dimensions',
 			function () {

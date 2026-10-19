@@ -369,12 +369,17 @@ class Post extends Indexable {
 			);
 		}
 
-		$vectors = array_map(
-			function ( $item ) use ( $stored, $new_vectors ) {
-				return $stored[ $item['hash'] ] ?? $new_vectors[ $item['hash'] ];
-			},
-			$chunk_items
-		);
+		$vectors = [];
+
+		foreach ( $chunk_items as $item ) {
+			$vector = $stored[ $item['hash'] ] ?? $new_vectors[ $item['hash'] ] ?? null;
+
+			if ( ! is_array( $vector ) ) {
+				throw new \Exception( esc_html__( 'No vector was found or returned for one of the chunks.', 'elasticpress-labs' ) );
+			}
+
+			$vectors[] = $vector;
+		}
 
 		return $this->add_chunks_field_value( $args, $vectors, $chunk_items );
 	}
@@ -526,7 +531,7 @@ class Post extends Indexable {
 
 		try {
 			// ElasticPress 5.4+ can ask for source fields.
-			if ( ( new \ReflectionMethod( $elasticsearch, 'get_documents' ) )->getNumberOfParameters() >= 4 ) {
+			if ( defined( 'EP_VERSION' ) && version_compare( EP_VERSION, '5.4.0', '>=' ) ) {
 				$documents = $elasticsearch->get_documents( $index, 'post', $post_ids, $fields );
 
 				return is_array( $documents ) ? $documents : [];
