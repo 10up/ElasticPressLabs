@@ -407,12 +407,17 @@ class Retriever {
 
 			return $properties;
 		};
+		// Every matching chunk type: the pipeline picks its passage types (`ep_chat_passage_chunk_types`).
+		$chunk_types = static function () {
+			return [ 'content', 'taxonomy', 'meta' ];
+		};
 
 		add_filter( 'ep_is_integrated_request', $integrate, 10, 2 );
 		add_filter( 'ep_query_request_args', $wait, 10, 6 );
 		add_filter( 'ep_post_formatted_args', $sharpen, PHP_INT_MAX, 2 );
 		add_filter( 'ep_retrieve_the_post', $score, 10, 2 );
 		add_filter( 'ep_search_post_return_args', $fields );
+		add_filter( 'ep_semantic_search_matched_chunk_types', $chunk_types );
 		add_filter( 'ep_post_search_algorithm', $choose, PHP_INT_MAX, 4 );
 		add_filter( 'ep_query_logger_formatted_query', $redact );
 
@@ -427,6 +432,7 @@ class Retriever {
 			remove_filter( 'ep_post_formatted_args', $sharpen, PHP_INT_MAX );
 			remove_filter( 'ep_retrieve_the_post', $score, 10 );
 			remove_filter( 'ep_search_post_return_args', $fields );
+			remove_filter( 'ep_semantic_search_matched_chunk_types', $chunk_types );
 		}
 
 		// Never answer from WordPress' own search, and never report an outage as "no sources".

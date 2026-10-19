@@ -71,6 +71,30 @@ class TestChatRetriever extends BaseTestCase {
 	}
 
 	/**
+	 * Test a Chat retrieval gets every matching chunk type, so meta chunks can still be
+	 * passages; other searches get the semantic search default.
+	 *
+	 * @since 2.6.0
+	 * @group chat
+	 */
+	public function test_retrieve_gets_every_matched_chunk_type() {
+		$seen = [];
+		add_filter(
+			'ep_retrieve_the_post',
+			function ( $document ) use ( &$seen ) {
+				$seen[] = apply_filters( 'ep_semantic_search_matched_chunk_types', [ 'content' ], $document );
+
+				return $document;
+			},
+			5
+		);
+
+		$this->assertCount( 1, ( new Retriever() )->search( 'cash' ) );
+		$this->assertSame( [ [ 'content', 'taxonomy', 'meta' ] ], $seen );
+		$this->assertSame( [ 'content' ], apply_filters( 'ep_semantic_search_matched_chunk_types', [ 'content' ], [] ) );
+	}
+
+	/**
 	 * Password-protected posts are left out of the passages, unless a site allows them. They
 	 * are only indexed when something asks for it, like the Protected Content feature.
 	 *
