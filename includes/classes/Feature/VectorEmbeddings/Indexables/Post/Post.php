@@ -56,6 +56,10 @@ class Post extends Indexable {
 		// Search results do not carry every chunk; matching chunks come from `inner_hits`.
 		add_filter( 'ep_post_formatted_args', [ $this, 'exclude_chunks_from_source' ], 9999 );
 
+		// ElasticPress.io reports its processing here; other generators, posts indexed with
+		// the vectors of an earlier version (see keep_stored_chunks()).
+		add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
+
 		$generator = $this->feature->get_setting( 'ep_embeddings_generator' );
 		if ( 'external' === $generator ) {
 			return;
@@ -73,7 +77,6 @@ class Post extends Indexable {
 		if ( 'epio' === $generator ) {
 			add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
-			add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
 			add_filter( 'ep_embeddings_dimensions', [ $this, 'set_epio_dimensions' ] );
 		} else {
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
@@ -415,6 +418,12 @@ class Post extends Indexable {
 			$vectors[] = $vector;
 		}
 
+		// The vectors match this version of the post: clear a message about older ones.
+		$args['ep_embeddings_control'] = [
+			'is_processing' => false,
+			'errors'        => [],
+		];
+
 		return $this->add_chunks_field_value( $args, $vectors, $chunk_items );
 	}
 
@@ -539,7 +548,7 @@ class Post extends Indexable {
 			return;
 		}
 
-		foreach ( $this->fetch_stored_chunks( $indexable->get_index_name(), $post_ids ) as $post_id => $source ) {
+		foreach ( (array) $this->fetch_stored_chunks( $indexable->get_index_name(), $post_ids ) as $post_id => $source ) {
 			foreach ( (array) ( $source['chunks'] ?? [] ) as $chunk ) {
 				if ( ! empty( $chunk['hash'] ) && ! empty( $chunk['vector'] ) && is_array( $chunk['vector'] ) ) {
 					$this->stored_vectors[ (int) $post_id ][ (string) $chunk['hash'] ] = $chunk['vector'];
@@ -555,12 +564,12 @@ class Post extends Indexable {
 	 * `_source` unless a request names them.
 	 *
 	 * @since 2.6.0
-	 * @param string $index    Index name.
-	 * @param int[]  $post_ids Post IDs.
-	 * @return array `[ post_id => _source ]`
+	 * @param string   $index    Index name.
+	 * @param int[]    $post_ids Post IDs.
+	 * @param string[] $fields   Optional. Chunk fields to get. Default the hash and the vector.
+	 * @return array|null `[ post_id => _source ]`, or null when the request failed.
 	 */
-	protected function fetch_stored_chunks( string $index, array $post_ids ): array {
-		$fields        = [ 'chunks.hash', 'chunks.vector' ];
+	protected function fetch_stored_chunks( string $index, array $post_ids, array $fields = [ 'chunks.hash', 'chunks.vector' ] ): ?array {
 		$elasticsearch = \ElasticPress\Elasticsearch::factory();
 
 		try {
@@ -568,7 +577,7 @@ class Post extends Indexable {
 			if ( defined( 'EP_VERSION' ) && version_compare( EP_VERSION, '5.4.0', '>=' ) ) {
 				$documents = $elasticsearch->get_documents( $index, 'post', $post_ids, $fields );
 
-				return is_array( $documents ) ? $documents : [];
+				return is_array( $documents ) ? $documents : null;
 			}
 
 			$response = $elasticsearch->remote_request(
@@ -581,11 +590,11 @@ class Post extends Indexable {
 				'post'
 			);
 		} catch ( \Throwable $th ) {
-			return [];
+			return null;
 		}
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return [];
+			return null;
 		}
 
 		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -601,21 +610,48 @@ class Post extends Indexable {
 	}
 
 	/**
-	 * Refuse to prepare a post that should be embedded while the feature is temporarily
-	 * disabled after failures, so its stored document keeps its vectors.
+	 * While the feature is temporarily disabled after failures, index a post that should be
+	 * embedded with the chunks already stored for it, so it keeps its vectors.
+	 *
+	 * The rest of the document (title, content, terms, meta) is up to date; the vectors are
+	 * from an earlier version of the post, which its doc status says until its next sync. A
+	 * post with no stored chunks is indexed without them. When the stored chunks cannot be
+	 * read, the post is not indexed, so its stored document keeps them.
 	 *
 	 * @since 2.6.0
 	 * @param array $args    Current sync args.
 	 * @param int   $post_id Post ID being synced.
 	 * @return array
-	 * @throws \Exception If the post should be embedded.
+	 * @throws \Exception If the stored chunks cannot be read.
 	 */
-	public function refuse_while_temporarily_disabled( array $args, int $post_id ): array {
-		if ( $this->should_add_vector_field_to_post( $post_id ) ) {
+	public function keep_stored_chunks( array $args, int $post_id ): array {
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+
+		if ( ! $indexable || $indexable->is_full_reindexing() || ! $this->should_add_vector_field_to_post( $post_id ) ) {
+			return $args;
+		}
+
+		$documents = $this->fetch_stored_chunks( $indexable->get_index_name(), [ $post_id ], [ 'chunks.hash', 'chunks.vector', 'chunks.text', 'chunks.type' ] );
+
+		if ( null === $documents ) {
 			throw new \Exception(
-				esc_html__( 'Vector Embeddings is temporarily disabled after repeated embedding failures. The post was not indexed, so it keeps its current vectors. Sync it again once the feature is re-enabled (or after resetting the failure counter).', 'elasticpress-labs' )
+				esc_html__( 'Vector Embeddings is temporarily disabled after repeated embedding failures, and the stored vectors of this post could not be read. The post was not indexed, so it keeps them. Sync it again once the feature is re-enabled.', 'elasticpress-labs' )
 			);
 		}
+
+		$chunks = (array) ( $documents[ $post_id ]['chunks'] ?? [] );
+
+		if ( ! $chunks ) {
+			return $args;
+		}
+
+		$args['chunks']                = $chunks;
+		$args['ep_embeddings_control'] = [
+			'is_processing' => false,
+			'errors'        => [
+				esc_html__( 'The vectors are from before this change: Vector Embeddings was temporarily disabled. Sync the post again.', 'elasticpress-labs' ),
+			],
+		];
 
 		return $args;
 	}

@@ -111,13 +111,11 @@ class TestVectorEmbeddingsBreakerGuard extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * With the breaker tripped, an embeddable post fails to prepare with a clear error and
-	 * its stored document keeps its chunks; other posts index normally; a new index keeps
-	 * the `chunks` mapping.
+	 * Trip the breaker, add the guard, and recreate the post index.
 	 *
-	 * @group vector-embeddings
+	 * @return string Index name.
 	 */
-	public function test_tripped_breaker_keeps_stored_vectors() {
+	protected function guarded_index(): string {
 		$this->trip_breaker();
 		$this->assertFalse( $this->feature->is_active() );
 		$this->assertTrue( $this->feature->is_temporarily_disabled_after_failures() );
@@ -130,26 +128,25 @@ class TestVectorEmbeddingsBreakerGuard extends \WP_UnitTestCase {
 		Elasticsearch::factory()->delete_index( $index );
 		$indexable->put_mapping();
 
-		$mapping = Elasticsearch::factory()->get_mapping( $index );
-		$this->assertArrayHasKey( 'chunks', $mapping[ $index ]['mappings']['properties'] );
+		return $index;
+	}
 
-		$post_id = self::factory()->post->create( [ 'post_content' => 'Cash use keeps falling.' ] );
-		$page_id = self::factory()->post->create(
-			[
-				'post_type'    => 'page',
-				'post_content' => 'About us.',
-			]
-		);
-
-		// The document as a healthy sync stored it.
+	/**
+	 * Store a document as a healthy sync did, with one chunk.
+	 *
+	 * @param string $index   Index name.
+	 * @param int    $post_id Post ID.
+	 */
+	protected function store_document( string $index, int $post_id ) {
 		Elasticsearch::factory()->index_document(
 			$index,
 			'post',
 			[
-				'ID'        => $post_id,
-				'post_id'   => $post_id,
-				'post_type' => 'post',
-				'chunks'    => [
+				'ID'         => $post_id,
+				'post_id'    => $post_id,
+				'post_type'  => 'post',
+				'post_title' => 'Old title',
+				'chunks'     => [
 					[
 						'vector' => [ 1.0, 2.0, 3.0 ],
 						'text'   => 'Stored chunk',
@@ -159,29 +156,114 @@ class TestVectorEmbeddingsBreakerGuard extends \WP_UnitTestCase {
 				],
 			]
 		);
+	}
 
-		$result = $indexable->bulk_index( [ $post_id, $page_id ] );
-		Elasticsearch::factory()->refresh_indices();
+	/**
+	 * With the breaker tripped, an embeddable post is indexed with its current fields and the
+	 * chunks already stored for it, and its doc status says the vectors are older; a post with
+	 * nothing stored is indexed without chunks; other posts index normally; a new index keeps
+	 * the `chunks` mapping.
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_tripped_breaker_keeps_stored_vectors() {
+		$index   = $this->guarded_index();
+		$mapping = Elasticsearch::factory()->get_mapping( $index );
+		$this->assertArrayHasKey( 'chunks', $mapping[ $index ]['mappings']['properties'] );
 
-		$this->assertTrue( $result['errors'] );
-
-		$errors = array_values(
-			array_filter(
-				$result['items'],
-				function ( $item ) {
-					return 'prepare_document_error' === ( $item['index']['error']['type'] ?? '' );
-				}
-			)
+		$post_id = self::factory()->post->create(
+			[
+				'post_title'   => 'New title',
+				'post_content' => 'Cash use keeps falling.',
+			]
+		);
+		$new_id  = self::factory()->post->create( [ 'post_content' => 'Nothing stored yet.' ] );
+		$page_id = self::factory()->post->create(
+			[
+				'post_type'    => 'page',
+				'post_content' => 'About us.',
+			]
 		);
 
-		$this->assertCount( 1, $errors );
-		$this->assertSame( $post_id, $errors[0]['index']['_id'] );
-		$this->assertStringContainsString( 'temporarily disabled', $errors[0]['index']['error']['reason'] );
+		$this->store_document( $index, $post_id );
 
-		$documents = Elasticsearch::factory()->get_documents( $index, 'post', [ $post_id, $page_id ], [ 'post_type', 'chunks.text' ] );
+		$result = Indexables::factory()->get( 'post' )->bulk_index( [ $post_id, $new_id, $page_id ] );
+		Elasticsearch::factory()->refresh_indices();
 
+		$this->assertFalse( $result['errors'] );
+
+		$documents = Elasticsearch::factory()->get_documents( $index, 'post', [ $post_id, $new_id, $page_id ], [ 'post_title', 'post_type', 'chunks.text', 'chunks.vector', 'ep_embeddings_control' ] );
+
+		$this->assertSame( 'New title', $documents[ $post_id ]['post_title'] );
 		$this->assertSame( 'Stored chunk', $documents[ $post_id ]['chunks'][0]['text'] );
+		$this->assertEquals( [ 1.0, 2.0, 3.0 ], $documents[ $post_id ]['chunks'][0]['vector'] );
+		$this->assertArrayNotHasKey( 'chunks', $documents[ $new_id ] );
 		$this->assertSame( 'page', $documents[ $page_id ]['post_type'] );
+
+		$status = apply_filters( 'ep_doc_status', [], $post_id, $documents[ $post_id ] );
+		$this->assertSame( 'error', $status['status'] );
+		$this->assertStringContainsString( 'temporarily disabled', $status['explanation'] );
+	}
+
+	/**
+	 * When the stored chunks cannot be read, the post is not indexed, so it keeps them.
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_tripped_breaker_refuses_when_stored_chunks_cannot_be_read() {
+		$index   = $this->guarded_index();
+		$post_id = self::factory()->post->create( [ 'post_title' => 'New title' ] );
+		$page_id = self::factory()->post->create( [ 'post_type' => 'page' ] );
+
+		$this->store_document( $index, $post_id );
+
+		add_filter(
+			'pre_http_request',
+			function ( $response, $args, $url ) {
+				return false !== strpos( $url, '/_mget' ) ? new \WP_Error( 'http_request_failed', 'Connection refused' ) : $response;
+			},
+			10,
+			3
+		);
+
+		// The page keeps the bulk request from being empty.
+		$result = Indexables::factory()->get( 'post' )->bulk_index( [ $post_id, $page_id ] );
+		Elasticsearch::factory()->refresh_indices();
+
+		$errors = wp_list_filter( wp_list_pluck( $result['items'], 'index' ), [ '_id' => $post_id ] );
+		$error  = reset( $errors )['error'];
+
+		$this->assertTrue( $result['errors'] );
+		$this->assertSame( 'prepare_document_error', $error['type'] );
+		$this->assertStringContainsString( 'could not be read', $error['reason'] );
+
+		remove_all_filters( 'pre_http_request' );
+
+		$response = Elasticsearch::factory()->remote_request( "{$index}/_doc/{$post_id}?_source_includes=post_title,chunks.text" );
+		$document = json_decode( wp_remote_retrieve_body( $response ), true )['_source'];
+
+		$this->assertSame( 'Old title', $document['post_title'] );
+		$this->assertSame( 'Stored chunk', $document['chunks'][0]['text'] );
+	}
+
+	/**
+	 * No guard when something else than the failures disables the feature.
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_no_guard_when_force_disabled() {
+		$this->trip_breaker();
+		add_filter(
+			'ep_elasticsearch_version',
+			function () {
+				return '6.8.0';
+			}
+		);
+
+		$this->assertFalse( $this->feature->is_temporarily_disabled_after_failures() );
+
+		$this->feature->maybe_add_breaker_guard();
+		$this->assertFalse( has_filter( 'ep_post_sync_args_post_prepare_meta' ) );
 	}
 
 	/**

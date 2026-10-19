@@ -151,8 +151,8 @@ class VectorEmbeddings extends Feature {
 	 *
 	 * The feature is not set up then, so without this a sync or a post save that starts in
 	 * that window would rewrite every document without its chunks, silently. Instead, posts
-	 * that should be embedded fail to prepare (reported as `prepare_document_error`, their
-	 * stored document untouched), and a new index still gets the `chunks` mapping.
+	 * that should be embedded are indexed with the chunks already stored for them (see
+	 * Post::keep_stored_chunks()), and a new index still gets the `chunks` mapping.
 	 *
 	 * Hooked on `init` right after ElasticPress sets up the active features.
 	 *
@@ -163,16 +163,17 @@ class VectorEmbeddings extends Feature {
 			return;
 		}
 
-		$indexable                = new Indexables\Post\Post( $this );
+		$indexable                = $this->create_indexables()['post'];
 		$indexable->settings_page = new Settings();
 
 		add_filter( 'ep_post_mapping', [ $indexable, 'add_post_vector_field_mapping' ] );
-		add_filter( 'ep_post_sync_args_post_prepare_meta', [ $indexable, 'refuse_while_temporarily_disabled' ], 10, 2 );
+		add_filter( 'ep_post_sync_args_post_prepare_meta', [ $indexable, 'keep_stored_chunks' ], 10, 2 );
+		add_filter( 'ep_doc_status', [ $indexable, 'maybe_set_doc_status' ], 10, 3 );
 	}
 
 	/**
 	 * Whether the feature is turned on in the settings but disabled for now after too many
-	 * embedding failures.
+	 * embedding failures, and for nothing else (like an Elasticsearch version that is too old).
 	 *
 	 * @since 2.6.0
 	 * @return bool
@@ -180,7 +181,11 @@ class VectorEmbeddings extends Feature {
 	public function is_temporarily_disabled_after_failures(): bool {
 		$settings = Utils\get_option( 'ep_feature_settings', [] );
 
-		return ! empty( $settings[ $this->slug ]['active'] ) && $this->should_disable_after_failures();
+		if ( empty( $settings[ $this->slug ]['active'] ) || ! $this->should_disable_after_failures() ) {
+			return false;
+		}
+
+		return \ElasticPress\FeatureRequirementsStatus::FORCE_DISABLED !== (int) $this->requirements_status()->code;
 	}
 
 	/**

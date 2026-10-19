@@ -105,6 +105,56 @@ test.describe('Vector Embeddings Feature', () => {
 		expect(pageInEsAfterSync.toString()).not.toContain('"chunks":[{"vector":[');
 	});
 
+	test('keeps stored vectors while temporarily disabled and says so in the doc status', async ({
+		loggedInPage,
+	}) => {
+		await maybeEnableFeature('vector_embeddings');
+
+		// Trip the breaker, so saving the post below does not call the embedding service.
+		await wpCliEval(
+			`set_transient( 'ep_vector_embeddings_failures', array_fill( 0, 10, time() ), HOUR_IN_SECONDS );`,
+		);
+
+		const postId = (
+			await wpCliEval(
+				`echo wp_insert_post( [ 'post_title' => 'New title', 'post_content' => 'Cash use keeps falling.', 'post_status' => 'publish' ] );`,
+			)
+		)
+			.toString()
+			.trim();
+
+		// The document as a healthy sync stored it.
+		await wpCliEval(`
+			$feature = \\ElasticPress\\Features::factory()->get_registered_feature( 'vector_embeddings' );
+			\\ElasticPress\\Elasticsearch::factory()->index_document(
+				\\ElasticPress\\Indexables::factory()->get( 'post' )->get_index_name(),
+				'post',
+				[
+					'ID'         => ${postId},
+					'post_id'    => ${postId},
+					'post_type'  => 'post',
+					'post_title' => 'Old title',
+					'chunks'     => [ [ 'vector' => array_fill( 0, $feature->get_dimensions(), 0.5 ), 'text' => 'Stored chunk', 'hash' => 'abc', 'type' => 'content' ] ],
+				]
+			);
+		`);
+
+		await wpCli(`elasticpress sync --include=${postId}`);
+
+		const postInEs = (await wpCli(`elasticpress get post ${postId}`)).toString();
+		expect(postInEs).toContain('"post_title":"New title"');
+		expect(postInEs).toContain('"text":"Stored chunk"');
+
+		await goToAdminPage(loggedInPage, `post.php?post=${postId}&action=edit`);
+
+		await expect(
+			loggedInPage.locator('#wp-admin-bar-ep-basic-status-summary .ab-item'),
+		).toContainText('The vectors are from before this change');
+
+		await wpCliEval(`delete_transient( 'ep_vector_embeddings_failures' );`);
+		await wpCli(`post delete ${postId} --force`);
+	});
+
 	test('can temporarily disable the feature after failures', async ({ loggedInPage }) => {
 		await maybeEnableFeature('vector_embeddings');
 		await maybeEnableFeature('search_algorithm');
