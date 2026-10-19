@@ -41,7 +41,12 @@ class TestUpgrades extends \WP_UnitTestCase {
 
 		Utils\delete_option( Upgrades::VERSION_OPTION );
 		Utils\delete_option( Upgrades::FAILURES_OPTION );
+		Utils\delete_option( Upgrades::ACTIONS_OPTION );
+		Utils\delete_option( 'ep_hide_' . Upgrades::ACTIONS_NOTICE . '_notice' );
 		Utils\delete_transient( Upgrades::BACKOFF_TRANSIENT );
+		Utils\delete_transient( Upgrades::LOCK_TRANSIENT );
+
+		wp_set_current_user( $this->factory()->user->create( [ 'role' => 'administrator' ] ) );
 
 		add_filter( 'ep_labs_upgrade_routines', [ $this, 'fake_routines' ] );
 	}
@@ -261,6 +266,102 @@ class TestUpgrades extends \WP_UnitTestCase {
 
 		( new Upgrades() )->maybe_run();
 		$this->assertSame( [ ELASTICPRESS_LABS_VERSION ], $this->ran_versions() );
+	}
+
+	/**
+	 * Automatic runs only happen for users who can manage ElasticPress.
+	 *
+	 * @group upgrades
+	 */
+	public function test_maybe_run_needs_capability() {
+		wp_set_current_user( $this->factory()->user->create( [ 'role' => 'subscriber' ] ) );
+
+		( new Upgrades() )->maybe_run();
+		$this->assertSame( [], $this->calls );
+		$this->assertFalse( Utils\get_option( Upgrades::VERSION_OPTION ) );
+	}
+
+	/**
+	 * Only one automatic run at a time: a run in progress makes others skip, and its lock
+	 * is released when it ends.
+	 *
+	 * @group upgrades
+	 */
+	public function test_maybe_run_skips_while_another_run_is_in_progress() {
+		Utils\set_transient( Upgrades::LOCK_TRANSIENT, time(), MINUTE_IN_SECONDS );
+
+		( new Upgrades() )->maybe_run();
+		$this->assertSame( [], $this->calls );
+
+		Utils\delete_transient( Upgrades::LOCK_TRANSIENT );
+
+		( new Upgrades() )->maybe_run();
+		$this->assertSame( [ '0.0.1', ELASTICPRESS_LABS_VERSION ], $this->ran_versions() );
+		$this->assertFalse( Utils\get_transient( Upgrades::LOCK_TRANSIENT ) );
+	}
+
+	/**
+	 * A routine that needs someone's action does not block the version or back off, and is
+	 * listed in a dismissible notice, which shows again when what is needed changes.
+	 *
+	 * @group upgrades
+	 */
+	public function test_needs_action_stores_version_and_shows_dismissible_notice() {
+		$this->returns[ ELASTICPRESS_LABS_VERSION ] = [
+			'status'  => Upgrades::NEEDS_ACTION,
+			'message' => 'Run a <sync>',
+		];
+
+		$upgrades = new Upgrades();
+		$upgrades->run();
+
+		$this->assertSame( ELASTICPRESS_LABS_VERSION, Utils\get_option( Upgrades::VERSION_OPTION ) );
+		$this->assertFalse( Utils\get_transient( Upgrades::BACKOFF_TRANSIENT ) );
+		$this->assertSame( [], $upgrades->add_failures_notice( [] ) );
+
+		$notices = $upgrades->add_actions_notice( [] );
+		$this->assertStringContainsString( 'Run a &lt;sync&gt;', $notices[ Upgrades::ACTIONS_NOTICE ]['html'] );
+		$this->assertSame( 'warning', $notices[ Upgrades::ACTIONS_NOTICE ]['type'] );
+		$this->assertTrue( $notices[ Upgrades::ACTIONS_NOTICE ]['dismiss'] );
+
+		// Dismissed, it stays hidden while the same action is needed.
+		Utils\update_option( 'ep_hide_' . Upgrades::ACTIONS_NOTICE . '_notice', true );
+		$upgrades->run( [ 'force' => true ] );
+		$this->assertSame( [], $upgrades->add_actions_notice( [] ) );
+
+		$this->returns[ ELASTICPRESS_LABS_VERSION ]['message'] = 'Run another sync';
+		$upgrades->run( [ 'force' => true ] );
+		$this->assertArrayHasKey( Upgrades::ACTIONS_NOTICE, $upgrades->add_actions_notice( [] ) );
+
+		// Once nothing is needed, the notice goes away.
+		unset( $this->returns[ ELASTICPRESS_LABS_VERSION ] );
+		$upgrades->run( [ 'force' => true ] );
+		$this->assertSame( [], $upgrades->add_actions_notice( [] ) );
+	}
+
+	/**
+	 * After a mapping is put, routines that needed someone's action run again on the next
+	 * admin request. Without such routines, nothing changes.
+	 *
+	 * @group upgrades
+	 */
+	public function test_put_mapping_rechecks_needed_actions() {
+		$upgrades = new Upgrades();
+		$upgrades->setup();
+
+		Utils\update_option( Upgrades::VERSION_OPTION, ELASTICPRESS_LABS_VERSION );
+
+		do_action( 'ep_after_put_mapping', 'index', [] );
+		$this->assertSame( ELASTICPRESS_LABS_VERSION, Utils\get_option( Upgrades::VERSION_OPTION ) );
+
+		Utils\update_option( Upgrades::ACTIONS_OPTION, [ [ 'message' => 'Run a sync' ] ] );
+
+		do_action( 'ep_after_put_mapping', 'index', [] );
+		$this->assertFalse( Utils\get_option( Upgrades::VERSION_OPTION ) );
+		$this->assertSame( [], $upgrades->add_actions_notice( [] ) );
+
+		$upgrades->maybe_run();
+		$this->assertSame( [ '0.0.1', ELASTICPRESS_LABS_VERSION ], $this->ran_versions() );
 	}
 
 	/**

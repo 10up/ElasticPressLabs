@@ -210,6 +210,122 @@ class TestVectorEmbeddingsMapping extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The fields Labs 2.5 added to the post mapping, as its `add_vector_mapping_field()` built
+	 * them. Kept as they were, so the test does not follow later changes to the target.
+	 *
+	 * @since 2.6.0
+	 * @return array
+	 */
+	protected function get_2_5_properties(): array {
+		$es_version = Elasticsearch::factory()->get_elasticsearch_version();
+		$vector     = [
+			'type' => 'dense_vector',
+			'dims' => $this->get_feature()->get_dimensions(),
+		];
+
+		if ( version_compare( $es_version, '8.0', '>=' ) ) {
+			$vector['index']      = true;
+			$vector['similarity'] = 'cosine';
+
+			if ( version_compare( $es_version, '8.6', '>=' ) ) {
+				$vector['element_type'] = 'float';
+			}
+
+			if ( version_compare( $es_version, '8.12', '>=' ) ) {
+				$vector['index_options']['type'] = 'int8_hnsw';
+			}
+		}
+
+		return [
+			'ep_embeddings_control' => [
+				'properties' => [
+					'is_processing' => [ 'type' => 'boolean' ],
+					'errors'        => [ 'type' => 'text' ],
+					'text_chunks'   => [ 'type' => 'text' ],
+				],
+			],
+			'chunks'                => [
+				'type'       => 'nested',
+				'properties' => [
+					'vector' => $vector,
+				],
+			],
+		];
+	}
+
+	/**
+	 * Coming from Labs 2.5: the 2.6.0 upgrade routine adds the new chunk fields to the
+	 * existing index, documents indexed before keep their vectors, and documents with the
+	 * new fields are accepted, without recreating the index or syncing.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_upgrade_from_2_5_keeps_documents_without_sync() {
+		$this->create_index( $this->get_2_5_properties() );
+
+		$elasticsearch = Elasticsearch::factory();
+		$dims          = $this->get_feature()->get_dimensions();
+		$old_vector    = [];
+		for ( $i = 1; $i <= $dims; $i++ ) {
+			$old_vector[] = $i / $dims;
+		}
+
+		$this->assertNotEmpty(
+			$elasticsearch->index_document(
+				$this->index,
+				'post',
+				[
+					'ID'         => 1,
+					'post_title' => 'Indexed with Labs 2.5',
+					'chunks'     => [ [ 'vector' => $old_vector ] ],
+				]
+			)
+		);
+
+		$results = ( new Upgrades() )->run( [ 'routine' => '2.6.0' ] );
+
+		$this->assertSame( [ Upgrades::APPLIED ], array_column( $results, 'status' ), implode( ' ', array_column( $results, 'message' ) ) );
+		$this->assertStringContainsString( 'added chunks.text, chunks.hash, chunks.type.', $results[0]['message'] );
+
+		$stored = $this->get_stored_properties();
+		$this->assertSame(
+			[
+				'type'  => 'text',
+				'index' => false,
+			],
+			$stored['chunks']['properties']['text']
+		);
+		$this->assertSame( 'keyword', $stored['chunks']['properties']['hash']['type'] );
+		$this->assertSame( 'keyword', $stored['chunks']['properties']['type']['type'] );
+
+		$indexed = $elasticsearch->index_document(
+			$this->index,
+			'post',
+			[
+				'ID'         => 2,
+				'post_title' => 'Indexed with Labs 2.6',
+				'chunks'     => [
+					[
+						'vector' => array_reverse( $old_vector ),
+						'text'   => 'Indexed with Labs 2.6',
+						'hash'   => 'abc123',
+						'type'   => 'content',
+					],
+				],
+			]
+		);
+		$this->assertNotEmpty( $indexed );
+		$this->assertArrayNotHasKey( 'error', (array) $indexed );
+
+		$docs = $elasticsearch->get_documents( $this->index, 'post', [ 1, 2 ], [ 'post_title', 'chunks.vector', 'chunks.text' ] );
+
+		$this->assertSame( 'Indexed with Labs 2.5', $docs[1]['post_title'] );
+		$this->assertEqualsWithDelta( $old_vector, $docs[1]['chunks'][0]['vector'], 0.0001 );
+		$this->assertSame( 'Indexed with Labs 2.6', $docs[2]['chunks'][0]['text'] );
+	}
+
+	/**
 	 * A new index created by ElasticPress gets the chunk fields from the mapping filter.
 	 *
 	 * @group vector-embeddings
@@ -278,12 +394,12 @@ class TestVectorEmbeddingsMapping extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A vector field with other dimensions cannot be changed in place: the routine fails,
-	 * asks for a full sync, and changes nothing.
+	 * A vector field with other dimensions cannot be changed in place: the routine asks for a
+	 * full sync, without retrying, and changes nothing.
 	 *
 	 * @group vector-embeddings
 	 */
-	public function test_conflicting_vector_fails_without_changes() {
+	public function test_conflicting_vector_needs_action_without_changes() {
 		$properties = $this->get_target_properties();
 		$properties['chunks']['properties']['vector']['dims'] = 8;
 		unset( $properties['ep_embeddings_control'] );
@@ -292,13 +408,43 @@ class TestVectorEmbeddingsMapping extends \WP_UnitTestCase {
 
 		$result = $this->get_feature()->ensure_mapping();
 
-		$this->assertSame( Upgrades::FAILED, $result['status'] );
+		$this->assertSame( Upgrades::NEEDS_ACTION, $result['status'] );
 		$this->assertStringContainsString( 'chunks.vector.dims', $result['message'] );
 		$this->assertStringContainsString( '--setup', $result['message'] );
 
 		$stored = $this->get_stored_properties();
 		$this->assertSame( 8, (int) $stored['chunks']['properties']['vector']['dims'] );
 		$this->assertArrayNotHasKey( 'ep_embeddings_control', $stored );
+	}
+
+	/**
+	 * Fields are added as a new index gets them, after the `ep_config_mapping` filter, and
+	 * `ep_after_put_mapping` fires.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_added_fields_follow_config_mapping_filter() {
+		$this->create_index( [] );
+
+		add_filter(
+			'ep_config_mapping',
+			function ( $mapping ) {
+				$mapping['mappings']['properties']['chunks']['properties']['source'] = [ 'type' => 'keyword' ];
+				$mapping['mappings']['properties']['not_ours']                       = [ 'type' => 'keyword' ];
+
+				return $mapping;
+			}
+		);
+
+		$put_mapping = did_action( 'ep_after_put_mapping' );
+
+		$this->assertSame( Upgrades::APPLIED, $this->get_feature()->ensure_mapping()['status'] );
+		$this->assertSame( $put_mapping + 1, did_action( 'ep_after_put_mapping' ) );
+
+		$stored = $this->get_stored_properties();
+		$this->assertSame( 'keyword', $stored['chunks']['properties']['source']['type'] );
+		$this->assertArrayNotHasKey( 'not_ours', $stored );
 	}
 
 	/**

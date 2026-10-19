@@ -176,14 +176,20 @@ abstract class Indexable {
 	 *
 	 * @since 2.6.0
 	 * @param array $stored_properties `mappings.properties` of the stored index mapping.
+	 * @param array $target_properties Optional. `mappings.properties` the index should have, as a
+	 *                                 new index gets them. Only this indexable's fields are compared.
+	 *                                 Defaults to the fields this indexable adds.
 	 * @return array {
 	 *     @type array    $add       Properties to send with `PUT _mapping`. Empty when nothing is missing.
 	 *     @type string[] $added     Dotted paths of the fields in `$add`.
 	 *     @type string[] $conflicts Dotted paths of the settings that differ, e.g. `chunks.vector.dims`.
 	 * }
 	 */
-	public function get_mapping_changes( array $stored_properties ): array {
-		return $this->diff_mapping_properties( $this->get_vector_mapping_properties( true ), $stored_properties, '' );
+	public function get_mapping_changes( array $stored_properties, array $target_properties = [] ): array {
+		$own_properties = $this->get_vector_mapping_properties( true );
+		$target         = $target_properties ? array_intersect_key( $target_properties, $own_properties ) : $own_properties;
+
+		return $this->diff_mapping_properties( $target, $stored_properties, '' );
 	}
 
 	/**

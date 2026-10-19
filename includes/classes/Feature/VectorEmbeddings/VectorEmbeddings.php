@@ -119,8 +119,11 @@ class VectorEmbeddings extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$this->indexables['post'] = new Indexables\Post\Post( $this );
-		$this->indexables['post']->setup();
+		$this->indexables = $this->create_indexables();
+
+		foreach ( $this->indexables as $indexable ) {
+			$indexable->setup();
+		}
 
 		add_filter( 'ep_query_logger_allowed_log_types', [ $this, 'add_vector_embeddings_to_allowed_log_types' ] );
 
@@ -187,7 +190,7 @@ class VectorEmbeddings extends Feature {
 			$ep_indexable = \ElasticPress\Indexables::factory()->get( $slug );
 
 			if ( $ep_indexable ) {
-				$results[] = $this->ensure_index_mapping( $ep_indexable->get_index_name(), $indexable, $dry_run );
+				$results[] = $this->ensure_index_mapping( $ep_indexable, $indexable, $dry_run );
 			}
 		}
 
@@ -202,7 +205,7 @@ class VectorEmbeddings extends Feature {
 		$statuses = wp_list_pluck( $results, 'status' );
 		$status   = Upgrades::SKIPPED;
 
-		foreach ( [ Upgrades::FAILED, Upgrades::APPLIED, Upgrades::PENDING ] as $candidate ) {
+		foreach ( [ Upgrades::FAILED, Upgrades::NEEDS_ACTION, Upgrades::APPLIED, Upgrades::PENDING ] as $candidate ) {
 			if ( in_array( $candidate, $statuses, true ) ) {
 				$status = $candidate;
 				break;
@@ -228,22 +231,52 @@ class VectorEmbeddings extends Feature {
 			return $this->indexables;
 		}
 
+		return $this->create_indexables();
+	}
+
+	/**
+	 * Create the Vector Embeddings indexables, keyed by ElasticPress indexable slug.
+	 *
+	 * @since 2.6.0
+	 * @return Indexable[]
+	 */
+	protected function create_indexables(): array {
 		return [
 			'post' => new Indexables\Post\Post( $this ),
 		];
 	}
 
 	/**
+	 * The fields this feature adds, as a new index would get them: from the ElasticPress
+	 * mapping, after the `ep_config_mapping` filter.
+	 *
+	 * @since 2.6.0
+	 * @param \ElasticPress\Indexable $ep_indexable ElasticPress indexable.
+	 * @param Indexable               $indexable    Vector Embeddings indexable.
+	 * @return array Mapping properties.
+	 */
+	protected function get_target_mapping_properties( \ElasticPress\Indexable $ep_indexable, Indexable $indexable ): array {
+		// The fields are added here too, for when the feature is being activated and not hooked yet.
+		$mapping = $indexable->add_vector_mapping_field( $ep_indexable->generate_mapping() );
+
+		/** This filter is documented in elasticpress/includes/classes/Elasticsearch.php */
+		$mapping = apply_filters( 'ep_config_mapping', $mapping, $ep_indexable->get_index_name() );
+
+		return (array) ( $mapping['mappings']['properties'] ?? [] );
+	}
+
+	/**
 	 * Add the missing fields to one index.
 	 *
 	 * @since 2.6.0
-	 * @param string    $index     Index name.
-	 * @param Indexable $indexable Vector Embeddings indexable.
-	 * @param bool      $dry_run   Report only.
+	 * @param \ElasticPress\Indexable $ep_indexable ElasticPress indexable.
+	 * @param Indexable               $indexable    Vector Embeddings indexable.
+	 * @param bool                    $dry_run      Report only.
 	 * @return array `status` and `message`.
 	 */
-	protected function ensure_index_mapping( string $index, Indexable $indexable, bool $dry_run ): array {
+	protected function ensure_index_mapping( \ElasticPress\Indexable $ep_indexable, Indexable $indexable, bool $dry_run ): array {
 		$elasticsearch = Elasticsearch::factory();
+		$index         = $ep_indexable->get_index_name();
 
 		if ( ! $elasticsearch->index_exists( $index ) ) {
 			return [
@@ -263,11 +296,15 @@ class VectorEmbeddings extends Feature {
 			];
 		}
 
-		$changes = $indexable->get_mapping_changes( (array) ( $mapping[ $index ]['mappings']['properties'] ?? [] ) );
+		$changes = $indexable->get_mapping_changes(
+			(array) ( $mapping[ $index ]['mappings']['properties'] ?? [] ),
+			$this->get_target_mapping_properties( $ep_indexable, $indexable )
+		);
 
+		// Nothing to retry: the index stays like this until it is recreated.
 		if ( $changes['conflicts'] ) {
 			return [
-				'status'  => Upgrades::FAILED,
+				'status'  => Upgrades::NEEDS_ACTION,
 				'message' => sprintf(
 					/* translators: 1: index name, 2: list of mapping settings */
 					__( 'Index %1$s: %2$s differ from what Vector Embeddings needs and cannot be changed in place. Run a full sync with --setup to recreate the index.', 'elasticpress-labs' ),
@@ -305,6 +342,9 @@ class VectorEmbeddings extends Feature {
 			[],
 			'put_mapping'
 		);
+
+		/** This action is documented in elasticpress/includes/classes/Elasticsearch.php */
+		do_action( 'ep_after_put_mapping', $index, $response );
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$body   = is_wp_error( $response ) ? [] : json_decode( wp_remote_retrieve_body( $response ), true );

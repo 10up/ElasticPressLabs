@@ -99,6 +99,13 @@ class Command extends WP_CLI_Command {
 			WP_CLI::error( sprintf( esc_html( _n( '%d routine failed.', '%d routines failed.', $failed, 'elasticpress-labs' ) ), $failed ) );
 		}
 
+		$needs_action = count( wp_list_filter( $results, [ 'status' => Upgrades::NEEDS_ACTION ] ) );
+
+		if ( $needs_action ) {
+			/* translators: %d: number of routines */
+			WP_CLI::error( sprintf( esc_html( _n( '%d routine needs your action. See its message above.', '%d routines need your action. See their messages above.', $needs_action, 'elasticpress-labs' ) ), $needs_action ) );
+		}
+
 		if ( $run_args['dry_run'] ) {
 			WP_CLI::success( esc_html__( 'Dry run: nothing was changed.', 'elasticpress-labs' ) );
 			return;
