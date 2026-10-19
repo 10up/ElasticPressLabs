@@ -8,6 +8,9 @@
 
 namespace ElasticPressLabs\Feature\VectorEmbeddings;
 
+use function ElasticPressLabs\Utils\preg_replace_safe;
+use function ElasticPressLabs\Utils\preg_split_safe;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -442,7 +445,7 @@ class Chunker {
 		$pieces  = [];
 		$current = '';
 
-		foreach ( preg_split( '/,\s*/u', $text ) as $item ) {
+		foreach ( preg_split_safe( '/,\s*/u', $text ) as $item ) {
 			$items = $this->count_words( $item ) > $max_words ? $this->split_words( $item, $max_words ) : [ $item ];
 
 			foreach ( $items as $part ) {
@@ -490,7 +493,7 @@ class Chunker {
 	 * @return string[]
 	 */
 	public function split_sentences( string $text ): array {
-		$parts     = preg_split( '/(?<=[.!?…])["”’)\]]*\K\s+/u', trim( $text ), -1, PREG_SPLIT_NO_EMPTY );
+		$parts     = preg_split_safe( '/(?<=[.!?…])["”’)\]]*\K\s+/u', trim( $text ), -1, PREG_SPLIT_NO_EMPTY );
 		$sentences = [];
 
 		foreach ( (array) $parts as $part ) {
@@ -613,12 +616,11 @@ class Chunker {
 	 * @return string[]
 	 */
 	protected function get_lines( string $text ): array {
-		$lines = preg_split( '/\R/u', $text );
 		$lines = array_map(
 			function ( $line ) {
-				return trim( (string) preg_replace( '/[^\S\n]+/u', ' ', $line ) );
+				return trim( preg_replace_safe( '/[^\S\n]+/u', ' ', $line ) );
 			},
-			(array) $lines
+			preg_split_safe( '/\R/u', $text )
 		);
 
 		return array_values( array_filter( $lines, 'strlen' ) );
@@ -631,7 +633,7 @@ class Chunker {
 	 * @return string[]
 	 */
 	protected function get_words( string $text ): array {
-		return (array) preg_split( '/\s+/u', trim( $text ), -1, PREG_SPLIT_NO_EMPTY );
+		return preg_split_safe( '/\s+/u', trim( $text ), -1, PREG_SPLIT_NO_EMPTY );
 	}
 
 	/**

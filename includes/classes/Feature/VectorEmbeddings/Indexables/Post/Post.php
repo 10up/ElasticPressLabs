@@ -416,7 +416,8 @@ class Post extends Indexable {
 
 		if ( 'words' === $this->feature->get_chunking_strategy() ) {
 			foreach ( array_filter( $sources ) as $type => $text ) {
-				foreach ( $this->feature->chunk_content( $text, $chunk_size, $overlap_size ) as $chunk ) {
+				// Term names and meta values are not post content: their shortcodes must not run.
+				foreach ( $this->feature->chunk_content( $text, $chunk_size, $overlap_size, 'content' === $type ) as $chunk ) {
 					$items[] = [
 						'text' => $chunk,
 						'type' => $type,
@@ -429,8 +430,14 @@ class Post extends Indexable {
 
 		$chunker = new Chunker( $chunk_size, $overlap_size );
 
+		// The title is part of each chunk's context when it is one of the embedded fields.
+		$title = in_array( 'post_title', $this->settings_page->get_embedding_fields( $post_id ), true )
+			? html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' )
+			: '';
+
 		foreach ( array_filter( $sources ) as $type => $text ) {
-			$text = $this->feature->normalize_content( $text );
+			// Term names and meta values are not post content: their shortcodes must not run.
+			$text = $this->feature->normalize_content( $text, 'content' === $type );
 
 			if ( 'content' === $type ) {
 				// The title is in every chunk's context line.
@@ -440,7 +447,7 @@ class Post extends Indexable {
 			$chunks = 'content' === $type ? $chunker->chunk_sections( $text ) : $chunker->chunk_labelled( $text );
 
 			foreach ( $chunks as $chunk ) {
-				$item = $this->prepare_chunk_item( $post, $chunk, $type );
+				$item = $this->prepare_chunk_item( $post, $chunk, $type, $title );
 
 				if ( '' !== trim( $item['text'] ) ) {
 					$items[] = $item;
@@ -458,18 +465,14 @@ class Post extends Indexable {
 	 * @param \WP_Post $post  Post.
 	 * @param array    $chunk Chunk from the Chunker: `text` and `headings`.
 	 * @param string   $type  Chunk type.
+	 * @param string   $title Post title for the context line, or empty when it is not embedded.
 	 * @return array `text` and `type`.
 	 */
-	protected function prepare_chunk_item( \WP_Post $post, array $chunk, string $type ): array {
+	protected function prepare_chunk_item( \WP_Post $post, array $chunk, string $type, string $title ): array {
 		$chunk_info = [
 			'type'     => $type,
 			'headings' => $chunk['headings'],
 		];
-
-		// The title is part of the context when it is one of the embedded fields.
-		$title = in_array( 'post_title', $this->settings_page->get_embedding_fields( $post->ID ), true )
-			? html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' )
-			: '';
 
 		/**
 		 * Filter the context line parts of a chunk. They are joined with " › " and the
@@ -502,21 +505,30 @@ class Post extends Indexable {
 	 * not repeated in the text. A post with nothing but a title keeps it, so it still has
 	 * a chunk.
 	 *
+	 * Only the section get_main_content() writes is removed: `# Title` as the first line, up
+	 * to the next level 1 line (`# Summary` or `# Content`). Content headings are level 2 or
+	 * deeper, so a "# Title" line further down is content, and stays.
+	 *
 	 * @since 2.6.0
 	 * @param string $text Normalized main content.
 	 * @return string
 	 */
 	protected function remove_title_section( string $text ): string {
-		$lines   = preg_split( '/\R/u', $text );
 		$kept    = [];
-		$skip    = false;
+		$skip    = null;
 		$content = false;
 
-		foreach ( (array) $lines as $line ) {
+		foreach ( Utils\preg_split_safe( '/\R/u', $text ) as $line ) {
 			$trimmed = trim( $line );
 
-			if ( preg_match( '/^#\s+(.+)$/u', $trimmed, $matches ) ) {
-				$skip = 'Title' === trim( $matches[1] );
+			if ( '' === $trimmed && null === $skip ) {
+				continue;
+			}
+
+			if ( null === $skip ) {
+				$skip = '# Title' === $trimmed;
+			} elseif ( $skip && preg_match( '/^#\s/u', $trimmed ) ) {
+				$skip = false;
 			}
 
 			if ( $skip ) {
@@ -694,15 +706,26 @@ class Post extends Indexable {
 	 *
 	 * @since 2.6.0
 	 * @param mixed $value Meta value.
+	 * @param int   $depth Optional. Nesting level, so an object that references itself ends.
 	 * @return string
 	 */
-	protected function meta_value_to_text( $value ): string {
+	protected function meta_value_to_text( $value, int $depth = 0 ): string {
+		if ( $depth > 10 ) {
+			return '';
+		}
+
 		if ( is_object( $value ) ) {
 			$value = get_object_vars( $value );
 		}
 
 		if ( is_array( $value ) ) {
-			return implode( ', ', array_filter( array_map( [ $this, 'meta_value_to_text' ], $value ), 'strlen' ) );
+			$texts = [];
+
+			foreach ( $value as $item ) {
+				$texts[] = $this->meta_value_to_text( $item, $depth + 1 );
+			}
+
+			return implode( ', ', array_filter( $texts, 'strlen' ) );
 		}
 
 		if ( is_bool( $value ) || null === $value ) {

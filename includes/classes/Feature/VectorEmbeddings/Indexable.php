@@ -325,6 +325,22 @@ abstract class Indexable {
 		// Only pair texts with vectors when every vector has its chunk.
 		$chunk_items = count( $chunk_items ) === count( $embeddings ) ? array_values( $chunk_items ) : [];
 
+		/**
+		 * Filters whether each chunk's text is stored with its vector.
+		 *
+		 * The text is stored in `_source` only (it is not searchable), and adds to the index
+		 * size roughly as much as the post content. Without it, semantic search returns no
+		 * matching chunks, and AI Chat has no passages to answer from.
+		 *
+		 * @hook ep_embeddings_store_chunk_text
+		 * @since 2.6.0
+		 * @param {bool}  $store       Whether to store the text. Default true.
+		 * @param {array} $args        The Elasticsearch document.
+		 * @param {array} $chunk_items The chunks: `text` and `type` each.
+		 * @return {bool} New value.
+		 */
+		$store_text = (bool) apply_filters( 'ep_embeddings_store_chunk_text', true, $args, $chunk_items );
+
 		// Add the embeddings data to the sync args.
 		$args['chunks'] = [];
 
@@ -334,7 +350,10 @@ abstract class Indexable {
 			];
 
 			if ( isset( $chunk_items[ $index ] ) ) {
-				$chunk['text'] = (string) ( $chunk_items[ $index ]['text'] ?? '' );
+				if ( $store_text ) {
+					$chunk['text'] = (string) ( $chunk_items[ $index ]['text'] ?? '' );
+				}
+
 				$chunk['type'] = (string) ( $chunk_items[ $index ]['type'] ?? '' );
 			}
 

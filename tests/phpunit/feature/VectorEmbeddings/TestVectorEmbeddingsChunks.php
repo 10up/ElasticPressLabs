@@ -335,4 +335,148 @@ class TestVectorEmbeddingsChunks extends \WP_UnitTestCase {
 		$args = $this->indexable->add_chunks_field_value( [], [ [ 1, 2 ] ], $items );
 		$this->assertSame( [ [ 'vector' => [ 1.0, 2.0 ] ] ], $args['chunks'] );
 	}
+
+	/**
+	 * Test the chunk text is not stored when the filter says so; the type still is.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_chunk_text_storage_filter() {
+		add_filter( 'ep_embeddings_store_chunk_text', '__return_false' );
+
+		$args = $this->indexable->add_chunks_field_value(
+			[],
+			[ [ 1, 2 ] ],
+			[
+				[
+					'text' => 'First chunk',
+					'type' => 'content',
+				],
+			]
+		);
+
+		$this->assertSame(
+			[
+				[
+					'vector' => [ 1.0, 2.0 ],
+					'type'   => 'content',
+				],
+			],
+			$args['chunks']
+		);
+	}
+
+	/**
+	 * Test content that is not valid UTF-8 still gets chunks.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_invalid_utf8_content_gets_chunks() {
+		add_filter(
+			'ep_embeddings_post_main_content',
+			function () {
+				return "# Content\n<p>Caf\xE9 au lait.</p><h2>Prices</h2><p>Two euros.</p>";
+			}
+		);
+
+		$texts = implode( "\n", array_column( $this->indexable->get_post_chunk_items( $this->create_post() ), 'text' ) );
+
+		$this->assertStringContainsString( 'au lait.', $texts );
+		$this->assertStringContainsString( 'Two euros.', $texts );
+	}
+
+	/**
+	 * Test a "# Title" line in the content is not taken for the title section: the text
+	 * after it stays.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_title_line_in_content_is_kept() {
+		$post_id = self::factory()->post->create(
+			[
+				'post_title'   => 'Real title',
+				'post_content' => '<p>Intro.</p><p># Title</p><p>After the line.</p>',
+			]
+		);
+
+		$texts = implode( "\n", array_column( $this->indexable->get_post_chunk_items( $post_id ), 'text' ) );
+
+		$this->assertStringContainsString( 'After the line.', $texts );
+		$this->assertStringNotContainsString( "# Title\nReal title", $texts );
+	}
+
+	/**
+	 * Test a meta value with an object that references itself becomes text, and ends.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_self_referencing_meta_value_ends() {
+		$value       = new \stdClass();
+		$value->name = 'Loop';
+		$value->self = $value;
+
+		$post_id = $this->create_post();
+
+		// Returned by the filter: update_post_meta() would never finish with this value.
+		add_filter(
+			'get_post_metadata',
+			function ( $meta, $object_id, $key ) use ( $post_id, $value ) {
+				return $post_id === $object_id && 'sub_headline' === $key ? [ $value ] : $meta;
+			},
+			10,
+			3
+		);
+
+		$items = $this->indexable->get_post_chunk_items( $post_id );
+
+		$this->assertStringContainsString( '## sub_headline: Loop, Loop', end( $items )['text'] );
+	}
+
+	/**
+	 * Test shortcodes in meta values and term names do not run, with either chunking
+	 * strategy; shortcodes in the content still do.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_meta_shortcodes_do_not_run() {
+		$runs = 0;
+		add_shortcode(
+			'ep_labs_test',
+			function () use ( &$runs ) {
+				++$runs;
+
+				return 'Rendered';
+			}
+		);
+
+		$post_id = self::factory()->post->create( [ 'post_content' => '<p>Body [ep_labs_test]</p>' ] );
+		update_post_meta( $post_id, 'sub_headline', 'Meta [ep_labs_test] value' );
+
+		foreach ( [ 'paragraphs', 'words' ] as $strategy ) {
+			$runs = 0;
+			add_filter(
+				'ep_embeddings_chunking_strategy',
+				function () use ( $strategy ) {
+					return $strategy;
+				}
+			);
+
+			$items = $this->indexable->get_post_chunk_items( $post_id );
+			$meta  = implode( "\n", array_column( wp_list_filter( $items, [ 'type' => 'meta' ] ), 'text' ) );
+
+			$this->assertSame( 1, $runs, $strategy );
+			$this->assertStringContainsString( 'Rendered', $items[0]['text'], $strategy );
+			$this->assertStringContainsString( 'Meta value', preg_replace( '/\s+/', ' ', $meta ), $strategy );
+			$this->assertStringNotContainsString( 'ep_labs_test', $meta, $strategy );
+
+			remove_all_filters( 'ep_embeddings_chunking_strategy' );
+		}
+
+		remove_shortcode( 'ep_labs_test' );
+	}
 }
