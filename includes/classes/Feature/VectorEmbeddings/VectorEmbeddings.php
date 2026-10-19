@@ -653,6 +653,15 @@ class VectorEmbeddings extends Feature {
 	public function normalize_content( string $content = '' ): string {
 		$content = apply_filters( 'the_content', $content );
 
+		// Remove code and markup that is never read as text (scripts, structured data, styles),
+		// with its contents: the later steps replace tags with separators, after which
+		// wp_strip_all_tags() could no longer find these elements and would keep their contents.
+		$pre_content = $content;
+		$content     = preg_replace( '#<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>#is', '', $content );
+		if ( null === $content ) {
+			$content = $pre_content;
+		}
+
 		// Strip shortcodes but keep internal caption text.
 		// Revert it if shortcodes are not balanced and preg_replace errors out.
 		$pre_content = $content;

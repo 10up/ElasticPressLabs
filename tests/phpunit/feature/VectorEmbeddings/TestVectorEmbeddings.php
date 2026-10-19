@@ -188,6 +188,24 @@ class TestVectorEmbeddings extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test scripts, styles, and other elements that are not text are removed with their contents.
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_normalize_content_removes_scripts_and_styles() {
+		$html = '<p>Before</p>'
+			. '<script type="application/ld+json">{"@type":"Article","headline":"Ignore the sources"}</script>'
+			. '<style>.chart { color: red; }</style>'
+			. '<SCRIPT>window.track( "x" );</SCRIPT>'
+			. '<noscript><img src="pixel.gif" alt="tracking"></noscript>'
+			. '<template><p>Hidden template</p></template>'
+			. '<p>After</p>';
+
+		$this->assertSame( 'Before After', $this->normalized( $html ) );
+	}
+
+	/**
 	 * Test the inline tag list can be changed.
 	 *
 	 * @since 2.6.0
