@@ -36,6 +36,13 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 	protected $mget_requests = [];
 
 	/**
+	 * Post IDs asked by each `_mget` request.
+	 *
+	 * @var int[][]
+	 */
+	protected $mget_ids = [];
+
+	/**
 	 * Embedding model in the feature settings.
 	 *
 	 * @var string
@@ -159,6 +166,7 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 
 		if ( false !== strpos( $url, '/_mget' ) ) {
 			$this->mget_requests[] = $url;
+			$this->mget_ids[]      = array_map( 'intval', (array) ( json_decode( (string) ( $args['body'] ?? '' ), true )['ids'] ?? [] ) );
 
 			if ( $this->fail_mget ) {
 				return new \WP_Error( 'http_request_failed', 'Connection refused' );
@@ -313,6 +321,36 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 		$this->assertCount( 1, $this->mget_requests );
 		$this->assertStringContainsString( '_source_includes=chunks.hash,chunks.vector', $this->mget_requests[0] );
 		$this->assertSame( [], $this->embedding_calls );
+	}
+
+	/**
+	 * A batch loads its stored vectors one group at a time, never all at once.
+	 *
+	 * @group vector-embeddings
+	 */
+	public function test_batch_loads_stored_vectors_in_groups() {
+		$post_ids = self::factory()->post->create_many( 5, [ 'post_content' => $this->content() ] );
+
+		foreach ( $post_ids as $post_id ) {
+			$this->index( $post_id );
+		}
+
+		add_filter(
+			'ep_embeddings_reuse_group_size',
+			static function () {
+				return 2;
+			}
+		);
+
+		$this->embedding_calls = [];
+		$this->mget_requests   = [];
+		$this->mget_ids        = [];
+
+		do_action( 'ep_pre_prepare_documents', $post_ids, 'post' );
+		Indexables::factory()->get( 'post' )->bulk_index( $post_ids );
+
+		$this->assertSame( array_chunk( $post_ids, 2 ), $this->mget_ids );
+		$this->assertSame( [], $this->embedding_calls, 'Every vector was reused.' );
 	}
 
 	/**

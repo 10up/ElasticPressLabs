@@ -27,12 +27,21 @@ class Post extends Indexable {
 	/**
 	 * Vectors already stored for posts being indexed: `[ post_id => [ hash => vector ] ]`.
 	 *
-	 * Filled once per batch (see prefetch_stored_vectors()) and cleared after it.
+	 * Holds one group of the batch at a time (see get_stored_vectors()), and is cleared
+	 * after the batch.
 	 *
 	 * @since 2.6.0
 	 * @var array
 	 */
 	protected $stored_vectors = [];
+
+	/**
+	 * The posts of the batch being indexed, in groups whose stored vectors are loaded together.
+	 *
+	 * @since 2.6.0
+	 * @var int[][]
+	 */
+	protected $batch_groups = [];
 
 	/**
 	 * Setup hooks
@@ -371,7 +380,11 @@ class Post extends Indexable {
 	}
 
 	/**
-	 * Load the stored vectors of the posts about to be indexed, in one request.
+	 * Split the posts about to be indexed into groups, whose stored vectors are then loaded
+	 * one group at a time, with one request each (see get_stored_vectors()).
+	 *
+	 * Vectors are large (a post can have dozens of chunks of 1,536 floats), so a whole batch
+	 * is never loaded at once.
 	 *
 	 * Runs on the `ep_pre_prepare_documents` action (ElasticPress 5.4+). Without it, each
 	 * post is looked up when it is prepared.
@@ -385,7 +398,10 @@ class Post extends Indexable {
 			return;
 		}
 
-		$this->load_stored_vectors( array_map( 'absint', (array) $object_ids ) );
+		$post_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $object_ids ) ) ) );
+
+		$this->stored_vectors = [];
+		$this->batch_groups   = $post_ids ? array_chunk( $post_ids, $this->get_group_size() ) : [];
 	}
 
 	/**
@@ -395,10 +411,13 @@ class Post extends Indexable {
 	 */
 	public function clear_stored_vectors() {
 		$this->stored_vectors = [];
+		$this->batch_groups   = [];
 	}
 
 	/**
 	 * Stored vectors of a post, keyed by chunk hash.
+	 *
+	 * A post of the current batch loads its whole group, and the previous group is let go.
 	 *
 	 * @since 2.6.0
 	 * @param int $post_id Post ID.
@@ -406,10 +425,53 @@ class Post extends Indexable {
 	 */
 	protected function get_stored_vectors( int $post_id ): array {
 		if ( ! array_key_exists( $post_id, $this->stored_vectors ) ) {
-			$this->load_stored_vectors( [ $post_id ] );
+			$group = $this->get_batch_group( $post_id );
+
+			if ( $group ) {
+				$this->stored_vectors = [];
+				$this->load_stored_vectors( $group );
+			} else {
+				$this->load_stored_vectors( [ $post_id ] );
+			}
 		}
 
 		return $this->stored_vectors[ $post_id ] ?? [];
+	}
+
+	/**
+	 * The group of the current batch a post is in.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id Post ID.
+	 * @return int[] Empty when the post is not in the batch.
+	 */
+	protected function get_batch_group( int $post_id ): array {
+		foreach ( $this->batch_groups as $group ) {
+			if ( in_array( $post_id, $group, true ) ) {
+				return $group;
+			}
+		}
+
+		return [];
+	}
+
+	/**
+	 * How many posts' stored vectors are loaded with one request.
+	 *
+	 * @since 2.6.0
+	 * @return int
+	 */
+	protected function get_group_size(): int {
+		/**
+		 * Filters how many posts' stored vectors are loaded with one request while a batch is
+		 * indexed. Fewer use less memory; more send fewer requests.
+		 *
+		 * @hook ep_embeddings_reuse_group_size
+		 * @since 2.6.0
+		 * @param {int} $size Posts per request. Default 25.
+		 * @return {int} New size.
+		 */
+		return max( 1, (int) apply_filters( 'ep_embeddings_reuse_group_size', 25 ) );
 	}
 
 	/**
