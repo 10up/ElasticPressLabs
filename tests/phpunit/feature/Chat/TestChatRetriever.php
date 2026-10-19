@@ -71,6 +71,35 @@ class TestChatRetriever extends BaseTestCase {
 	}
 
 	/**
+	 * Password-protected posts are left out of the passages, unless a site allows them. They
+	 * are only indexed when something asks for it, like the Protected Content feature.
+	 *
+	 * @group chat
+	 */
+	public function test_password_protected_posts_are_left_out() {
+		add_filter( 'ep_pre_kill_sync_for_password_protected', '__return_false' );
+
+		$protected = $this->ep_factory->post->create(
+			[
+				'post_title'    => 'Cash use in a protected report',
+				'post_content'  => 'Protected: 99% of adults use cash every day.',
+				'post_password' => 'secret',
+			]
+		);
+
+		Elasticsearch::factory()->refresh_indices();
+
+		$posts = ( new Retriever() )->search( 'cash' );
+
+		$this->assertCount( 1, $posts );
+		$this->assertNotContains( $protected, wp_list_pluck( $posts, 'ID' ) );
+
+		add_filter( 'ep_chat_retrieve_password_protected_posts', '__return_true' );
+
+		$this->assertContains( $protected, wp_list_pluck( ( new Retriever() )->search( 'cash' ), 'ID' ) );
+	}
+
+	/**
 	 * When Elasticsearch does not answer the query, Chat gets an error (never WordPress' own
 	 * search results, and never "no sources"), and an action reports it. The pipeline returns
 	 * the error, which the reader can retry, instead of a refusal.

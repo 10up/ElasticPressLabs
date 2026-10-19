@@ -448,9 +448,9 @@ class Retriever {
 				[ 'status' => 503 ]
 			);
 		} elseif ( ! empty( $args[ self::RECENT_FLAG ] ) ) {
-			$posts = $this->favor_recent( $query->posts, (int) $args[ self::RECENT_FLAG ] );
+			$posts = $this->favor_recent( $this->without_password_protected( $query->posts ), (int) $args[ self::RECENT_FLAG ] );
 		} else {
-			$posts = $query->posts;
+			$posts = $this->without_password_protected( $query->posts );
 		}
 
 		return [
@@ -458,6 +458,37 @@ class Retriever {
 			'query'     => $query,
 			'algorithm' => $ran,
 		];
+	}
+
+	/**
+	 * Leave out password-protected posts: their text is behind a password on the site, so it
+	 * must not become an answer. The password is read from the database, so this works whether
+	 * or not ElasticPress indexes it (Protected Content).
+	 *
+	 * @param \WP_Post[] $posts Retrieved posts.
+	 * @return \WP_Post[]
+	 */
+	protected function without_password_protected( array $posts ): array {
+		/**
+		 * Filters whether Chat may answer from password-protected posts.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_retrieve_password_protected_posts
+		 * @param {bool} $allowed Whether password-protected posts are kept. Default false.
+		 * @return {bool} New value.
+		 */
+		if ( apply_filters( 'ep_chat_retrieve_password_protected_posts', false ) ) {
+			return $posts;
+		}
+
+		return array_values(
+			array_filter(
+				$posts,
+				static function ( $post ) {
+					return '' === (string) get_post_field( 'post_password', $post->ID ?? 0 );
+				}
+			)
+		);
 	}
 
 	/**
