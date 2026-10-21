@@ -88,9 +88,10 @@ class ConnectionTest {
 			set_transient( $wait_key, 1, $interval );
 		}
 
-		$unsaved  = is_array( $request['settings'] ) ? $request['settings'] : [];
-		$saved    = $feature->get_settings();
-		$settings = $saved;
+		$unsaved         = is_array( $request['settings'] ) ? $request['settings'] : [];
+		$saved           = $feature->get_settings();
+		$settings        = $saved;
+		$check_redirects = false;
 
 		// Only the connection fields: the test never sees (or saves) anything else from the form.
 		foreach ( $feature->get_connection_fields() as $key ) {
@@ -108,19 +109,37 @@ class ConnectionTest {
 			$value = esc_url_raw( $value );
 
 			// The saved URL is tested as it is: the feature's own requests already go there.
-			if ( (string) ( $saved[ $key ] ?? '' ) !== $value && ! $this->is_url_allowed( $value, $feature ) ) {
-				return rest_ensure_response(
-					[
-						'success' => false,
-						'message' => __( 'Save the settings before testing this URL. A URL that is not saved yet is only tested when it is a public address on a standard port.', 'elasticpress-labs' ),
-					]
-				);
+			if ( (string) ( $saved[ $key ] ?? '' ) !== $value ) {
+				$is_public = false !== wp_http_validate_url( $value );
+
+				if ( ! $this->is_url_allowed( $value, $is_public, $feature ) ) {
+					return rest_ensure_response(
+						[
+							'success' => false,
+							'message' => __( 'Save the settings before testing this URL. A URL that is not saved yet is only tested when it is a public address on a standard port.', 'elasticpress-labs' ),
+						]
+					);
+				}
+
+				// A public address could still redirect to an internal one.
+				$check_redirects = $check_redirects || $is_public;
 			}
 
 			$settings[ $key ] = $value;
 		}
 
+		$reject_unsafe_urls = static function ( $args ) {
+			$args['reject_unsafe_urls'] = true;
+			return $args;
+		};
+
+		if ( $check_redirects ) {
+			add_filter( 'http_request_args', $reject_unsafe_urls );
+		}
+
 		$result = $feature->test_connection( $settings );
+
+		remove_filter( 'http_request_args', $reject_unsafe_urls );
 
 		if ( is_wp_error( $result ) ) {
 			return rest_ensure_response(
@@ -145,13 +164,12 @@ class ConnectionTest {
 	 * By default, only a public address on a standard port (see wp_http_validate_url()), so the
 	 * test cannot be used to reach the site's internal network with values nobody saved.
 	 *
-	 * @param string             $url     URL from the form.
-	 * @param ConnectionTestable $feature Feature being tested.
+	 * @param string             $url       URL from the form.
+	 * @param bool               $is_public Whether the URL is a public address on a standard port.
+	 * @param ConnectionTestable $feature   Feature being tested.
 	 * @return bool
 	 */
-	protected function is_url_allowed( string $url, ConnectionTestable $feature ): bool {
-		$allowed = false !== wp_http_validate_url( $url );
-
+	protected function is_url_allowed( string $url, bool $is_public, ConnectionTestable $feature ): bool {
 		/**
 		 * Filters whether the connection test may call a URL that is not saved yet.
 		 *
@@ -162,7 +180,7 @@ class ConnectionTest {
 		 * @param {ConnectionTestable} $feature Feature being tested.
 		 * @return {bool} New value.
 		 */
-		return (bool) apply_filters( 'ep_labs_connection_test_url_allowed', $allowed, $url, $feature );
+		return (bool) apply_filters( 'ep_labs_connection_test_url_allowed', $is_public, $url, $feature );
 	}
 
 	/**

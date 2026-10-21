@@ -498,7 +498,6 @@ The following JSON object contains the URL and the page content. You should use 
 				'type'    => 'text',
 				'default' => $this->default_settings['chat_model'],
 			],
-			ConnectionTest::get_field( $this ),
 			[
 				'key'     => 'number_of_posts',
 				'label'   => __( 'Number of posts', 'elasticpress-labs' ),
@@ -515,8 +514,13 @@ The following JSON object contains the URL and the page content. You should use 
 			],
 		];
 
-		// ElasticPress versions without the button's field type get no entry.
-		$this->settings_schema = array_values( array_filter( $this->settings_schema ) );
+		$test = ConnectionTest::get_field( $this );
+
+		if ( $test ) {
+			// After the chat model, the last connection setting.
+			$position = array_search( 'chat_model', array_column( $this->settings_schema, 'key' ), true );
+			array_splice( $this->settings_schema, $position + 1, 0, [ $test ] );
+		}
 	}
 
 	/**

@@ -69,6 +69,7 @@ class TestConnectionTest extends BaseTestCase {
 					'url'     => $url,
 					'headers' => $args['headers'] ?? [],
 					'timeout' => $args['timeout'] ?? null,
+					'safe'    => ! empty( $args['reject_unsafe_urls'] ),
 					'body'    => json_decode( (string) ( $args['body'] ?? '' ), true ),
 				];
 
@@ -186,7 +187,7 @@ class TestConnectionTest extends BaseTestCase {
 
 	/**
 	 * A URL that is not saved yet is only called when it is a public address on a standard
-	 * port, while the saved URL is called as it is. Replies never echo the raw body, and a user
+	 * port, and only follows redirects to public addresses, while the saved URL is called as it is. Replies never echo the raw body, and a user
 	 * waits between two tests.
 	 *
 	 * @group connection-test
@@ -218,6 +219,25 @@ class TestConnectionTest extends BaseTestCase {
 
 		$this->assertTrue( $this->test( 'vector_embeddings', $settings )->get_data()['success'] );
 		$this->assertSame( 'http://127.0.0.1:4000/v1/embeddings', $this->requests[0]['url'] );
+		$this->assertFalse( $this->requests[0]['safe'], 'The saved URL is called as it is.' );
+
+		// An unsaved public URL is called, but its redirects must stay on public addresses too.
+		$public = 'https://93.184.215.14/v1/embeddings';
+
+		$this->assertTrue( $this->test( 'vector_embeddings', array_merge( $settings, [ 'ep_embeddings_api_url' => $public ] ) )->get_data()['success'] );
+		$this->assertSame( $public, $this->requests[1]['url'] );
+		$this->assertTrue( $this->requests[1]['safe'] );
+
+		// Only for the test request.
+		$this->assertFalse( wp_parse_args( apply_filters( 'http_request_args', [], $public ), [ 'reject_unsafe_urls' => false ] )['reject_unsafe_urls'] );
+
+		// An internal URL the site allows is called as it is.
+		add_filter( 'ep_labs_connection_test_url_allowed', '__return_true' );
+
+		$this->assertTrue( $this->test( 'vector_embeddings', array_merge( $settings, [ 'ep_embeddings_api_url' => 'http://10.0.0.5/v1/embeddings' ] ) )->get_data()['success'] );
+		$this->assertFalse( $this->requests[2]['safe'] );
+
+		remove_filter( 'ep_labs_connection_test_url_allowed', '__return_true' );
 
 		// An error page is reported by its status only.
 		remove_all_filters( 'pre_http_request' );
@@ -304,6 +324,12 @@ class TestConnectionTest extends BaseTestCase {
 			$this->assertNotNull( $field, $slug );
 			$this->assertSame( ConnectionTest::FIELD_TYPE, $field['type'] );
 			$this->assertSame( $group, $field['field_group_slug'] ?? '', $slug );
+
+			if ( 'ai_search_summary' === $slug ) {
+				$keys = array_keys( $fields );
+
+				$this->assertSame( $field['key'], $keys[ array_search( 'chat_model', $keys, true ) + 1 ], 'The button comes right after the chat model.' );
+			}
 		}
 	}
 }
