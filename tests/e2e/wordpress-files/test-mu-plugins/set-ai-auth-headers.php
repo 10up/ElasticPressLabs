@@ -301,6 +301,26 @@ function epl_chat_e2e_mock_rerank( $pre, $args, $url ) {
 add_filter( 'pre_http_request', 'epl_chat_e2e_mock_rerank', 10, 3 );
 
 /**
+ * Let the connection test call the mocked re-ranker before its URL is saved. The test refuses
+ * unsaved URLs that are not public, and example.test does not resolve.
+ *
+ * @param bool   $allowed Whether the URL may be called.
+ * @param string $url     URL from the form.
+ * @return bool
+ */
+function epl_chat_e2e_allow_mock_rerank_url( $allowed, $url ) {
+	if ( get_option( 'epl_chat_e2e_mock_rerank' ) && 0 === strpos( (string) $url, 'https://example.test/' ) ) {
+		return true;
+	}
+
+	return $allowed;
+}
+add_filter( 'ep_labs_connection_test_url_allowed', 'epl_chat_e2e_allow_mock_rerank_url', 10, 2 );
+
+// Tests click Test connection several times in a row: no wait between them.
+add_filter( 'ep_labs_connection_test_interval', '__return_zero' );
+
+/**
  * Optional mock of the embeddings API for e2e: a fixed vector of the requested size per input,
  * so inserted posts are indexed (with chunks) without an API key.
  *

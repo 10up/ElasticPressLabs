@@ -4,6 +4,7 @@ import {
 	test,
 	expect,
 	wpCliEval,
+	maybeDisableFeature,
 } from 'elasticpress-playwright-utils';
 import {
 	deleteAllChatBots,
@@ -29,6 +30,14 @@ const setChatFeature = async (values) => {
 };
 
 test.describe('Chat Bots', { tag: '@chat' }, () => {
+	// Specs that run after these expect Vector Embeddings off: with it on, their syncs embed
+	// every post through the real service.
+	test.afterAll(async () => {
+		await resetChatRerankE2e();
+		await maybeDisableFeature('chat');
+		await maybeDisableFeature('vector_embeddings');
+	});
+
 	test.beforeEach(async () => {
 		await resetVectorEmbeddingsFailures();
 	});
