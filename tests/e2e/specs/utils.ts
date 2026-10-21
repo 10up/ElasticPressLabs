@@ -102,6 +102,16 @@ export const ensureChatBot = async (
 	);
 };
 
+/**
+ * Whether WordPress has the AI client Chat needs (WordPress 7.0+).
+ *
+ * @returns {Promise<boolean>}
+ */
+export const hasAiClient = async () => {
+	const output = await wpCliEval(`echo function_exists( 'wp_ai_client_prompt' ) ? 'yes' : 'no';`);
+	return String(output).includes('yes');
+};
+
 export const resetChatRerankE2e = async () => {
 	await wpCliEval(
 		`
