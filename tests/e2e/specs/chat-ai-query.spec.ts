@@ -9,6 +9,7 @@ import {
 import {
 	deleteAllChatBots,
 	ensureChatBot,
+	hasAiClient,
 	resetChatRerankE2e,
 	resetVectorEmbeddingsFailures,
 } from './utils';
@@ -30,6 +31,12 @@ const resetAiQueryE2e = async () => {
 };
 
 test.describe('Chat AI-generated query', { tag: '@chat' }, () => {
+	// Chat needs the AI client from WordPress 7.0. The e2e mu-plugin fakes it being available,
+	// so on older versions these would test a setup no real site can reach.
+	test.beforeAll(async () => {
+		test.skip(!(await hasAiClient()), 'Chat needs WordPress 7.0');
+	});
+
 	test.beforeEach(async () => {
 		await resetVectorEmbeddingsFailures();
 		await resetAiQueryE2e();
