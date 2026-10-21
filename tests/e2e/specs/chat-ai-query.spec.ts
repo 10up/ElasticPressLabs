@@ -1,5 +1,6 @@
 import {
 	goToAdminPage,
+	maybeDisableFeature,
 	maybeEnableFeature,
 	test,
 	expect,
@@ -39,6 +40,13 @@ test.describe('Chat AI-generated query', { tag: '@chat' }, () => {
 	test.afterEach(async () => {
 		await resetAiQueryE2e();
 		await resetChatRerankE2e();
+	});
+
+	// Specs that run after these expect Vector Embeddings off: with it on, their syncs embed
+	// every post through the real service.
+	test.afterAll(async () => {
+		await maybeDisableFeature('chat');
+		await maybeDisableFeature('vector_embeddings');
 	});
 
 	test('the Search Algorithm screen hides the AI-generated query; the Chat settings offer it, with the fallback and model', async ({
