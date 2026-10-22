@@ -173,6 +173,27 @@ class TestChat extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Whether a hook has a callback on an instance of a class.
+	 *
+	 * @param string $hook       Hook name.
+	 * @param string $class_name Class name.
+	 * @return bool
+	 */
+	protected function has_callback_of( string $hook, string $class_name ): bool {
+		global $wp_filter;
+
+		foreach ( isset( $wp_filter[ $hook ] ) ? $wp_filter[ $hook ]->callbacks : [] as $callbacks ) {
+			foreach ( $callbacks as $callback ) {
+				if ( is_array( $callback['function'] ) && $callback['function'][0] instanceof $class_name ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Test a front-end request only gets the post types and the sweep; the rest waits for a REST
 	 * request, and wp-admin gets it right away.
 	 *
@@ -184,6 +205,7 @@ class TestChat extends \WP_UnitTestCase {
 
 		$this->assertNotFalse( has_filter( 'ep_indexable_post_types' ) );
 		$this->assertNotFalse( has_action( 'pre_get_comments' ) );
+		$this->assertTrue( $this->has_callback_of( 'created_term', \ElasticPressLabs\Feature\Chat\Index_Schema::class ) );
 		$this->assertFalse( has_action( 'ep_chat_question_answered' ) );
 		$this->assertSame( 0, has_action( 'rest_api_init', [ $feature, 'setup_runtime' ] ) );
 
