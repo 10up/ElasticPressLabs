@@ -224,6 +224,9 @@ function maybe_load_features() {
 	$upgrades = new \ElasticPressLabs\Upgrades();
 	$upgrades->setup();
 
+	$connection_test = new \ElasticPressLabs\ConnectionTest();
+	$connection_test->setup();
+
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		\WP_CLI::add_command( 'elasticpress-labs', '\ElasticPressLabs\Command' );
 	}

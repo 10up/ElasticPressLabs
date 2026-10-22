@@ -16,6 +16,8 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
+use ElasticPressLabs\ConnectionTest;
+use ElasticPressLabs\ConnectionTestable;
 use ElasticPressLabs\Traits\DisableAfterFailures;
 use ElasticPressLabs\Upgrades;
 use WP_Error;
@@ -30,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vector Embeddings feature
  */
-class VectorEmbeddings extends Feature {
+class VectorEmbeddings extends Feature implements ConnectionTestable {
 	use DisableAfterFailures;
 
 	/**
@@ -568,6 +570,71 @@ class VectorEmbeddings extends Feature {
 				'field_group_slug' => 'ep_embeddings_openai',
 			],
 		];
+
+		$test = ConnectionTest::get_field( $this, 'ep_embeddings_openai' );
+
+		if ( $test ) {
+			$this->settings_schema[] = $test;
+		}
+	}
+
+	/**
+	 * The OpenAI connection settings the connection test reads.
+	 *
+	 * @since 2.6.0
+	 * @return string[]
+	 */
+	public function get_connection_fields(): array {
+		return [ 'ep_embeddings_api_key', 'ep_embeddings_api_url', 'ep_embeddings_embedding_model', 'ep_embeddings_dimensions' ];
+	}
+
+	/**
+	 * Embed a short text with these settings, and check the vector has the dimensions set. A
+	 * failed test is not counted as an embedding failure.
+	 *
+	 * @since 2.6.0
+	 * @param array $settings Feature settings, with the unsaved connection fields.
+	 * @return string|\WP_Error
+	 */
+	public function test_connection( array $settings ) {
+		$model = trim( (string) ( $settings['ep_embeddings_embedding_model'] ?? '' ) );
+
+		if ( '' === $model ) {
+			return new \WP_Error( 'ep_embeddings_test_no_model', __( 'Fill in the embedding model first.', 'elasticpress-labs' ) );
+		}
+
+		$dimensions        = $this->get_dimensions( $settings );
+		[ $url, $options ] = ( new VectorEmbeddingsRequest( $this ) )->get_request( 'Connection test', $settings );
+
+		$data = ConnectionTest::send( $url, $options );
+
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
+		$vector = $data['data'][0]['embedding'] ?? null;
+
+		if ( ! is_array( $vector ) || ! $vector ) {
+			return new \WP_Error( 'ep_embeddings_test_no_vector', __( 'The service answered, but without an embedding. Check the API URL and the model.', 'elasticpress-labs' ) );
+		}
+
+		if ( count( $vector ) !== $dimensions ) {
+			return new \WP_Error(
+				'ep_embeddings_test_dimensions',
+				sprintf(
+					/* translators: 1: dimensions returned, 2: dimensions set */
+					__( 'The model returned %1$d dimensions, but %2$d are set. Change the dimensions to match the model.', 'elasticpress-labs' ),
+					count( $vector ),
+					$dimensions
+				)
+			);
+		}
+
+		return sprintf(
+			/* translators: %d: number of dimensions */
+			__( 'Connected. The model returned %d dimensions, as set.', 'elasticpress-labs' ),
+			$dimensions
+		);
 	}
 
 	/**
@@ -1097,10 +1164,15 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Get the number of dimensions for the embeddings.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$settings` parameter.
+	 * @param array $settings Settings to use instead of the saved ones, such as the unsaved values
+	 *                        of a connection test.
 	 * @return int
 	 */
-	public function get_dimensions(): int {
-		$calc_dimensions = max( 1, min( 4096, $this->get_setting( 'ep_embeddings_dimensions' ) ) );
+	public function get_dimensions( array $settings = [] ): int {
+		$dimensions      = $settings['ep_embeddings_dimensions'] ?? $this->get_setting( 'ep_embeddings_dimensions' );
+		$calc_dimensions = max( 1, min( 4096, (int) $dimensions ) );
 
 		/**
 		 * Filter the dimensions we want for each embedding.
