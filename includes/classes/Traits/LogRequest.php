@@ -63,11 +63,13 @@ trait LogRequest {
 		/*
 		 * Like ElasticPress, keep requests for the query log only when debugging. One callback
 		 * per class reads them all: a callback per request would keep every request object
-		 * (and its response) alive for as long as the process runs. During a sync, the list is
-		 * emptied whenever ElasticPress frees memory between batches.
+		 * (and its response) alive for as long as the process runs. Only the latest requests are
+		 * kept, and during a sync, the list is emptied whenever ElasticPress frees memory between
+		 * batches.
 		 */
 		if ( $this->should_add_to_query_log() ) {
 			self::$query_log_requests[] = $formatted_request;
+			self::$query_log_requests   = array_slice( self::$query_log_requests, -$this->get_query_log_limit() );
 			add_filter( 'ep_get_query_log', [ self::class, 'add_requests_to_query_log' ] );
 			add_action( 'ep_stop_the_insanity', [ self::class, 'clear_query_log_requests' ] );
 		}
@@ -129,6 +131,27 @@ trait LogRequest {
 		}
 
 		return $options;
+	}
+
+	/**
+	 * How many requests of a class are kept for the query log, the latest ones.
+	 *
+	 * @since 2.6.0
+	 * @return int
+	 */
+	protected function get_query_log_limit(): int {
+		/**
+		 * Filters how many AI requests of one kind (Vector Embeddings, AI Search Summary) are kept
+		 * for the query log when debugging is on. Older ones are dropped, so a long process does
+		 * not keep every request and its response in memory.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_labs_query_log_requests_limit
+		 * @param {int}    $limit      Requests kept. Default 100, at least 1.
+		 * @param {string} $class_name Class that sent the requests.
+		 * @return {int} Filtered limit.
+		 */
+		return max( 1, (int) apply_filters( 'ep_labs_query_log_requests_limit', 100, self::class ) );
 	}
 
 	/**

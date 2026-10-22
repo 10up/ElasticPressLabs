@@ -215,6 +215,52 @@ class TestLogRequest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test only the latest requests are kept, 100 by default or as filtered.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_keeps_the_latest_requests() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		for ( $i = 1; $i <= 102; $i++ ) {
+			$requester->call( "https://example.org/embeddings/{$i}" );
+		}
+
+		$log = apply_filters( 'ep_get_query_log', [] );
+		$this->assertCount( 100, $log );
+		$this->assertSame( 'https://example.org/embeddings/3', $log[0]['url'] );
+		$this->assertSame( 'https://example.org/embeddings/102', $log[99]['url'] );
+
+		$class = get_class( $requester );
+		$limit = function ( $limit, $class_name ) use ( $class ) {
+			$this->assertSame( 100, $limit );
+			$this->assertSame( $class, $class_name );
+			return 2;
+		};
+		add_filter( 'ep_labs_query_log_requests_limit', $limit, 10, 2 );
+
+		$requester->call( 'https://example.org/embeddings/103' );
+
+		$this->assertSame(
+			[ 'https://example.org/embeddings/102', 'https://example.org/embeddings/103' ],
+			wp_list_pluck( apply_filters( 'ep_get_query_log', [] ), 'url' )
+		);
+	}
+
+	/**
 	 * Test the API key is not kept in the query log or passed to `ep_remote_request`.
 	 *
 	 * @since 2.6.0
