@@ -490,4 +490,28 @@ class TestChatReaper extends \WP_UnitTestCase {
 
 		$this->assertFalse( wp_next_scheduled( Reaper::HOOK ) );
 	}
+
+	/**
+	 * A sweep that fires while Chat is not active removes itself, and stays while Chat is active.
+	 *
+	 * @group chat
+	 */
+	public function test_sweep_unschedules_itself_while_chat_is_inactive() {
+		$chat = \ElasticPress\Features::factory()->get_registered_feature( 'chat' );
+
+		Reaper::unschedule();
+		wp_schedule_event( time() + 300, 'hourly', Reaper::HOOK );
+
+		add_filter( 'ep_feature_active', '__return_true' );
+		$chat->maybe_unschedule_reaper();
+		remove_filter( 'ep_feature_active', '__return_true' );
+
+		$this->assertNotFalse( wp_next_scheduled( Reaper::HOOK ) );
+
+		add_filter( 'ep_feature_active', '__return_false' );
+		do_action( Reaper::HOOK );
+		remove_filter( 'ep_feature_active', '__return_false' );
+
+		$this->assertFalse( wp_next_scheduled( Reaper::HOOK ) );
+	}
 }

@@ -24,7 +24,28 @@ class TestChatAdmission extends \WP_UnitTestCase {
 	protected function is_lock_free( int $user_id ): bool {
 		global $wpdb;
 
-		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', $wpdb->prefix . 'ep_chat_admission_' . $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', ( new Admission() )->get_lock_name( $user_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * The lock name fits MySQL's 64 characters with any table prefix, and differs per user.
+	 *
+	 * @group chat
+	 */
+	public function test_lock_name() {
+		global $wpdb;
+
+		$admission = new Admission();
+		$prefix    = $wpdb->prefix;
+
+		$wpdb->prefix = str_repeat( 'a', 60 ) . '_';
+		$long         = $admission->get_lock_name( 123456789 );
+
+		$wpdb->prefix = $prefix;
+
+		$this->assertLessThanOrEqual( 64, strlen( $long ) );
+		$this->assertNotSame( $long, $admission->get_lock_name( 123456789 ) );
+		$this->assertNotSame( $admission->get_lock_name( 1 ), $admission->get_lock_name( 2 ) );
 	}
 
 	/**

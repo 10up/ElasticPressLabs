@@ -119,7 +119,9 @@ class Admission {
 	 *
 	 * The lock is a MySQL named lock: taking it is atomic, a request that finds it taken waits
 	 * for it, and the database releases it if the request dies. Without one (another database
-	 * engine, or a wait that runs out), the callback runs unlocked.
+	 * engine, or a wait that runs out), the callback runs unlocked. Named locks belong to a
+	 * database connection, so behind a connection pooler (like ProxySQL) that sends queries of
+	 * one request to different servers, the lock may not hold.
 	 *
 	 * @param int      $user_id  User ID.
 	 * @param callable $callback Callback. Its return value is returned.
@@ -128,7 +130,7 @@ class Admission {
 	public function with_lock( int $user_id, callable $callback ) {
 		global $wpdb;
 
-		$name   = $wpdb->prefix . 'ep_chat_admission_' . $user_id;
+		$name   = $this->get_lock_name( $user_id );
 		$locked = '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, self::LOCK_WAIT ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		try {
@@ -138,6 +140,21 @@ class Admission {
 				$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			}
 		}
+	}
+
+	/**
+	 * Name of the user's admission lock.
+	 *
+	 * MySQL limits lock names to 64 characters and shares them across the databases of a server,
+	 * so the name is a hash of the database, the table prefix, and the user.
+	 *
+	 * @param int $user_id User ID.
+	 * @return string
+	 */
+	public function get_lock_name( int $user_id ): string {
+		global $wpdb;
+
+		return 'ep_chat_admission_' . md5( DB_NAME . '|' . $wpdb->prefix . '|' . $user_id );
 	}
 
 	/**

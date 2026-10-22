@@ -71,12 +71,33 @@ class Abilities {
 	}
 
 	/**
+	 * Whether to register the Chat abilities.
+	 *
+	 * @return bool
+	 */
+	protected function should_register(): bool {
+		/**
+		 * Filters whether AI Chat registers its abilities (ask, search, and list chat bots).
+		 *
+		 * They are public MCP tools, so with an MCP adapter plugin, an AI client can use them
+		 * with the credentials of any user who can ask questions. Return false to keep AI Chat
+		 * in wp-admin only.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_register_abilities
+		 * @param {bool} $register Whether to register the abilities. Default true.
+		 * @return {bool} New value.
+		 */
+		return (bool) apply_filters( 'ep_chat_register_abilities', true );
+	}
+
+	/**
 	 * Register the Chat category.
 	 *
 	 * @return void
 	 */
 	public function register_category() {
-		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+		if ( ! function_exists( 'wp_register_ability_category' ) || ! $this->should_register() ) {
 			return;
 		}
 
@@ -95,7 +116,7 @@ class Abilities {
 	 * @return void
 	 */
 	public function register_abilities() {
-		if ( ! function_exists( 'wp_register_ability' ) ) {
+		if ( ! function_exists( 'wp_register_ability' ) || ! $this->should_register() ) {
 			return;
 		}
 

@@ -445,4 +445,44 @@ class TestChatJobs extends \WP_UnitTestCase {
 
 		$this->assertSame( Storage::STATUS_REFUSED, $refused->get_status() );
 	}
+
+	/**
+	 * Test an exception in the pipeline is reported through an action, while the person only
+	 * sees a generic error.
+	 *
+	 * @group chat
+	 */
+	public function test_job_processor_reports_pipeline_exceptions() {
+		$this->stub_pipeline();
+
+		add_filter(
+			'ep_chat_retrieve',
+			static function () {
+				throw new \RuntimeException( 'Gate bug.' );
+			},
+			20
+		);
+
+		$seen = [];
+
+		add_action(
+			'ep_chat_pipeline_exception',
+			static function ( $e, $question_id ) use ( &$seen ) {
+				$seen[] = [ $e->getMessage(), $question_id ];
+			},
+			10,
+			2
+		);
+
+		$job = $this->accepted_job( Bots::MODE_WP_ASYNC );
+		$this->storage->set_job_context( $job['ids']['question_id'], $job['bot']['id'], [] );
+
+		$result = ( new Job_Processor() )->process( $job['ids']['question_id'] );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'ep_chat_pipeline_exception', $result->get_error_code() );
+		$this->assertSame( 'The assistant could not generate a reply.', $result->get_error_message() );
+		$this->assertSame( Storage::STATUS_ERROR, $this->storage->get_status( $job['ids']['question_id'], true ) );
+		$this->assertSame( [ [ 'Gate bug.', $job['ids']['question_id'] ] ], $seen );
+	}
 }

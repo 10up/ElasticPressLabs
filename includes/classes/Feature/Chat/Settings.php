@@ -699,7 +699,7 @@ class Settings {
 			'clarify_enabled'     => __( 'Only for queries of up to three words, not phrased as questions, that are about to be declined while at least two reports were found. The question model looks for the different things the query could mean. Each offer is an extra model call.', 'elasticpress-labs' ),
 			'decline_display'     => __( 'History and the export always keep the reason.', 'elasticpress-labs' ),
 			'passage_chunks'      => __( 'Sent in reading order.', 'elasticpress-labs' ),
-			'passage_word_budget' => __( 'Over the budget, the lowest-ranked reports lose their extra sections first.', 'elasticpress-labs' ),
+			'passage_word_budget' => __( 'Over the budget, the lowest-ranked reports lose their extra sections first. A bigger budget gives the model more to read, but makes answers slower: each sentence of the answer is matched against more text to find its source.', 'elasticpress-labs' ),
 		];
 
 		return $details[ $key ] ?? '';

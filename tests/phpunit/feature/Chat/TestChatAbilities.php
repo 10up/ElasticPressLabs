@@ -105,6 +105,15 @@ class TestChatAbilities extends BaseTestCase {
 	 * Remove the abilities and the category.
 	 */
 	public function tear_down() {
+		$this->tear_down_abilities();
+
+		parent::tear_down();
+	}
+
+	/**
+	 * Unregister the abilities and the category.
+	 */
+	protected function tear_down_abilities() {
 		foreach ( [ Abilities::ASK, Abilities::SEARCH, Abilities::LIST_BOTS ] as $name ) {
 			if ( wp_has_ability( $name ) ) {
 				wp_unregister_ability( $name );
@@ -114,8 +123,6 @@ class TestChatAbilities extends BaseTestCase {
 		if ( wp_has_ability_category( Abilities::CATEGORY ) ) {
 			wp_unregister_ability_category( Abilities::CATEGORY );
 		}
-
-		parent::tear_down();
 	}
 
 	/**
@@ -145,6 +152,24 @@ class TestChatAbilities extends BaseTestCase {
 				$wp_filter[ $hook ] = $saved; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 		}
+	}
+
+	/**
+	 * A site can keep the abilities from being registered.
+	 *
+	 * @group chat
+	 */
+	public function test_register_abilities_filter() {
+		$this->tear_down_abilities();
+
+		add_filter( 'ep_chat_register_abilities', '__return_false' );
+		$this->register_abilities();
+
+		foreach ( [ Abilities::ASK, Abilities::SEARCH, Abilities::LIST_BOTS ] as $name ) {
+			$this->assertFalse( wp_has_ability( $name ), $name );
+		}
+
+		$this->assertFalse( wp_has_ability_category( Abilities::CATEGORY ) );
 	}
 
 	/**

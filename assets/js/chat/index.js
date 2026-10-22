@@ -89,8 +89,9 @@ const writePanelPreference = (value) => {
 };
 
 /**
- * Decode HTML entities (`&hellip;`, `&amp;`) into plain text. A textarea
- * never runs markup, so this is safe for untrusted text.
+ * Decode HTML entities (`&hellip;`, `&amp;`) into plain text. DOMParser builds
+ * an inert document (no scripts run, nothing loads), so this is safe for
+ * untrusted text.
  *
  * @param {string} text Text that may contain entities.
  * @returns {string}
@@ -100,10 +101,7 @@ const decodeEntities = (text) => {
 		return text || '';
 	}
 
-	const textarea = document.createElement('textarea');
-	textarea.innerHTML = text;
-
-	return textarea.value;
+	return new window.DOMParser().parseFromString(text, 'text/html').documentElement.textContent;
 };
 
 /**

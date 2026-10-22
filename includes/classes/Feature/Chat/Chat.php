@@ -67,6 +67,10 @@ class Chat extends Feature implements ConnectionTestable {
 
 		$this->requires_feature = 'vector_embeddings';
 
+		// setup() does not run while Chat is off or temporarily disabled, but its sweep may
+		// still be scheduled.
+		add_action( Reaper::HOOK, [ $this, 'maybe_unschedule_reaper' ] );
+
 		parent::__construct();
 	}
 
@@ -225,6 +229,17 @@ class Chat extends Feature implements ConnectionTestable {
 		parent::post_deactivation();
 
 		Reaper::unschedule();
+	}
+
+	/**
+	 * Stop the stale-job sweep when it fires while Chat is not active.
+	 *
+	 * @return void
+	 */
+	public function maybe_unschedule_reaper() {
+		if ( ! $this->is_active() ) {
+			Reaper::unschedule();
+		}
 	}
 
 	/**

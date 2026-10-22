@@ -138,6 +138,21 @@ class Job_Processor {
 		try {
 			$result = ( new Pipeline() )->run( $question, $history, $bot );
 		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf( 'ElasticPress Labs AI Chat: question %d failed: %s', $question_id, $e ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+
+			/**
+			 * Fires when answering a question throws. The person sees a generic error, so this is
+			 * where the exception can be logged.
+			 *
+			 * @since 2.6.0
+			 * @hook ep_chat_pipeline_exception
+			 * @param {\Throwable} $e           The exception.
+			 * @param {int}        $question_id Question comment ID.
+			 */
+			do_action( 'ep_chat_pipeline_exception', $e, $question_id );
+
 			$result = new \WP_Error(
 				'ep_chat_pipeline_exception',
 				esc_html__( 'The assistant could not generate a reply.', 'elasticpress-labs' )

@@ -52,14 +52,48 @@ class Injection {
 		 * Filters the patterns for instruction-shaped text in passages. A sentence (or line)
 		 * that matches is removed before the model reads the passage.
 		 *
+		 * This is one layer of defense, not a boundary: anyone who can publish a post can write
+		 * text that tries to steer the answers other people read, and patterns only catch the
+		 * wording they describe (the defaults are English). Add patterns for the site's
+		 * languages here. An invalid pattern is ignored, with a notice.
+		 *
 		 * @since 2.6.0
 		 * @hook ep_chat_injection_patterns
 		 * @param {string[]} $patterns Regexes (English defaults).
 		 * @return {string[]} Filtered patterns.
 		 */
 		$patterns = apply_filters( 'ep_chat_injection_patterns', $patterns );
+		$patterns = array_values( array_filter( array_map( 'strval', is_array( $patterns ) ? $patterns : [] ) ) );
 
-		return array_values( array_filter( array_map( 'strval', is_array( $patterns ) ? $patterns : [] ) ) );
+		return array_values( array_filter( $patterns, [ $this, 'is_valid_pattern' ] ) );
+	}
+
+	/**
+	 * Whether a pattern is a valid regex. An invalid one gets a notice, once per request.
+	 *
+	 * @param string $pattern Regex.
+	 * @return bool
+	 */
+	protected function is_valid_pattern( string $pattern ): bool {
+		static $checked = [];
+
+		if ( isset( $checked[ $pattern ] ) ) {
+			return $checked[ $pattern ];
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Checking whether the pattern compiles.
+		$checked[ $pattern ] = false !== @preg_match( $pattern, '' );
+
+		if ( ! $checked[ $pattern ] ) {
+			_doing_it_wrong(
+				'ep_chat_injection_patterns',
+				/* translators: %s: regex */
+				esc_html( sprintf( __( 'The pattern %s is not a valid regular expression, so it is ignored.', 'elasticpress-labs' ), $pattern ) ),
+				'ElasticPress Labs 2.6.0'
+			);
+		}
+
+		return $checked[ $pattern ];
 	}
 
 	/**
@@ -128,7 +162,7 @@ class Injection {
 	 */
 	protected function matches( string $sentence, array $patterns ): bool {
 		foreach ( $patterns as $pattern ) {
-			if ( @preg_match( $pattern, $sentence ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A filtered pattern may be invalid.
+			if ( preg_match( $pattern, $sentence ) ) {
 				return true;
 			}
 		}

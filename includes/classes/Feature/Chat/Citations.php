@@ -550,7 +550,7 @@ class Citations {
 
 			// Markers before the figure move it in the plain text; read again where it is there.
 			if ( $shift ) {
-				foreach ( ( new Figures() )->locate( $plain ) as $candidate ) {
+				foreach ( $this->figures->locate( $plain ) as $candidate ) {
 					if ( $candidate['figure'] === $figure ) {
 						$wanted = $context->read_answer( $plain, $candidate );
 						$year   = $context->read_answer_year( $plain, $candidate );
