@@ -141,4 +141,182 @@ class TestLogRequest extends \WP_UnitTestCase {
 		$this->assertArrayHasKey( 'url', $log[1] );
 		$this->assertSame( $url, $log[1]['url'] );
 	}
+
+	/**
+	 * Requests are kept for the query log through one callback per class, so request objects
+	 * are not kept alive; nothing is kept when query logging is off.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_does_not_keep_request_objects() {
+		global $wp_filter;
+
+		$class = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$name = get_class( $class );
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			( new $name() )->call( "https://example.org/embeddings/{$i}" );
+		}
+
+		$callbacks = count( $wp_filter['ep_get_query_log']->callbacks[10] ?? [] );
+		$this->assertSame( 1, $callbacks );
+		$this->assertCount( 3, apply_filters( 'ep_get_query_log', [] ) );
+
+		add_filter( 'ep_disable_query_logging', '__return_true' );
+		( new $name() )->call( 'https://example.org/embeddings/off' );
+
+		$this->assertCount( 3, apply_filters( 'ep_get_query_log', [] ) );
+	}
+
+	/**
+	 * Test the list is emptied when ElasticPress frees memory during a sync.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_is_emptied_between_sync_batches() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$requester->call( 'https://example.org/embeddings/1' );
+		$requester->call( 'https://example.org/embeddings/2' );
+		$this->assertCount( 2, apply_filters( 'ep_get_query_log', [] ) );
+
+		do_action( 'ep_stop_the_insanity' );
+		$this->assertCount( 0, apply_filters( 'ep_get_query_log', [] ) );
+
+		$requester->call( 'https://example.org/embeddings/3' );
+		$this->assertCount( 1, apply_filters( 'ep_get_query_log', [] ) );
+	}
+
+	/**
+	 * Test only the latest requests are kept, 100 by default or as filtered.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_query_log_keeps_the_latest_requests() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param string $url URL.
+			 * @return array
+			 */
+			public function call( $url ) {
+				return $this->send_request_and_log( $url, [], 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		for ( $i = 1; $i <= 102; $i++ ) {
+			$requester->call( "https://example.org/embeddings/{$i}" );
+		}
+
+		$log = apply_filters( 'ep_get_query_log', [] );
+		$this->assertCount( 100, $log );
+		$this->assertSame( 'https://example.org/embeddings/3', $log[0]['url'] );
+		$this->assertSame( 'https://example.org/embeddings/102', $log[99]['url'] );
+
+		$class = get_class( $requester );
+		$limit = function ( $limit, $class_name ) use ( $class ) {
+			$this->assertSame( 100, $limit );
+			$this->assertSame( $class, $class_name );
+			return 2;
+		};
+		add_filter( 'ep_labs_query_log_requests_limit', $limit, 10, 2 );
+
+		$requester->call( 'https://example.org/embeddings/103' );
+
+		$this->assertSame(
+			[ 'https://example.org/embeddings/102', 'https://example.org/embeddings/103' ],
+			wp_list_pluck( apply_filters( 'ep_get_query_log', [] ), 'url' )
+		);
+	}
+
+	/**
+	 * Test the API key is not kept in the query log or passed to `ep_remote_request`.
+	 *
+	 * @since 2.6.0
+	 * @group log-request
+	 */
+	public function test_authorization_header_is_redacted() {
+		$requester = new class() {
+			use LogRequest;
+
+			/**
+			 * Proxy to call trait method.
+			 *
+			 * @param array $options Options.
+			 * @return array
+			 */
+			public function call( $options ) {
+				return $this->send_request_and_log( 'https://example.org/embeddings', $options, 'vector_embeddings', 'vector-embeddings' );
+			}
+		};
+
+		$sent = [];
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args ) use ( &$sent ) {
+				$sent[] = $args['headers'];
+				return $preempt;
+			},
+			5,
+			2
+		);
+
+		$remote = [];
+		add_action(
+			'ep_remote_request',
+			function ( $request ) use ( &$remote ) {
+				$remote[] = $request['args']['headers'];
+			}
+		);
+
+		$requester->call( [ 'headers' => [ 'Authorization' => 'Bearer secret-key' ] ] );
+		$requester->call(
+			[
+				'headers' => [
+					'authorization' => 'Bearer secret-key',
+					'Content-Type'  => 'application/json',
+				],
+			]
+		);
+
+		$this->assertSame( 'Bearer secret-key', $sent[0]['Authorization'] );
+
+		$log = apply_filters( 'ep_get_query_log', [] );
+		$this->assertSame( '[redacted]', $log[0]['args']['headers']['Authorization'] );
+		$this->assertSame( '[redacted]', $log[1]['args']['headers']['authorization'] );
+		$this->assertSame( 'application/json', $log[1]['args']['headers']['Content-Type'] );
+		$this->assertSame( '[redacted]', $remote[0]['Authorization'] );
+		$this->assertStringNotContainsString( 'secret-key', wp_json_encode( $log ) );
+	}
 }
