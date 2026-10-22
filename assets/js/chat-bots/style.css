@@ -1,0 +1,225 @@
+.ep-chat-bots-panel {
+	margin-bottom: 16px;
+}
+
+.ep-chat-bots-list-heading {
+	font-size: 14px;
+	margin: 16px 16px 0;
+}
+
+.ep-chat-bots-list-empty {
+	margin: 8px 16px 16px;
+}
+
+.ep-chat-bot-row {
+	align-items: flex-start;
+	display: flex;
+	gap: 4px;
+}
+
+.ep-chat-bot-row .components-panel__body {
+	flex: 1;
+	width: 100%;
+}
+
+.ep-chat-bot-row__handle {
+	flex-shrink: 0;
+	margin-top: 8px;
+}
+
+.ep-chat-bot-box {
+	background: #fff;
+	border: 1px solid var(--wp-components-color-gray-300, #ddd);
+	margin: 16px 0 0;
+	width: 100%;
+}
+
+.ep-chat-bot-box__title {
+	font-size: inherit;
+	margin: 0;
+}
+
+/*
+ * The title is one full-width toggle button. The color must beat the
+ * WordPress button :hover and :active rules (0,3,0).
+ */
+/* stylelint-disable selector-max-specificity -- WordPress button states. */
+.ep-chat-bot-box .ep-chat-bot-box__toggle.components-button.has-icon {
+	color: inherit;
+	font-weight: 600;
+	height: auto;
+	justify-content: space-between;
+	padding: 12px 16px;
+	width: 100%;
+
+	&:hover,
+	&:focus:not(:disabled) {
+		color: var(--wp-admin-theme-color, #3858e9);
+	}
+}
+/* stylelint-enable selector-max-specificity */
+
+.ep-chat-bot-box__body {
+	border-top: 1px solid var(--wp-components-color-gray-300, #ddd);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+}
+
+.ep-chat-bot-box__body .components-base-control__field,
+.ep-chat-bot-box__body .components-radio-control {
+	margin-bottom: 0;
+}
+
+.ep-chat-bot-actions {
+	margin-top: 16px;
+}
+
+
+/* "Add chat bot" and its short form. */
+.ep-chat-bots-add-wrap {
+	margin-bottom: 16px;
+}
+
+.ep-chat-bots-new {
+	background: #fff;
+	border: 1px solid var(--wp-components-color-gray-300, #ddd);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+}
+
+.ep-chat-bots-new__heading {
+	font-size: 14px;
+	margin: 0;
+}
+
+.ep-chat-bots-new .description {
+	margin: 0;
+}
+
+.ep-chat-bots-loading {
+	padding: 20px;
+	text-align: center;
+}
+
+/* A bot's row: the name, its tags, and a one-line summary. */
+.ep-chat-bot-row__title {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	text-align: left;
+}
+
+.ep-chat-bot-row__name {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.ep-chat-bot-row__summary {
+	color: var(--wp-components-color-gray-700, #757575);
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.ep-chat-bot-row__tag,
+.ep-chat-bot-field__tag,
+.ep-chat-bot-box__badge {
+	background: var(--wp-components-color-gray-100, #f0f0f0);
+	border-radius: 2px;
+	color: var(--wp-components-color-foreground, #1e1e1e);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.5;
+	padding: 0 8px;
+
+	&.is-unsaved {
+		background: var(--wp-components-color-warning-light, #fef8ee);
+		color: var(--wp-components-color-warning-dark, #8a4d00);
+	}
+}
+
+.ep-chat-bot-row__body {
+	width: 100%;
+}
+
+.ep-chat-bot-box__badge {
+	margin-left: auto;
+	margin-right: 12px;
+}
+
+/* A setting the bot can take from the site or change. */
+.ep-chat-bot-field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&.is-changed {
+		border-left: 3px solid var(--wp-admin-theme-color, #3858e9);
+		padding-left: 12px;
+	}
+}
+
+.ep-chat-bot-field__head {
+	align-items: center;
+	display: flex;
+	gap: 8px;
+}
+
+.ep-chat-bot-field__label {
+	font-size: 11px;
+	font-weight: 500;
+	text-transform: uppercase;
+}
+
+.ep-chat-bot-field__inherited {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.ep-chat-bot-field__reset {
+	align-self: flex-start;
+}
+
+.ep-chat-bot-help {
+	color: var(--wp-components-color-gray-700, #757575);
+	font-size: 12px;
+	margin: 0;
+}
+
+/* Answer checks: by step; a required one is locked on. */
+.ep-chat-bot-checks__stage {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.ep-chat-bot-checks__heading {
+	font-size: 13px;
+	margin: 0;
+}
+
+.ep-chat-bot-check:where(.is-required) {
+
+	& .ep-chat-bot-check__title {
+		align-items: center;
+		display: flex;
+		gap: 8px;
+
+		& svg {
+			fill: currentcolor;
+		}
+	}
+
+	& .ep-chat-bot-check__description {
+		color: var(--wp-components-color-gray-700, #757575);
+		font-size: 12px;
+		margin: 4px 0 0 28px;
+	}
+}

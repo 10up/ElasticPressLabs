@@ -20,9 +20,10 @@ const { Fill, Slot } = createSlotFill('SettingsPageAction');
  * @param {object} props Component props.
  * @param {WPElement} props.children Component children.
  * @param {string} props.title Page title.
+ * @param {boolean} [props.headerEnd] Mark the end of the header for WordPress admin notices, on screens without ElasticPress's header (which has its own mark: WordPress moves notices after every one).
  * @returns {WPElement} Sync page component.
  */
-export const SettingsScreenProvider = ({ children, title }) => {
+export const SettingsScreenProvider = ({ children, title, headerEnd = false }) => {
 	const { createNotice, removeNotice } = useDispatch(noticeStore);
 
 	const { notices } = useSelect((select) => {
@@ -49,6 +50,8 @@ export const SettingsScreenProvider = ({ children, title }) => {
 							<h1 className="ep-settings-page__title">{title}</h1>
 							<Slot />
 						</header>
+						{/* WordPress moves admin notices after this mark, below the title. */}
+						{headerEnd ? <hr className="wp-header-end" /> : null}
 						{children}
 					</div>
 					<SnackbarList

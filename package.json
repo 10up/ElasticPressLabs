@@ -62,12 +62,16 @@
       "geo-location-script": "./assets/js/geo-location/index.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
       "blocks-styles": "./assets/css/blocks.css",
-      "connection-test-script": "./assets/js/connection-test/index.js"
+      "connection-test-script": "./assets/js/connection-test/index.js",
+      "chat-script": "./assets/js/chat/index.js",
+      "chat-bots-script": "./assets/js/chat-bots/index.js",
+      "chat-settings-script": "./assets/js/chat-settings/index.js"
     },
     "wpDependencyExternals": true
   },
   "dependencies": {
     "@wordpress/icons": "^18.0.0",
+    "marked": "^18.0.14",
     "react-loading-skeleton": "^3.5.0"
   },
   "overrides": {

@@ -93,6 +93,7 @@ function activate() {
  * @return void
  */
 function deactivate() {
+	\ElasticPressLabs\Feature\Chat\Jobs\Reaper::unschedule();
 }
 
 
@@ -221,6 +222,10 @@ function maybe_load_features() {
 	$ai_search_summary = new \ElasticPressLabs\Feature\AISearchSummary();
 	\ElasticPress\Features::factory()->register_feature( $ai_search_summary );
 
+	$chat = new \ElasticPressLabs\Feature\Chat\Chat();
+	\ElasticPress\Features::factory()->register_feature( $chat );
+	$chat->setup_settings_screen();
+
 	$upgrades = new \ElasticPressLabs\Upgrades();
 	$upgrades->setup();
 
@@ -229,6 +234,7 @@ function maybe_load_features() {
 
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		\WP_CLI::add_command( 'elasticpress-labs', '\ElasticPressLabs\Command' );
+		\WP_CLI::add_command( 'elasticpress-labs chat', '\ElasticPressLabs\Feature\Chat\Command' );
 	}
 }
 
