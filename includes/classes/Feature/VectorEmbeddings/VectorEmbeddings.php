@@ -924,6 +924,34 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * Hash that identifies the embedding of a chunk text.
+	 *
+	 * It covers the text and everything that changes its vector (generator, API URL,
+	 * model, dimensions), so a stored vector with the same hash can be reused as is.
+	 * Services behind other URLs can answer to the same model name with vectors that
+	 * cannot be compared.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Chunk text, exactly as sent to the model.
+	 * @return string
+	 */
+	public function get_chunk_hash( string $text ): string {
+		return sha1(
+			implode(
+				"\n",
+				[
+					(string) $this->get_setting( 'ep_embeddings_generator' ),
+					/** This filter is documented in includes/classes/Feature/VectorEmbeddings/VectorEmbeddingsRequest.php */
+					(string) apply_filters( 'ep_embeddings_api_url', $this->get_setting( 'ep_embeddings_api_url' ) ),
+					(string) $this->get_setting( 'ep_embeddings_embedding_model' ),
+					(string) $this->get_dimensions(),
+					$text,
+				]
+			)
+		);
+	}
+
+	/**
 	 * How content is split into chunks.
 	 *
 	 * - `paragraphs` (default): at paragraph and section boundaries, see Chunker.

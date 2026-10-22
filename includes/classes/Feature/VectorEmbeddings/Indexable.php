@@ -313,7 +313,7 @@ abstract class Indexable {
 	 * @param array $args        The current sync args (an Elasticsearch document)
 	 * @param array $embeddings  The embeddings to add to the sync args
 	 * @param array $chunk_items Optional. The chunks the embeddings were made from, in the same
-	 *                           order: `[ 'text' => string, 'type' => string ]` each.
+	 *                           order: `[ 'text' => string, 'type' => string, 'hash' => string ]` each.
 	 * @return array
 	 */
 	public function add_chunks_field_value( array $args, array $embeddings, array $chunk_items = [] ): array {
@@ -355,6 +355,10 @@ abstract class Indexable {
 				}
 
 				$chunk['type'] = (string) ( $chunk_items[ $index ]['type'] ?? '' );
+
+				if ( ! empty( $chunk_items[ $index ]['hash'] ) ) {
+					$chunk['hash'] = (string) $chunk_items[ $index ]['hash'];
+				}
 			}
 
 			$args['chunks'][] = $chunk;
