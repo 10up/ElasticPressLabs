@@ -30,6 +30,7 @@ class TestSearchAlgorithm extends \WP_UnitTestCase {
 	public function tear_down() {
 		\ElasticPress\SearchAlgorithms::factory()->unregister( 'test_hidden' );
 		\ElasticPress\SearchAlgorithms::factory()->unregister( 'test_not_hidden' );
+		remove_all_filters( 'ep_labs_search_algorithm_hidden' );
 
 		parent::tear_down();
 	}
@@ -318,5 +319,37 @@ class TestSearchAlgorithm extends \WP_UnitTestCase {
 		$this->assertSame( $default, $fixed['search_algorithm']['search_algorithm_version'] );
 		$this->assertSame( $default, $read['search_algorithm']['search_algorithm_version'] );
 		$this->assertSame( $default, $clean['search_algorithm_version'] );
+	}
+
+	/**
+	 * Test the `ep_labs_search_algorithm_hidden` filter hides any algorithm and shows a hidden one
+	 *
+	 * @since 2.6.0
+	 * @group search-algorithm
+	 */
+	public function test_hidden_filter() {
+		$this->register_algorithm( 'test_hidden', true );
+
+		add_filter(
+			'ep_labs_search_algorithm_hidden',
+			static function ( $hidden, $search_algorithm ) {
+				return in_array( $search_algorithm->get_slug(), [ '4.0', 'test_hidden' ], true ) ? ! $hidden : $hidden;
+			},
+			10,
+			2
+		);
+
+		$slugs = SearchAlgorithm::get_public_search_algorithm_slugs();
+
+		// An ElasticPress algorithm, without the property, is hidden.
+		$this->assertNotContains( '4.0', $slugs );
+
+		// The algorithm that hides itself is shown, and can be saved.
+		$this->assertContains( 'test_hidden', $slugs );
+
+		$feature = $this->get_feature();
+		$clean   = $feature->sanitize_settings_callback( [ 'search_algorithm_version' => 'test_hidden' ] );
+
+		$this->assertSame( 'test_hidden', $clean['search_algorithm_version'] );
 	}
 }
