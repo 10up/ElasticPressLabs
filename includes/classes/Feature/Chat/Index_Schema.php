@@ -17,21 +17,28 @@ if ( ! defined( 'ABSPATH' ) ) {
  * it may filter on.
  *
  * Reading the mapping and the terms is the slow part, and both rarely change, so they are kept in
- * an option: the whole mapping as `path => type`, and the terms of each listed taxonomy. The option
- * is cleared when ElasticPress puts a new mapping and when a sync ends (taxonomy and meta fields are
+ * two options: the whole mapping as `path => type`, and the terms of each listed taxonomy. Both are
+ * cleared when ElasticPress puts a new mapping and when a sync ends (taxonomy and meta fields are
  * added to the mapping as content is indexed), when ElasticPress or Labs is updated, when the index
  * name changes, and after a day (`ep_chat_index_schema_ttl`), for fields indexed between syncs. A
- * taxonomy's terms are cleared when one of its terms is added, edited, or deleted. Which fields are
- * offered, their notes, and which taxonomies are listed are filters, applied on each read, so
- * changing them needs no rebuild.
+ * taxonomy's terms are cleared when one of its terms is added, edited, or deleted; the mapping,
+ * being in its own option, is not written again then. Which fields are offered, their notes, and
+ * which taxonomies are listed are filters, applied on each read, so changing them needs no rebuild.
  */
 class Index_Schema {
 	/**
-	 * Option that keeps the mapping and the term values.
+	 * Option that keeps the mapping.
 	 *
 	 * @var string
 	 */
 	public const OPTION = 'ep_chat_index_schema';
+
+	/**
+	 * Option that keeps the term values, with the build time of the mapping they go with.
+	 *
+	 * @var string
+	 */
+	public const TERMS_OPTION = 'ep_chat_index_schema_terms';
 
 	/**
 	 * Most terms kept per listed taxonomy, before the `ep_chat_ai_query_term_limit` filter.
@@ -60,6 +67,7 @@ class Index_Schema {
 	 */
 	public function clear() {
 		delete_option( self::OPTION );
+		delete_option( self::TERMS_OPTION );
 	}
 
 	/**
@@ -73,14 +81,14 @@ class Index_Schema {
 	public function clear_terms( $term_id, $tt_id, $taxonomy ) {
 		unset( $term_id, $tt_id );
 
-		$stored = get_option( self::OPTION );
+		$stored = get_option( self::TERMS_OPTION );
 
 		if ( ! is_array( $stored ) || ! isset( $stored['terms'][ $taxonomy ] ) ) {
 			return;
 		}
 
 		unset( $stored['terms'][ $taxonomy ] );
-		update_option( self::OPTION, $stored, false );
+		update_option( self::TERMS_OPTION, $stored, false );
 	}
 
 	/**
@@ -125,10 +133,19 @@ class Index_Schema {
 			return [];
 		}
 
-		$stored  = $this->get_stored();
+		$schema  = $this->get_stored();
+		$stored  = get_option( self::TERMS_OPTION );
 		$changed = false;
 		$limit   = $this->get_term_limit();
 		$terms   = [];
+
+		// Terms read for an older mapping are read again.
+		if ( ! is_array( $stored ) || ( $stored['built'] ?? 0 ) !== $schema['built'] || ! is_array( $stored['terms'] ?? null ) ) {
+			$stored = [
+				'built' => $schema['built'],
+				'terms' => [],
+			];
+		}
 
 		foreach ( $taxonomies as $taxonomy ) {
 			if ( ! isset( $stored['terms'][ $taxonomy ] ) || ! is_array( $stored['terms'][ $taxonomy ] ) ) {
@@ -139,17 +156,17 @@ class Index_Schema {
 			$terms[ $taxonomy ] = array_slice( $stored['terms'][ $taxonomy ], 0, $limit, true );
 		}
 
-		if ( $changed && $stored['mapping'] ) {
-			update_option( self::OPTION, $stored, false );
+		if ( $changed && $schema['mapping'] ) {
+			update_option( self::TERMS_OPTION, $stored, false );
 		}
 
 		return $terms;
 	}
 
 	/**
-	 * The stored mapping and terms, read again when missing or out of date.
+	 * The stored mapping, read again when missing or out of date.
 	 *
-	 * @return array{index: string, version: string, built: int, mapping: array<string, string>, terms: array}
+	 * @return array{index: string, version: string, built: int, mapping: array<string, string>}
 	 */
 	protected function get_stored(): array {
 		$index   = $this->get_index_name();
@@ -164,7 +181,7 @@ class Index_Schema {
 			&& ! empty( $stored['mapping'] )
 			&& is_array( $stored['mapping'] )
 		) {
-			$stored['terms'] = is_array( $stored['terms'] ?? null ) ? $stored['terms'] : [];
+			$stored['built'] = (int) $stored['built'];
 
 			return $stored;
 		}
@@ -174,7 +191,6 @@ class Index_Schema {
 			'version' => $version,
 			'built'   => time(),
 			'mapping' => $this->read_mapping(),
-			'terms'   => [],
 		];
 
 		// An index that cannot be read is not kept, so the next question tries again.
@@ -327,6 +343,10 @@ class Index_Schema {
 		 * content, dates, post type, author name, the content chunk vectors, and the name and slug
 		 * of the public taxonomies of the post types Chat searches. Fields the index does not
 		 * search (`index: false`) are never offered.
+		 *
+		 * The question steers the query, so anyone who can ask can, in effect, search these fields
+		 * for exact phrases (within the posts Chat searches). Add only fields whose values those
+		 * people may see: a meta field that is not shown on the site is better left out.
 		 *
 		 * @since 2.6.0
 		 * @hook ep_chat_ai_query_fields

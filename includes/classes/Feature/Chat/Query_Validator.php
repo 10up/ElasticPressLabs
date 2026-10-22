@@ -71,7 +71,14 @@ class Query_Validator {
 	public const MAX_CANDIDATES = 1000;
 
 	/**
-	 * Date formats a range on a date field reads, when the model gives none.
+	 * Most sort fields.
+	 *
+	 * @var int
+	 */
+	public const MAX_SORT = 5;
+
+	/**
+	 * Date formats a range on a date field reads. A format the model writes is replaced.
 	 *
 	 * @var string
 	 */
@@ -514,7 +521,7 @@ class Query_Validator {
 		$range = [];
 
 		foreach ( $body[ $field ] as $key => $value ) {
-			if ( in_array( $key, [ 'gte', 'gt', 'lte', 'lt', 'format' ], true ) ) {
+			if ( in_array( $key, [ 'gte', 'gt', 'lte', 'lt' ], true ) ) {
 				if ( ! is_scalar( $value ) ) {
 					return $this->malformed();
 				}
@@ -530,7 +537,7 @@ class Query_Validator {
 		}
 
 		// ElasticPress maps dates as `yyyy-MM-dd HH:mm:ss` only; a model writes `2020-01-01`.
-		if ( ! isset( $range['format'] ) && $this->is_field( $field, [ 'date' ] ) ) {
+		if ( $this->is_field( $field, [ 'date' ] ) ) {
 			$range['format'] = self::DATE_FORMATS;
 		}
 
@@ -649,7 +656,8 @@ class Query_Validator {
 
 	/**
 	 * Check a sort: `_score` and allowed sortable fields (keyword, date, number, boolean, not in a
-	 * nested path), each as `[ field => [ 'order' => asc|desc ] ]`. Others are dropped.
+	 * nested path), each as `[ field => [ 'order' => asc|desc ] ]`. Others are dropped, and so are
+	 * repeated fields and those after the first `MAX_SORT`.
 	 *
 	 * @param mixed $sort Sort: a field, a field => order map, or a list of them.
 	 * @return array
@@ -684,12 +692,20 @@ class Query_Validator {
 			$order = is_array( $order ) ? ( $order['order'] ?? '' ) : $order;
 			$order = in_array( $order, [ 'asc', 'desc' ], true ) ? $order : 'desc';
 
+			if ( isset( $checked[ $field ] ) ) {
+				continue;
+			}
+
 			if ( '_score' === $field || ( is_string( $field ) && $this->is_field( $field, $sortable ) && ! $this->in_nested( $field ) ) ) {
-				$checked[] = [ $field => [ 'order' => $order ] ];
+				$checked[ $field ] = [ $field => [ 'order' => $order ] ];
+			}
+
+			if ( count( $checked ) >= self::MAX_SORT ) {
+				break;
 			}
 		}
 
-		return $checked;
+		return array_values( $checked );
 	}
 
 	/**

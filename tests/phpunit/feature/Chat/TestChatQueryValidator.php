@@ -28,6 +28,7 @@ class TestChatQueryValidator extends \WP_UnitTestCase {
 				'post_title'          => 'text',
 				'post_content'        => 'text',
 				'post_date'           => 'date',
+				'comment_count'       => 'long',
 				'post_type.raw'       => 'keyword',
 				'terms.formats.name'  => 'text',
 				'terms.formats.slug'  => 'keyword',
@@ -443,6 +444,29 @@ class TestChatQueryValidator extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( [ [ 'post_date' => [ 'order' => 'desc' ] ] ], $result['sort'] );
+
+		// A repeated field keeps its first order, and fields after the first five are dropped.
+		$result = $this->get_validator()->validate(
+			[
+				'query' => [ 'match' => [ 'post_title' => 'cash' ] ],
+				'sort'  => array_merge(
+					[ [ 'post_date' => 'asc' ] ],
+					array_fill( 0, 1000, [ 'post_date' => 'desc' ] ),
+					[ '_score', [ 'post_type.raw' => 'asc' ], 'terms.formats.slug', 'terms.category.slug', 'terms.post_tag.slug' ]
+				),
+			]
+		);
+
+		$this->assertSame(
+			[
+				[ 'post_date' => [ 'order' => 'asc' ] ],
+				[ '_score' => [ 'order' => 'desc' ] ],
+				[ 'post_type.raw' => [ 'order' => 'asc' ] ],
+				[ 'terms.formats.slug' => [ 'order' => 'desc' ] ],
+				[ 'terms.category.slug' => [ 'order' => 'desc' ] ],
+			],
+			$result['sort']
+		);
 	}
 
 	/**
@@ -461,7 +485,7 @@ class TestChatQueryValidator extends \WP_UnitTestCase {
 						'post_date' => [
 							'gte'    => 'now-2y/y',
 							'lt'     => '2025-01-01',
-							'format' => 'yyyy-MM-dd',
+							'format' => Query_Validator::DATE_FORMATS,
 						],
 					],
 				],
@@ -495,6 +519,23 @@ class TestChatQueryValidator extends \WP_UnitTestCase {
 				],
 			],
 			$validator->validate( [ 'query' => [ 'range' => [ 'post_date' => [ 'gte' => '2020-01-01' ] ] ] ] )
+		);
+
+		// A format the model writes is dropped: dates get the formats above, numbers none.
+		$this->assertSame(
+			[ 'query' => [ 'range' => [ 'comment_count' => [ 'gte' => 10 ] ] ] ],
+			$validator->validate(
+				[
+					'query' => [
+						'range' => [
+							'comment_count' => [
+								'gte'    => 10,
+								'format' => 'yyyy',
+							],
+						],
+					],
+				]
+			)
 		);
 
 		// A text field cannot be a range: dropped, so the query is empty.

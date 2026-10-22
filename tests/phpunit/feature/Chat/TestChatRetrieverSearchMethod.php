@@ -225,8 +225,8 @@ class TestChatRetrieverSearchMethod extends BaseTestCase {
 
 		add_action( 'ep_chat_ai_query_failed', $track );
 
-		// An unknown date format passes the checks, but Elasticsearch refuses it.
-		$this->reply = '{"query":{"range":{"post_date":{"gte":"2020","format":"not a format"}}}}';
+		// A date Elasticsearch cannot read passes the checks, but Elasticsearch refuses it.
+		$this->reply = '{"query":{"range":{"post_date":{"gte":"not a date"}}}}';
 
 		$retriever = new Retriever();
 		$posts     = $retriever->search( 'cash', $this->bot( AI_Query::SLUG ) );

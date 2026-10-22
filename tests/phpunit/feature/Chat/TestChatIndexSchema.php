@@ -45,6 +45,7 @@ class TestChatIndexSchema extends BaseTestCase {
 		Elasticsearch::factory()->refresh_indices();
 
 		delete_option( Index_Schema::OPTION );
+		delete_option( Index_Schema::TERMS_OPTION );
 
 		$this->schema = new Index_Schema();
 		$this->schema->setup();
@@ -65,6 +66,7 @@ class TestChatIndexSchema extends BaseTestCase {
 		remove_action( 'edited_term', [ $this->schema, 'clear_terms' ], 10 );
 		remove_action( 'delete_term', [ $this->schema, 'clear_terms' ], 10 );
 		delete_option( Index_Schema::OPTION );
+		delete_option( Index_Schema::TERMS_OPTION );
 
 		parent::tear_down();
 	}
@@ -354,7 +356,7 @@ class TestChatIndexSchema extends BaseTestCase {
 			],
 			$terms['category']
 		);
-		$this->assertArrayHasKey( 'category', get_option( Index_Schema::OPTION )['terms'] );
+		$this->assertArrayHasKey( 'category', get_option( Index_Schema::TERMS_OPTION )['terms'] );
 	}
 
 	/**
@@ -372,7 +374,9 @@ class TestChatIndexSchema extends BaseTestCase {
 
 		( new Index_Schema() )->get_terms();
 
-		$this->assertSame( [ 'category', 'post_tag' ], array_keys( get_option( Index_Schema::OPTION )['terms'] ) );
+		$this->assertSame( [ 'category', 'post_tag' ], array_keys( get_option( Index_Schema::TERMS_OPTION )['terms'] ) );
+
+		$mapping = get_option( Index_Schema::OPTION );
 
 		$term = $this->factory->term->create(
 			[
@@ -381,19 +385,54 @@ class TestChatIndexSchema extends BaseTestCase {
 			]
 		);
 
-		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::OPTION )['terms'] ) );
+		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::TERMS_OPTION )['terms'] ) );
 
 		( new Index_Schema() )->get_terms();
 		wp_update_term( $term, 'category', [ 'name' => 'Renamed' ] );
 
-		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::OPTION )['terms'] ) );
+		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::TERMS_OPTION )['terms'] ) );
 
 		( new Index_Schema() )->get_terms();
 		wp_delete_term( $term, 'category' );
 
 		remove_filter( 'ep_chat_ai_query_listed_taxonomies', $listed );
 
-		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::OPTION )['terms'] ) );
+		$this->assertSame( [ 'post_tag' ], array_keys( get_option( Index_Schema::TERMS_OPTION )['terms'] ) );
+		$this->assertSame( $mapping, get_option( Index_Schema::OPTION ) );
 		$this->assertSame( 1, $this->mapping_requests );
+	}
+
+	/**
+	 * Terms read for an older mapping are read again with the new one, and clearing the cache
+	 * clears both.
+	 *
+	 * @group chat
+	 * @group chat-ai-query
+	 */
+	public function test_terms_follow_the_mapping() {
+		$listed = static function () {
+			return [ 'category' ];
+		};
+
+		add_filter( 'ep_chat_ai_query_listed_taxonomies', $listed );
+
+		$this->schema->get_terms();
+
+		$stored                      = get_option( Index_Schema::TERMS_OPTION );
+		$stored['built']            -= 10;
+		$stored['terms']['category'] = [ 'stale' => 'Stale' ];
+		update_option( Index_Schema::TERMS_OPTION, $stored, false );
+
+		$terms = $this->schema->get_terms();
+
+		$this->assertArrayNotHasKey( 'stale', $terms['category'] );
+		$this->assertSame( get_option( Index_Schema::OPTION )['built'], get_option( Index_Schema::TERMS_OPTION )['built'] );
+
+		$this->schema->clear();
+
+		remove_filter( 'ep_chat_ai_query_listed_taxonomies', $listed );
+
+		$this->assertFalse( get_option( Index_Schema::OPTION ) );
+		$this->assertFalse( get_option( Index_Schema::TERMS_OPTION ) );
 	}
 }
