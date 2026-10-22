@@ -103,13 +103,23 @@ export const ensureChatBot = async (
 };
 
 /**
- * Whether WordPress has the AI client Chat needs (WordPress 7.0+).
+ * Whether WordPress has the AI client Chat needs (WordPress 7.0+). Throws when WP-CLI does not
+ * answer, so a failed call is not read as "no" and the Chat specs are not skipped by mistake.
  *
  * @returns {Promise<boolean>}
  */
 export const hasAiClient = async () => {
-	const output = await wpCliEval(`echo function_exists( 'wp_ai_client_prompt' ) ? 'yes' : 'no';`);
-	return String(output).includes('yes');
+	const output = String(
+		await wpCliEval(
+			`echo function_exists( 'wp_ai_client_prompt' ) ? 'ai-client:yes' : 'ai-client:no';`,
+		),
+	);
+
+	if (!output.includes('ai-client:yes') && !output.includes('ai-client:no')) {
+		throw new Error(`Could not check for the WordPress AI client. WP-CLI said: ${output}`);
+	}
+
+	return output.includes('ai-client:yes');
 };
 
 export const resetChatRerankE2e = async () => {
