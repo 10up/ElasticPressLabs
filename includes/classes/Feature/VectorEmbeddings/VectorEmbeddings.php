@@ -20,6 +20,9 @@ use ElasticPressLabs\Traits\DisableAfterFailures;
 use ElasticPressLabs\Upgrades;
 use WP_Error;
 
+use function ElasticPressLabs\Utils\preg_replace_callback_safe;
+use function ElasticPressLabs\Utils\preg_replace_safe;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -651,26 +654,263 @@ class VectorEmbeddings extends Feature {
 	 * @return string
 	 */
 	public function normalize_content( string $content = '' ): string {
-		$content = apply_filters( 'the_content', $content );
+		$content = (string) apply_filters( 'the_content', $content );
+
+		// Remove code and markup that is never read as text (scripts, structured data, styles),
+		// with its contents: the later steps replace tags with separators, after which
+		// wp_strip_all_tags() could no longer find these elements and would keep their contents.
+		// Every step keeps the text as it was when its pattern fails (backtrack limit, invalid
+		// UTF-8), so a post is never embedded empty.
+		$content = preg_replace_safe( '#<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>#is', '', $content );
 
 		// Strip shortcodes but keep internal caption text.
-		// Revert it if shortcodes are not balanced and preg_replace errors out.
-		$pre_content = $content;
-		$content     = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
-		if ( null === $content ) {
-			$content = $pre_content;
-		}
-
-		// Strip HTML entities.
-		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
+		$content = preg_replace_safe( '#\[.+\](.+)\[/.+\]#', '$1', $content );
 
 		// Replace HTML linebreaks with newlines.
-		$content = preg_replace( '#<br\s?/?>#', "\n\n", $content );
+		$content = preg_replace_safe( '#<br\s?/?>#i', "\n\n", $content );
+
+		$separator = $this->get_separator_pattern();
+
+		// Tables become Markdown, so each figure keeps its row and column labels.
+		$content = $this->tables_to_markdown( $content );
+
+		// Headings become Markdown heading lines, so chunks can follow the sections.
+		$content = $this->headings_to_markdown( $content, $separator );
+
+		// Keep text from separate elements apart, so table cells, list items, and chart
+		// labels do not run together ("2026" + "12" + "46" must not become "20261246").
+		$content = $this->separate_elements( $content, $separator );
 
 		// Strip all HTML tags.
 		$content = wp_strip_all_tags( $content );
 
+		// Decode entities after the tags are gone, so "&amp;" reads "&" instead of vanishing.
+		$content = html_entity_decode( $content, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		// Non-breaking and other Unicode spaces become plain spaces.
+		$content = preg_replace_safe( '/[\x{00A0}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]/u', ' ', $content );
+
 		return $content;
+	}
+
+	/**
+	 * Replace every HTML table with a Markdown table.
+	 *
+	 * The innermost tables are converted first, so a nested table ends up on one
+	 * line inside its outer table's cell.
+	 *
+	 * @since 2.6.0
+	 * @param string $content HTML.
+	 * @return string
+	 */
+	protected function tables_to_markdown( string $content ): string {
+		/**
+		 * Filters whether tables are turned into Markdown tables before embedding.
+		 *
+		 * @hook ep_embeddings_tables_as_markdown
+		 * @since 2.6.0
+		 * @param {bool} $enabled Whether to convert tables. Default true.
+		 * @return {bool} Whether to convert tables.
+		 */
+		if ( ! class_exists( '\DOMDocument' ) || ! apply_filters( 'ep_embeddings_tables_as_markdown', true ) || false === stripos( $content, '<table' ) ) {
+			return $content;
+		}
+
+		// Innermost table: no other "<table" between its start and its end.
+		$pattern = '#<table\b[^>]*>(?:(?!<table\b).)*?</table>#is';
+		$guard   = 0;
+
+		while ( $guard++ < 50 && preg_match( $pattern, $content ) ) {
+			$converted = preg_replace_callback_safe(
+				$pattern,
+				function ( $found ) {
+					return "\n\n" . $this->table_to_markdown( $found[0] ) . "\n\n";
+				},
+				$content
+			);
+
+			if ( $converted === $content ) {
+				break;
+			}
+
+			$content = $converted;
+		}
+
+		return $content;
+	}
+
+	/**
+	 * Convert one HTML table (without nested tables) to a Markdown table.
+	 *
+	 * The header is the `<thead>` row, or the first row when every cell is a `<th>`,
+	 * or else the first row. Cell text is escaped again as HTML, so the later steps
+	 * (stripping tags, decoding entities) turn it back into the same text.
+	 *
+	 * @since 2.6.0
+	 * @param string $html Table HTML.
+	 * @return string Markdown, or the plain text of the table if it has no rows.
+	 */
+	protected function table_to_markdown( string $html ): string {
+		$document = new \DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$loaded   = $document->loadHTML( '<?xml encoding="utf-8"?><html><body>' . $html . '</body></html>', LIBXML_NONET );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+
+		if ( ! $loaded ) {
+			return $html;
+		}
+
+		// DOM properties (parentNode, childNodes, nodeName, textContent) are camelCase.
+		// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+		$rows       = [];
+		$header_row = null;
+
+		foreach ( $document->getElementsByTagName( 'tr' ) as $tr ) {
+			$cells   = [];
+			$all_th  = true;
+			$in_head = $tr->parentNode && 'thead' === strtolower( $tr->parentNode->nodeName );
+
+			foreach ( $tr->childNodes as $cell ) {
+				$name = strtolower( $cell->nodeName );
+
+				if ( 'td' !== $name && 'th' !== $name ) {
+					continue;
+				}
+
+				$all_th  = $all_th && 'th' === $name;
+				$cells[] = $this->markdown_cell( $cell->textContent );
+			}
+
+			if ( ! $cells ) {
+				continue;
+			}
+
+			if ( null === $header_row && ( $in_head || $all_th ) ) {
+				$header_row = count( $rows );
+			}
+
+			$rows[] = $cells;
+		}
+
+		if ( ! $rows ) {
+			return $html;
+		}
+
+		$header = $rows[ $header_row ?? 0 ];
+		unset( $rows[ $header_row ?? 0 ] );
+
+		$columns = max( array_map( 'count', array_merge( [ $header ], $rows ) ) );
+		$line    = static function ( array $cells ) use ( $columns ) {
+			return '| ' . implode( ' | ', array_pad( $cells, $columns, '' ) ) . ' |';
+		};
+
+		$lines = [];
+		$title = $document->getElementsByTagName( 'caption' )->item( 0 );
+
+		if ( $title && '' !== $this->markdown_cell( $title->textContent ) ) {
+			$lines[] = $this->markdown_cell( $title->textContent );
+		}
+		// phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+
+		$lines[] = $line( $header );
+		$lines[] = $line( array_fill( 0, $columns, '---' ) );
+
+		foreach ( $rows as $cells ) {
+			$lines[] = $line( $cells );
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Cell text for a Markdown table: one line, pipes escaped, HTML-escaped.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Cell text (decoded).
+	 * @return string
+	 */
+	protected function markdown_cell( string $text ): string {
+		$text = trim( preg_replace_safe( '/\s+/u', ' ', $text ) );
+		$text = str_replace( '|', '\\|', $text );
+
+		return htmlspecialchars( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Replace every HTML heading with a Markdown heading line (`## Methodology`).
+	 *
+	 * Content headings are level 2 or deeper, whatever their tag: level 1 is kept for the
+	 * sections Labs writes around the content (`# Title`, `# Summary`, `# Content`).
+	 *
+	 * @since 2.6.0
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
+	 * @return string
+	 */
+	protected function headings_to_markdown( string $content, string $separator = '' ): string {
+		$separator = '' !== $separator ? $separator : $this->get_separator_pattern();
+
+		return preg_replace_callback_safe(
+			'#<h([1-6])\b[^>]*>(.*?)</h\1\s*>#is',
+			function ( $found ) use ( $separator ) {
+				$text = trim( preg_replace_safe( '/\s+/u', ' ', wp_strip_all_tags( $this->separate_elements( $found[2], $separator ) ) ) );
+
+				if ( '' === $text ) {
+					return "\n";
+				}
+
+				return "\n\n" . str_repeat( '#', max( 2, (int) $found[1] ) ) . ' ' . $text . "\n\n";
+			},
+			$content
+		);
+	}
+
+	/**
+	 * Put a separator at element boundaries before tags are stripped.
+	 *
+	 * Block-level elements get a new line; every other element gets a space, except the
+	 * inline formatting tags listed here, which sit inside words and sentences.
+	 *
+	 * @since 2.6.0
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
+	 * @return string
+	 */
+	protected function separate_elements( string $content, string $separator = '' ): string {
+		$block = 'address|article|aside|blockquote|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hgroup|hr|li|main|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul';
+
+		$content = preg_replace_safe( '#</?(?:' . $block . ')\b[^>]*>#i', "\n", $content );
+
+		return preg_replace_safe( '' !== $separator ? $separator : $this->get_separator_pattern(), ' ', $content );
+	}
+
+	/**
+	 * Pattern of the tags that get a space in separate_elements(): every tag but the
+	 * inline formatting ones.
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	protected function get_separator_pattern(): string {
+		/**
+		 * Filters the inline tags that join text without a separator when content is
+		 * prepared for embeddings. Every other tag gets a space.
+		 *
+		 * @hook ep_embeddings_inline_tags
+		 * @since 2.6.0
+		 * @param {array} $tags Tag names.
+		 * @return {array} Tag names.
+		 */
+		$inline = (array) apply_filters(
+			'ep_embeddings_inline_tags',
+			[ 'a', 'abbr', 'b', 'bdi', 'bdo', 'cite', 'code', 'del', 'dfn', 'em', 'i', 'ins', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'strong', 'time', 'u', 'var', 'wbr' ]
+		);
+		$inline = implode( '|', array_map( 'preg_quote', array_filter( array_map( 'strval', $inline ) ) ) );
+
+		return '' !== $inline
+			? '#<(?!/?(?:' . $inline . ')\b)/?[a-z][a-z0-9-]*\b[^>]*>#i'
+			: '#</?[a-z][a-z0-9-]*\b[^>]*>#i';
 	}
 
 	/**
