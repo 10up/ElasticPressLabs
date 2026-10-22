@@ -174,8 +174,9 @@ class Chat extends Feature implements ConnectionTestable {
 	 * Connects the feature with WordPress using hooks and/or filters.
 	 *
 	 * On every request: the post types (kept out of the index, and their comments out of other
-	 * comment queries) and the stale-job sweep. The rest only where Chat runs: wp-admin, REST,
-	 * cron, and WP-CLI, so a front-end page load does not build it.
+	 * comment queries), the stale-job sweep, and keeping the index schema cache current. The
+	 * rest only where Chat runs: wp-admin, REST, cron, and WP-CLI, so a front-end page load does
+	 * not build it.
 	 *
 	 * @return void
 	 */
@@ -188,6 +189,10 @@ class Chat extends Feature implements ConnectionTestable {
 
 		$reaper = new Reaper();
 		$reaper->setup();
+
+		// Terms can change on any request, and the schema the query writer reads must follow.
+		$index_schema = new Index_Schema();
+		$index_schema->setup();
 
 		// REST_REQUEST is only defined after `init`.
 		if ( is_admin() || wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
@@ -222,9 +227,6 @@ class Chat extends Feature implements ConnectionTestable {
 
 		$abilities = new Abilities();
 		$abilities->setup();
-
-		$index_schema = new Index_Schema();
-		$index_schema->setup();
 
 		$query_generator = new Query_Generator();
 		$query_generator->setup();
