@@ -212,6 +212,9 @@ function maybe_load_features() {
 	$vector_embeddings = new \ElasticPressLabs\Feature\VectorEmbeddings\VectorEmbeddings();
 	\ElasticPress\Features::factory()->register_feature( $vector_embeddings );
 
+	// Right after ElasticPress sets up the active features (init, priority 0).
+	add_action( 'init', [ $vector_embeddings, 'maybe_add_breaker_guard' ], 1 );
+
 	$semantic_search = new \ElasticPressLabs\Feature\SemanticSearch\SemanticSearch();
 	\ElasticPress\Features::factory()->register_feature( $semantic_search );
 

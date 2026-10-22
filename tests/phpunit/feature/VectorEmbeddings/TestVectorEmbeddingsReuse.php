@@ -250,6 +250,36 @@ class TestVectorEmbeddingsReuse extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test a sync clears a doc status message about vectors from an earlier version (written
+	 * while the feature was temporarily disabled).
+	 *
+	 * @since 2.6.0
+	 * @group vector-embeddings
+	 */
+	public function test_sync_clears_message_about_older_vectors() {
+		$post_id = self::factory()->post->create( [ 'post_content' => $this->content() ] );
+
+		Elasticsearch::factory()->index_document(
+			$this->get_index(),
+			'post',
+			[
+				'ID'                    => $post_id,
+				'ep_embeddings_control' => [
+					'is_processing' => false,
+					'errors'        => [ 'The vectors are from before this change.' ],
+				],
+			]
+		);
+
+		$this->index( $post_id );
+
+		$response = Elasticsearch::factory()->remote_request( $this->get_index() . "/_doc/{$post_id}?_source_includes=ep_embeddings_control" );
+		$control  = json_decode( wp_remote_retrieve_body( $response ), true )['_source']['ep_embeddings_control'];
+
+		$this->assertSame( [], $control['errors'] );
+	}
+
+	/**
 	 * Editing one section re-embeds only its chunk.
 	 *
 	 * @group vector-embeddings

@@ -146,6 +146,49 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * While the feature is on but temporarily disabled after failures, keep documents from
+	 * losing their vectors.
+	 *
+	 * The feature is not set up then, so without this a sync or a post save that starts in
+	 * that window would rewrite every document without its chunks, silently. Instead, posts
+	 * that should be embedded are indexed with the chunks already stored for them (see
+	 * Post::keep_stored_chunks()), and a new index still gets the `chunks` mapping.
+	 *
+	 * Hooked on `init` right after ElasticPress sets up the active features.
+	 *
+	 * @since 2.6.0
+	 */
+	public function maybe_add_breaker_guard() {
+		if ( ! $this->is_temporarily_disabled_after_failures() || 'external' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return;
+		}
+
+		$indexable                = $this->create_indexables()['post'];
+		$indexable->settings_page = new Settings();
+
+		add_filter( 'ep_post_mapping', [ $indexable, 'add_post_vector_field_mapping' ] );
+		add_filter( 'ep_post_sync_args_post_prepare_meta', [ $indexable, 'keep_stored_chunks' ], 10, 2 );
+		add_filter( 'ep_doc_status', [ $indexable, 'maybe_set_doc_status' ], 10, 3 );
+	}
+
+	/**
+	 * Whether the feature is turned on in the settings but disabled for now after too many
+	 * embedding failures, and for nothing else (like an Elasticsearch version that is too old).
+	 *
+	 * @since 2.6.0
+	 * @return bool
+	 */
+	public function is_temporarily_disabled_after_failures(): bool {
+		$settings = Utils\get_option( 'ep_feature_settings', [] );
+
+		if ( empty( $settings[ $this->slug ]['active'] ) || ! $this->should_disable_after_failures() ) {
+			return false;
+		}
+
+		return \ElasticPress\FeatureRequirementsStatus::FORCE_DISABLED !== (int) $this->requirements_status()->code;
+	}
+
+	/**
 	 * Add the feature's fields to existing indices when the feature is activated.
 	 *
 	 * An index created before the feature was active has none of them.
