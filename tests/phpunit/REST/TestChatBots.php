@@ -273,6 +273,34 @@ class TestChatBots extends \ElasticPressLabsTest\BaseTestCase {
 	}
 
 	/**
+	 * Test a new bot without a mode answers in the background, and an update without a mode
+	 * keeps the bot's own.
+	 *
+	 * @group rest
+	 * @group chat
+	 */
+	public function test_mode_defaults() {
+		wp_set_current_user( $this->ep_factory->user->create( [ 'role' => 'administrator' ] ) );
+
+		$created = $this->controller->create_item(
+			$this->request( 'POST', '/elasticpress-labs/v1/chat-bots', [ 'name' => 'Researcher' ] )
+		)->get_data();
+
+		$this->assertSame( Bots::MODE_WP_ASYNC, $created['execution_mode'] );
+
+		$bot_id = $this->bots->create( 'Waits', Bots::MODE_SYNC );
+		$params = [
+			'id'   => $bot_id,
+			'name' => 'Still waits',
+		];
+
+		$updated = $this->controller->update_item( $this->request( 'PUT', '/elasticpress-labs/v1/chat-bots/' . $bot_id, $params ) );
+
+		$this->assertSame( 'Still waits', $updated['name'] );
+		$this->assertSame( Bots::MODE_SYNC, $updated['execution_mode'] );
+	}
+
+	/**
 	 * Test missing names are rejected.
 	 *
 	 * @group rest

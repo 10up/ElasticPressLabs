@@ -248,7 +248,7 @@ class ChatBots {
 	public function create_item( \WP_REST_Request $request ) {
 		$bot_id = $this->bots->create(
 			(string) $request['name'],
-			(string) ( $request['execution_mode'] ?? Bots::MODE_SYNC ),
+			(string) ( $request['execution_mode'] ?? Bots::DEFAULT_MODE ),
 			$this->get_settings( $request )
 		);
 
@@ -269,10 +269,15 @@ class ChatBots {
 	 * @return array|\WP_Error
 	 */
 	public function update_item( \WP_REST_Request $request ) {
+		$current = $this->bots->get( (int) $request['id'] );
+
+		// Without a mode, the bot keeps its own.
+		$mode = $request['execution_mode'] ?? ( is_wp_error( $current ) ? null : $current['execution_mode'] );
+
 		$updated = $this->bots->update(
 			(int) $request['id'],
 			(string) $request['name'],
-			(string) ( $request['execution_mode'] ?? Bots::MODE_SYNC ),
+			(string) ( $mode ?? Bots::DEFAULT_MODE ),
 			$this->get_settings( $request )
 		);
 

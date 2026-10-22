@@ -485,4 +485,36 @@ class TestChatJobs extends \WP_UnitTestCase {
 		$this->assertSame( Storage::STATUS_ERROR, $this->storage->get_status( $job['ids']['question_id'], true ) );
 		$this->assertSame( [ [ 'Gate bug.', $job['ids']['question_id'] ] ], $seen );
 	}
+
+	/**
+	 * Test a question answered while the person waits gets a deadline, and a background one
+	 * does not.
+	 *
+	 * @group chat
+	 */
+	public function test_sync_questions_get_a_deadline() {
+		$this->stub_pipeline();
+
+		$deadlines = [];
+
+		add_filter(
+			'ep_chat_verify_answer',
+			static function ( $context ) use ( &$deadlines ) {
+				$deadlines[] = $context['deadline'];
+
+				return $context;
+			}
+		);
+
+		$job = $this->accepted_job();
+		( new Sync_Runner() )->dispatch( $job['question'], [], $job['bot'], $job['ids'] );
+
+		$this->assertEqualsWithDelta( microtime( true ) + 45, $deadlines[0], 5 );
+
+		$job = $this->accepted_job( Bots::MODE_WP_ASYNC );
+		$this->storage->set_job_context( $job['ids']['question_id'], $job['bot']['id'], [] );
+		( new Job_Processor() )->process( $job['ids']['question_id'] );
+
+		$this->assertNull( $deadlines[1] );
+	}
 }

@@ -88,16 +88,17 @@ class TestChatBots extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test invalid execution modes fall back to sync.
+	 * Test invalid execution modes fall back to the default, in the background.
 	 *
 	 * @group chat
 	 */
-	public function test_invalid_execution_mode_falls_back_to_sync() {
+	public function test_invalid_execution_mode_falls_back_to_default() {
 		$bot_id = $this->bots->create( 'Fallback', 'nope' );
 
 		$bot = $this->bots->get( $bot_id );
 
-		$this->assertSame( Bots::MODE_SYNC, $bot['execution_mode'] );
+		$this->assertSame( Bots::MODE_WP_ASYNC, Bots::DEFAULT_MODE );
+		$this->assertSame( Bots::DEFAULT_MODE, $bot['execution_mode'] );
 	}
 
 	/**
@@ -110,7 +111,7 @@ class TestChatBots extends \WP_UnitTestCase {
 
 		$bot = $this->bots->get( $bot_id );
 
-		$this->assertSame( Bots::MODE_SYNC, $bot['execution_mode'] );
+		$this->assertSame( Bots::DEFAULT_MODE, $bot['execution_mode'] );
 	}
 
 	/**
@@ -179,7 +180,7 @@ class TestChatBots extends \WP_UnitTestCase {
 
 		$this->assertCount( 1, $all );
 		$this->assertSame( Bots::DEFAULT_NAME, $all[0]['name'] );
-		$this->assertSame( Bots::MODE_SYNC, $all[0]['execution_mode'] );
+		$this->assertSame( Bots::DEFAULT_MODE, $all[0]['execution_mode'] );
 	}
 
 	/**

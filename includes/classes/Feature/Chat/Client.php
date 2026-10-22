@@ -44,13 +44,14 @@ class Client {
 	 * Credentials come from WordPress Connectors via core's AI client.
 	 * This class does not store or read API keys.
 	 *
-	 * @since 2.6.0 Takes `$instruction`.
+	 * @since 2.6.0 Takes `$instruction` and `$timeout`.
 	 * @param string      $question    User question.
 	 * @param array       $history     Prior turns with `role` and `content`.
 	 * @param array       $passages    Retrieved passages to ground the reply.
 	 * @param array       $bot         Selected chat bot.
 	 * @param string|null $instruction System instruction, as the "Before writing the answer"
 	 *                                 gates left it; null builds it (see get_system_instruction()).
+	 * @param int|null    $timeout     Seconds the model call can take, or null for the client's.
 	 * @return string|\WP_Error
 	 */
 	public function generate_text(
@@ -58,7 +59,8 @@ class Client {
 		array $history = [],
 		array $passages = [],
 		array $bot = [],
-		?string $instruction = null
+		?string $instruction = null,
+		?int $timeout = null
 	) {
 		/**
 		 * Filters the generated Chat reply before the AI client runs.
@@ -82,16 +84,19 @@ class Client {
 
 		$instruction = $instruction ?? $this->get_system_instruction( $question, $passages, $bot );
 
-		$result = Models::generate(
-			$question,
-			[
-				'system'        => $instruction,
-				'history'       => $this->to_history_messages( $history ),
-				'models'        => [ Models::parse( (string) Settings::get( 'answer_model', $bot ) ) ],
-				'error_code'    => 'ep_chat_ai_failed',
-				'error_message' => esc_html__( 'The assistant could not generate a reply.', 'elasticpress-labs' ),
-			]
-		);
+		$options = [
+			'system'        => $instruction,
+			'history'       => $this->to_history_messages( $history ),
+			'models'        => [ Models::parse( (string) Settings::get( 'answer_model', $bot ) ) ],
+			'error_code'    => 'ep_chat_ai_failed',
+			'error_message' => esc_html__( 'The assistant could not generate a reply.', 'elasticpress-labs' ),
+		];
+
+		if ( null !== $timeout ) {
+			$options['timeout'] = $timeout;
+		}
+
+		$result = Models::generate( $question, $options );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;

@@ -10,6 +10,7 @@ namespace ElasticPressLabs\Feature\Chat\Gates;
 
 use ElasticPressLabs\Feature\Chat\Figures;
 use ElasticPressLabs\Feature\Chat\Models;
+use ElasticPressLabs\Feature\Chat\Pipeline;
 use ElasticPressLabs\Feature\Chat\Settings;
 use ElasticPressLabs\Feature\Chat\Steps;
 use ElasticPressLabs\Feature\Chat\Text;
@@ -197,6 +198,15 @@ class Claim_Verifier_Gate extends Base_Gate {
 	 * @return bool|null True when supported, false when not, null when the check failed.
 	 */
 	protected function get_verdict( array $context ): ?bool {
+		$time_left = Pipeline::get_time_left( $context['deadline'] ?? null );
+
+		// Someone is waiting and the time is up: fail closed, as on a timeout.
+		if ( null !== $time_left && $time_left < 1 ) {
+			$this->report_failure( new \WP_Error( 'ep_chat_verifier_no_time', 'No time left to check the answer.' ), $context );
+
+			return null;
+		}
+
 		$messages = $this->get_messages( $context );
 
 		/**
@@ -229,7 +239,7 @@ class Claim_Verifier_Gate extends Base_Gate {
 				'models'      => $this->get_models( $context ),
 				'temperature' => 0.0,
 				'max_tokens'  => $this->get_max_tokens(),
-				'timeout'     => $this->get_timeout(),
+				'timeout'     => $this->get_timeout( $time_left ),
 				'json_schema' => [
 					'type'       => 'object',
 					'properties' => [ 'supported' => [ 'type' => 'boolean' ] ],
@@ -440,11 +450,13 @@ class Claim_Verifier_Gate extends Base_Gate {
 	}
 
 	/**
-	 * Seconds the verifier call may take.
+	 * Seconds the verifier call may take: its timeout, or the time left for the answer when
+	 * that is shorter.
 	 *
+	 * @param float|null $time_left Seconds left for the answer, or null without a limit.
 	 * @return float
 	 */
-	protected function get_timeout(): float {
+	protected function get_timeout( ?float $time_left = null ): float {
 		/**
 		 * Filters how long the claim verifier waits for its model.
 		 *
@@ -453,7 +465,9 @@ class Claim_Verifier_Gate extends Base_Gate {
 		 * @param {float} $timeout Seconds. Default 10.
 		 * @return {float} Filtered seconds.
 		 */
-		return max( 1.0, (float) apply_filters( 'ep_chat_claim_verifier_timeout', 10.0 ) );
+		$timeout = max( 1.0, (float) apply_filters( 'ep_chat_claim_verifier_timeout', 10.0 ) );
+
+		return null === $time_left ? $timeout : max( 1.0, min( $timeout, $time_left ) );
 	}
 
 	/**

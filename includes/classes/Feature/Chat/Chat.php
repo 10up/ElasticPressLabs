@@ -173,25 +173,43 @@ class Chat extends Feature implements ConnectionTestable {
 	/**
 	 * Connects the feature with WordPress using hooks and/or filters.
 	 *
+	 * On every request: the post types (kept out of the index, and their comments out of other
+	 * comment queries) and the stale-job sweep. The rest only where Chat runs: wp-admin, REST,
+	 * cron, and WP-CLI, so a front-end page load does not build it.
+	 *
 	 * @return void
 	 */
 	public function setup() {
-		$admin = new Admin();
-		$admin->setup();
-
 		$storage = new Storage();
 		$storage->setup();
 
 		$bots = new Bots();
 		$bots->setup();
 
+		$reaper = new Reaper();
+		$reaper->setup();
+
+		// REST_REQUEST is only defined after `init`.
+		if ( is_admin() || wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			$this->setup_runtime();
+		} else {
+			add_action( 'rest_api_init', [ $this, 'setup_runtime' ], 0 );
+		}
+	}
+
+	/**
+	 * Connects the parts of the feature that answer questions and show the screens.
+	 *
+	 * @return void
+	 */
+	public function setup_runtime() {
+		$admin = new Admin();
+		$admin->setup();
+
 		Gates::registry();
 
 		$dispatcher = new Dispatcher();
 		$dispatcher->setup();
-
-		$reaper = new Reaper();
-		$reaper->setup();
 
 		$summarizer = new Summarizer();
 		$summarizer->setup();

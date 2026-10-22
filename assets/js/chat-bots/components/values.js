@@ -100,7 +100,7 @@ export const toFormValues = (bot) => {
 
 	return {
 		name: bot?.name ?? '',
-		executionMode: bot?.execution_mode ?? 'sync',
+		executionMode: bot?.execution_mode ?? 'wp_async',
 		rerankEnabled: Boolean(bot?.rerank_enabled),
 		optionalGates,
 		overrides: toOverrideValues(bot || {}),

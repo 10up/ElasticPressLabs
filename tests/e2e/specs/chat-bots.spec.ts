@@ -80,11 +80,14 @@ test.describe('Chat Bots', { tag: '@chat' }, () => {
 
 		await expect(form.getByRole('button', { name: 'Create chat bot' })).toBeDisabled();
 		await form.getByLabel('Name (required)').fill('Researcher');
-		await expect(form.getByRole('radio', { name: 'While the person waits' })).toBeChecked();
+		// A new bot answers in the background by default.
+		await expect(form.getByRole('radio', { name: 'In the background' })).toBeChecked();
+		await expect(form.getByRole('radio', { name: 'WP Async' })).toBeChecked();
+		await expect(form.getByRole('radio', { name: 'WP Cron' })).toBeVisible();
+		await form.getByRole('radio', { name: 'While the person waits' }).check();
 		await expect(form.getByRole('radio', { name: 'WP Async' })).toHaveCount(0);
 		await form.getByRole('radio', { name: 'In the background' }).check();
 		await expect(form.getByRole('radio', { name: 'WP Async' })).toBeChecked();
-		await expect(form.getByRole('radio', { name: 'WP Cron' })).toBeVisible();
 		await expect(form.getByRole('group', { name: /Answer checks/ })).toHaveCount(0);
 		await form.getByRole('button', { name: 'Create chat bot' }).click();
 		await expect(snackbar('Chat bot created.')).toBeVisible();
@@ -161,7 +164,7 @@ test.describe('Chat Bots', { tag: '@chat' }, () => {
 		await form.getByLabel('Name (required)').fill('Analyst');
 		await form.getByRole('button', { name: 'Create chat bot' }).click();
 		await expect(snackbar('Chat bot created.')).toBeVisible();
-		await expect(toggleRow('Analyst')).toContainText('Waits for the answer');
+		await expect(toggleRow('Analyst')).toContainText('In the background (WP Async)');
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=ep-ai-chat');
 		await expect(loggedInPage.getByLabel('Chat bot')).toContainText('Editor');
@@ -178,7 +181,7 @@ test.describe('Chat Bots', { tag: '@chat' }, () => {
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=ep-ai-chat');
 		await expect(loggedInPage.getByLabel('Chat bot').locator('option:checked')).toHaveText(
-			/Analyst \(Sync\)/,
+			/Analyst \(WP Async\)/,
 		);
 
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress-chat-bots');

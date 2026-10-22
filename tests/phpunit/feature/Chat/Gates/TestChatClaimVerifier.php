@@ -93,12 +93,13 @@ class TestChatClaimVerifier extends \WP_UnitTestCase {
 	 * @param string $answer   Answer from the fake model.
 	 * @param string $question Question.
 	 * @param array  $gates    Optional gates on for the bot.
+	 * @param ?float $deadline When the answer must be ready, or null.
 	 * @return array|\WP_Error
 	 */
-	protected function ask( string $answer, string $question = 'Which country rates the U.S. highest?', array $gates = [ 'claim_verifier' ] ) {
+	protected function ask( string $answer, string $question = 'Which country rates the U.S. highest?', array $gates = [ 'claim_verifier' ], ?float $deadline = null ) {
 		$this->answer = $answer;
 
-		return ( new Pipeline() )->run(
+		return ( new Pipeline() )->set_deadline( $deadline )->run(
 			$question,
 			[],
 			[
@@ -214,6 +215,42 @@ class TestChatClaimVerifier extends \WP_UnitTestCase {
 		$this->assertSame( 'ep_chat_verifier_failed', $result->get_error_code() );
 		$this->assertSame( 'The answer could not be checked. Please try again.', $result->get_error_message() );
 		$this->assertSame( [ 'timeout' ], $failures );
+	}
+
+	/**
+	 * With a deadline, the check gets the time left; with no time left, the answer is not shown
+	 * and the reader gets the same error to retry, without calling the model.
+	 *
+	 * @group chat
+	 */
+	public function test_deadline() {
+		$failures = [];
+		add_action(
+			'ep_chat_claim_verifier_failed',
+			static function ( $error ) use ( &$failures ) {
+				$failures[] = $error->get_error_code();
+			}
+		);
+
+		$answer = 'Poland gives the U.S. its highest rating: 93%.';
+
+		$this->assertSame( 'done', $this->ask( $answer, 'Which country rates the U.S. highest?', [ 'claim_verifier' ], microtime( true ) + 30 )['status'] );
+		$this->assertCount( 1, $this->calls );
+
+		$result = $this->ask( $answer, 'Which country rates the U.S. highest?', [ 'claim_verifier' ], microtime( true ) - 1 );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'ep_chat_verifier_failed', $result->get_error_code() );
+		$this->assertSame( [ 'ep_chat_verifier_no_time' ], $failures );
+		$this->assertCount( 1, $this->calls, 'The model was not called.' );
+
+		$timeout = new \ReflectionMethod( Claim_Verifier_Gate::class, 'get_timeout' );
+		$timeout->setAccessible( true );
+		$gate = new Claim_Verifier_Gate();
+
+		$this->assertSame( 10.0, $timeout->invoke( $gate, null ) );
+		$this->assertSame( 10.0, $timeout->invoke( $gate, 30.0 ) );
+		$this->assertSame( 3.5, $timeout->invoke( $gate, 3.5 ) );
 	}
 
 	/**

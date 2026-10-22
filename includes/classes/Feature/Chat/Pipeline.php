@@ -96,6 +96,56 @@ class Pipeline {
 	protected $retrieved = [];
 
 	/**
+	 * When the answer must be ready (a `microtime( true )` timestamp), or null for no limit.
+	 *
+	 * @var float|null
+	 */
+	protected $deadline = null;
+
+	/**
+	 * Limit how long the answer and its claim check can take, for a question someone waits on.
+	 *
+	 * @param float|null $deadline `microtime( true )` timestamp, or null for no limit.
+	 * @return self
+	 */
+	public function set_deadline( ?float $deadline ): self {
+		$this->deadline = $deadline;
+
+		return $this;
+	}
+
+	/**
+	 * Seconds a question answered while the person waits (sync mode) may take, counted from the
+	 * start of the pipeline. Under the 55 seconds the Ask screen waits for the request.
+	 *
+	 * @return float
+	 */
+	public static function get_sync_budget(): float {
+		/**
+		 * Filters how long a question answered while the person waits (sync mode) may take.
+		 * Writing the answer gets the time left; the claim check gets its own timeout or the
+		 * time left, whichever is shorter, and with no time left the answer is not shown and the
+		 * reader can retry. Background modes have no such limit.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_sync_deadline
+		 * @param {float} $seconds Seconds. Default 45.
+		 * @return {float} Filtered seconds.
+		 */
+		return max( 1.0, (float) apply_filters( 'ep_chat_sync_deadline', 45.0 ) );
+	}
+
+	/**
+	 * Seconds left before a deadline (0 when it passed), or null without one.
+	 *
+	 * @param float|null $deadline `microtime( true )` timestamp, or null.
+	 * @return float|null
+	 */
+	public static function get_time_left( ?float $deadline ): ?float {
+		return null === $deadline ? null : max( 0.0, $deadline - microtime( true ) );
+	}
+
+	/**
 	 * Run the pipeline for one question (in the request, or in a background job).
 	 *
 	 * @param string $question User question.
@@ -121,6 +171,7 @@ class Pipeline {
 			'passages' => [],
 			'prompt'   => '',
 			'content'  => '',
+			'deadline' => $this->deadline,
 		];
 
 		/**
@@ -248,7 +299,16 @@ class Pipeline {
 
 		Steps::report( Steps::SYNTHESIZE );
 
-		$result = $client->generate_text( (string) $context['question'], $history, $passages, $bot, (string) $context['prompt'] );
+		$time_left = self::get_time_left( $this->deadline );
+		$result    = $client->generate_text(
+			(string) $context['question'],
+			$history,
+			$passages,
+			$bot,
+			(string) $context['prompt'],
+			// At least a few seconds, so a late start still gets one try.
+			null === $time_left ? null : (int) max( 5, ceil( $time_left ) )
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return new \WP_Error(

@@ -173,6 +173,35 @@ class TestChatAbilities extends BaseTestCase {
 	}
 
 	/**
+	 * An ask waits 25 seconds by default for an answer running elsewhere, never past PHP's time
+	 * limit.
+	 *
+	 * @group chat
+	 */
+	public function test_wait_seconds() {
+		$abilities = new Abilities();
+		$limit     = ini_get( 'max_execution_time' );
+
+		try {
+			ini_set( 'max_execution_time', '0' ); // phpcs:ignore WordPress.PHP.IniSet.max_execution_time_Disallowed
+			$this->assertSame( 25, $abilities->get_wait_seconds() );
+
+			add_filter(
+				'ep_chat_ability_wait',
+				static function () {
+					return 90;
+				}
+			);
+			$this->assertSame( 90, $abilities->get_wait_seconds() );
+
+			ini_set( 'max_execution_time', '30' ); // phpcs:ignore WordPress.PHP.IniSet.max_execution_time_Disallowed
+			$this->assertSame( 25, $abilities->get_wait_seconds() );
+		} finally {
+			ini_set( 'max_execution_time', (string) $limit ); // phpcs:ignore WordPress.PHP.IniSet.max_execution_time_Disallowed
+		}
+	}
+
+	/**
 	 * Chat's REST routes (Chat is not turned on in tests).
 	 */
 	protected function register_routes() {

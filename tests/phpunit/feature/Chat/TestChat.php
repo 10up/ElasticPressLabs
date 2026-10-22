@@ -112,9 +112,9 @@ class TestChat extends \WP_UnitTestCase {
 		$user->add_cap( Utils\get_capability( 'chat' ) );
 		wp_set_current_user( $user_id );
 
+		set_current_screen( 'dashboard' );
 		$this->get_feature()->setup();
 
-		set_current_screen( 'dashboard' );
 		do_action( 'admin_menu' );
 
 		global $menu, $submenu;
@@ -159,9 +159,9 @@ class TestChat extends \WP_UnitTestCase {
 		$user_id = $this->factory()->user->create( [ 'role' => 'author' ] );
 		wp_set_current_user( $user_id );
 
+		set_current_screen( 'dashboard' );
 		$this->get_feature()->setup();
 
-		set_current_screen( 'dashboard' );
 		do_action( 'admin_menu' );
 
 		global $menu;
@@ -170,6 +170,32 @@ class TestChat extends \WP_UnitTestCase {
 		$this->assertContains( Admin::PAGE_SLUG, $slugs );
 		$this->assertTrue( current_user_can( 'edit_posts' ) );
 		$this->assertFalse( current_user_can( Utils\get_capability( 'chat' ) ) );
+	}
+
+	/**
+	 * Test a front-end request only gets the post types and the sweep; the rest waits for a REST
+	 * request, and wp-admin gets it right away.
+	 *
+	 * @group chat
+	 */
+	public function test_setup_skips_the_front_end() {
+		$feature = $this->get_feature();
+		$feature->setup();
+
+		$this->assertNotFalse( has_filter( 'ep_indexable_post_types' ) );
+		$this->assertNotFalse( has_action( 'pre_get_comments' ) );
+		$this->assertFalse( has_action( 'ep_chat_question_answered' ) );
+		$this->assertSame( 0, has_action( 'rest_api_init', [ $feature, 'setup_runtime' ] ) );
+
+		$feature->setup_runtime();
+
+		$this->assertNotFalse( has_action( 'ep_chat_question_answered' ) );
+
+		remove_all_actions( 'ep_chat_question_answered' );
+		set_current_screen( 'dashboard' );
+		$this->get_feature()->setup();
+
+		$this->assertNotFalse( has_action( 'ep_chat_question_answered' ) );
 	}
 
 	/**

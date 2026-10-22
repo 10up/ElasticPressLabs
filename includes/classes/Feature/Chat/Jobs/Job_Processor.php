@@ -136,7 +136,8 @@ class Job_Processor {
 		add_action( 'ep_chat_step', $track );
 
 		try {
-			$result = ( new Pipeline() )->run( $question, $history, $bot );
+			$deadline = Job_Handle::MODE_SYNC === $mode ? microtime( true ) + Pipeline::get_sync_budget() : null;
+			$result   = ( new Pipeline() )->set_deadline( $deadline )->run( $question, $history, $bot );
 		} catch ( \Throwable $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( sprintf( 'ElasticPress Labs AI Chat: question %d failed: %s', $question_id, $e ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

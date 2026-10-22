@@ -420,21 +420,39 @@ class Abilities {
 	 * @return void
 	 */
 	protected function wait( Storage $storage, int $question_id ) {
-		/**
-		 * Filters how long an ask through the Chat ability waits when it joins the same question
-		 * already running elsewhere (for example started from Ask). Past it, the ability returns
-		 * `queued` with the IDs, and the answer is in Chat history.
-		 *
-		 * @since 2.6.0
-		 * @hook ep_chat_ability_wait
-		 * @param {int} $seconds Seconds. Default 90.
-		 * @return {int} Filtered seconds.
-		 */
-		$deadline = time() + max( 0, (int) apply_filters( 'ep_chat_ability_wait', 90 ) );
+		$deadline = time() + $this->get_wait_seconds();
 
 		while ( time() < $deadline && in_array( $storage->get_status( $question_id, true ), $storage->get_active_statuses(), true ) ) {
 			sleep( 1 );
 		}
+	}
+
+	/**
+	 * How long an ask waits for an answer running elsewhere. The request holds a PHP worker
+	 * meanwhile, so never longer than PHP lets the request run, minus a margin to reply.
+	 *
+	 * @return int Seconds.
+	 */
+	public function get_wait_seconds(): int {
+		/**
+		 * Filters how long an ask through the Chat ability waits when it joins the same question
+		 * already running elsewhere (for example started from Ask). Past it, the ability returns
+		 * `queued` with the IDs, and the answer is in Chat history. Never longer than
+		 * `max_execution_time` minus 5 seconds.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_ability_wait
+		 * @param {int} $seconds Seconds. Default 25.
+		 * @return {int} Filtered seconds.
+		 */
+		$seconds = max( 0, (int) apply_filters( 'ep_chat_ability_wait', 25 ) );
+		$limit   = (int) ini_get( 'max_execution_time' );
+
+		if ( $limit > 0 ) {
+			$seconds = min( $seconds, max( 0, $limit - 5 ) );
+		}
+
+		return $seconds;
 	}
 
 	/**

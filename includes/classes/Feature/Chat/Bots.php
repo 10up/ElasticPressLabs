@@ -77,6 +77,14 @@ class Bots {
 	public const MODE_WP_CRON = 'wp_cron';
 
 	/**
+	 * Mode of a new chat bot: in the background, so a slow model never runs into the request's
+	 * time limits.
+	 *
+	 * @var string
+	 */
+	public const DEFAULT_MODE = self::MODE_WP_ASYNC;
+
+	/**
 	 * Default bot title created on feature activation.
 	 *
 	 * @var string
@@ -221,7 +229,7 @@ class Bots {
 	public function sanitize_execution_mode( string $mode ): string {
 		return in_array( $mode, $this->allowed_execution_modes(), true )
 			? $mode
-			: self::MODE_SYNC;
+			: self::DEFAULT_MODE;
 	}
 
 	/**
@@ -232,7 +240,7 @@ class Bots {
 	 * @param array  $settings        Optional re-ranker settings.
 	 * @return int|\WP_Error
 	 */
-	public function create( string $name, string $execution_mode = self::MODE_SYNC, array $settings = [] ) {
+	public function create( string $name, string $execution_mode = self::DEFAULT_MODE, array $settings = [] ) {
 		$valid = $this->validate_settings( $settings );
 
 		if ( is_wp_error( $valid ) ) {
@@ -450,7 +458,7 @@ class Bots {
 			return 0;
 		}
 
-		return $this->create( __( 'Default', 'elasticpress-labs' ), self::MODE_SYNC );
+		return $this->create( __( 'Default', 'elasticpress-labs' ), self::DEFAULT_MODE );
 	}
 
 	/**
