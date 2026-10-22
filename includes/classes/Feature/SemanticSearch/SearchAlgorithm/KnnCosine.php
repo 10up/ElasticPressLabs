@@ -75,8 +75,9 @@ class KnnCosine extends SearchAlgorithm {
 					'must' => [
 						[
 							'nested' => [
-								'path'  => 'chunks',
-								'query' => [
+								'path'       => 'chunks',
+								'inner_hits' => $this->get_chunks_inner_hits(),
+								'query'      => [
 									'script_score' => [
 										'query'  => [
 											'match_all' => (object) [],
