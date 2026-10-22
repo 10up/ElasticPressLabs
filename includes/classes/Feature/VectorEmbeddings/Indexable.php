@@ -308,23 +308,56 @@ abstract class Indexable {
 	/**
 	 * Add the embedding data to the post vector sync args.
 	 *
-	 * @param array $args       The current sync args (an Elasticsearch document)
-	 * @param array $embeddings The embeddings to add to the sync args
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$chunk_items` parameter.
+	 * @param array $args        The current sync args (an Elasticsearch document)
+	 * @param array $embeddings  The embeddings to add to the sync args
+	 * @param array $chunk_items Optional. The chunks the embeddings were made from, in the same
+	 *                           order: `[ 'text' => string, 'type' => string ]` each.
 	 * @return array
 	 */
-	public function add_chunks_field_value( array $args, array $embeddings ): array {
+	public function add_chunks_field_value( array $args, array $embeddings, array $chunk_items = [] ): array {
 		// If we still don't have embeddings, return early.
 		if ( empty( $embeddings ) ) {
 			return $args;
 		}
 
+		// Only pair texts with vectors when every vector has its chunk.
+		$chunk_items = count( $chunk_items ) === count( $embeddings ) ? array_values( $chunk_items ) : [];
+
+		/**
+		 * Filters whether each chunk's text is stored with its vector.
+		 *
+		 * The text is stored in `_source` only (it is not searchable), and adds to the index
+		 * size roughly as much as the post content. Without it, semantic search returns no
+		 * matching chunks, and AI Chat has no passages to answer from.
+		 *
+		 * @hook ep_embeddings_store_chunk_text
+		 * @since 2.6.0
+		 * @param {bool}  $store       Whether to store the text. Default true.
+		 * @param {array} $args        The Elasticsearch document.
+		 * @param {array} $chunk_items The chunks: `text` and `type` each.
+		 * @return {bool} New value.
+		 */
+		$store_text = (bool) apply_filters( 'ep_embeddings_store_chunk_text', true, $args, $chunk_items );
+
 		// Add the embeddings data to the sync args.
 		$args['chunks'] = [];
 
-		foreach ( $embeddings as $embedding ) {
-			$args['chunks'][] = [
+		foreach ( array_values( $embeddings ) as $index => $embedding ) {
+			$chunk = [
 				'vector' => array_map( 'floatval', $embedding ),
 			];
+
+			if ( isset( $chunk_items[ $index ] ) ) {
+				if ( $store_text ) {
+					$chunk['text'] = (string) ( $chunk_items[ $index ]['text'] ?? '' );
+				}
+
+				$chunk['type'] = (string) ( $chunk_items[ $index ]['type'] ?? '' );
+			}
+
+			$args['chunks'][] = $chunk;
 		}
 
 		return $args;

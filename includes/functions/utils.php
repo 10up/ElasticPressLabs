@@ -276,3 +276,24 @@ function preg_replace_callback_safe( string $pattern, callable $callback, string
 
 	return null === $result ? $subject : $result;
 }
+
+/**
+ * `preg_split()` that returns the whole subject as the only piece when the pattern fails,
+ * instead of `false`.
+ *
+ * @since 2.6.0
+ * @param string $pattern Pattern.
+ * @param string $subject Subject.
+ * @param int    $limit   Limit.
+ * @param int    $flags   Flags.
+ * @return string[]
+ */
+function preg_split_safe( string $pattern, string $subject, int $limit = -1, int $flags = 0 ): array {
+	$result = preg_split( $pattern, $subject, $limit, $flags );
+
+	if ( false !== $result ) {
+		return $result;
+	}
+
+	return ( $flags & PREG_SPLIT_NO_EMPTY ) && '' === $subject ? [] : [ $subject ];
+}

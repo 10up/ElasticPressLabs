@@ -650,11 +650,21 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Normalizes content into plain text.
 	 *
-	 * @param string $content Content to normalize.
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$apply_the_content` parameter.
+	 * @param string $content           Content to normalize.
+	 * @param bool   $apply_the_content Optional. Whether to run the `the_content` filters (blocks,
+	 *                                  shortcodes, embeds). Default true. Without them, shortcodes
+	 *                                  are removed without running.
 	 * @return string
 	 */
-	public function normalize_content( string $content = '' ): string {
-		$content = (string) apply_filters( 'the_content', $content );
+	public function normalize_content( string $content = '', bool $apply_the_content = true ): string {
+		$content = $apply_the_content ? (string) apply_filters( 'the_content', $content ) : strip_shortcodes( $content );
+
+		// Replace bytes that are not valid UTF-8, so the patterns below (with the `u` modifier) work.
+		if ( function_exists( 'mb_scrub' ) ) {
+			$content = mb_scrub( $content, 'UTF-8' );
+		}
 
 		// Remove code and markup that is never read as text (scripts, structured data, styles),
 		// with its contents: the later steps replace tags with separators, after which
@@ -914,34 +924,72 @@ class VectorEmbeddings extends Feature {
 	}
 
 	/**
+	 * How content is split into chunks.
+	 *
+	 * - `paragraphs` (default): at paragraph and section boundaries, see Chunker.
+	 * - `words`: fixed windows of words with an overlap (chunk_content()), as before 2.6.0.
+	 *
+	 * ElasticPress.io chunks content on its side, so it always gets the `words` path
+	 * (which sends the whole content).
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	public function get_chunking_strategy(): string {
+		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return 'words';
+		}
+
+		/**
+		 * Filter how content is split into chunks.
+		 *
+		 * @hook ep_embeddings_chunking_strategy
+		 * @since 2.6.0
+		 * @param {string}           $strategy `paragraphs` (default) or `words`.
+		 * @param {VectorEmbeddings} $feature  Feature instance.
+		 * @return {string} New strategy.
+		 */
+		$strategy = apply_filters( 'ep_embeddings_chunking_strategy', 'paragraphs', $this );
+
+		return 'words' === $strategy ? 'words' : 'paragraphs';
+	}
+
+	/**
 	 * Chunk content into smaller pieces with an overlap.
 	 *
-	 * @param string $content      Content to chunk.
-	 * @param int    $chunk_size   Size of each chunk, in words.
-	 * @param int    $overlap_size Overlap size for each chunk, in words.
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$apply_the_content` parameter.
+	 * @param string $content           Content to chunk.
+	 * @param int    $chunk_size        Size of each chunk, in words.
+	 * @param int    $overlap_size      Overlap size for each chunk, in words.
+	 * @param bool   $apply_the_content Optional. Whether to run the `the_content` filters. Default true.
 	 * @return array
 	 */
-	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25 ): array {
+	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25, bool $apply_the_content = true ): array {
 		// Normalize our content.
-		$content = $this->normalize_content( $content );
+		$content = $this->normalize_content( $content, $apply_the_content );
 		if ( ! $content ) {
 			return [];
 		}
 
 		// Remove multiple whitespaces.
-		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );
+		$content = preg_replace_safe( '/[ \t\r\f]+/', ' ', $content );
 
 		// Remove multiple new lines.
-		$content = preg_replace( '/[\n\v]{2,}/', "\n\n", $content );
+		$content = preg_replace_safe( '/[\n\v]{2,}/', "\n\n", $content );
 
 		// For ElasticPress.io, we chunk the content on the service side.
 		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
 			/**
 			 * Filter a chunk of text.
 			 *
+			 * With the `paragraphs` chunking strategy, the chunk already starts with its
+			 * context line, and a second argument describes it.
+			 *
 			 * @hook ep_embeddings_chunk
-			 * @since 2.4.0
-			 * @param {string} $chunk The chunk being processed.
+			 * @since 2.4.0, 2.6.0 added $chunk_info (`paragraphs` strategy only)
+			 * @param {string} $chunk      The chunk being processed.
+			 * @param {array}  $chunk_info `type` (content, taxonomy, meta) and `headings` (heading path).
 			 * @return {string} The modified chunk.
 			 */
 			return (array) apply_filters( 'ep_embeddings_chunk', $content );
