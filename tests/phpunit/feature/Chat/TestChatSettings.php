@@ -42,8 +42,9 @@ class TestChatSettings extends BaseTestCase {
 		parent::set_up();
 
 		Models::reset();
-		FixtureAiProvider::$reply   = '';
-		FixtureAiProvider::$replies = [];
+		FixtureAiProvider::$reply        = '';
+		FixtureAiProvider::$replies      = [];
+		FixtureAiProvider::$temperatures = [];
 
 		$this->bots = new Bots();
 		$this->bots->register_post_type();
@@ -466,6 +467,78 @@ class TestChatSettings extends BaseTestCase {
 
 		$this->assertTrue( $result->is_modify() );
 		$this->assertSame( [ 'verifier_model' => 'fixture-ai::fixture-small' ], $result->get_context() );
+	}
+
+	/**
+	 * Model calls send no temperature unless ep_chat_model_temperature sets one, which gets
+	 * what the call is for and its models.
+	 *
+	 * @group chat
+	 */
+	public function test_model_calls_send_a_temperature_only_when_filtered() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'The WordPress AI client is not available.' );
+		}
+
+		$this->use_fixture_models();
+		FixtureAiProvider::$replies = [ 'fixture-small' => '{"supported": true}' ];
+
+		$bot   = [
+			'answer_model'   => 'fixture-ai::fixture-large',
+			'verifier_model' => 'fixture-ai::fixture-small',
+		];
+		$check = function () use ( $bot ) {
+			( new Client() )->generate_text( 'Where is the U.S. viewed most favorably?', [], [], $bot );
+			( new Claim_Verifier_Gate() )->run(
+				[
+					'question' => 'Where is the U.S. viewed most favorably?',
+					'content'  => 'Poland gives the U.S. its highest rating, at 93%.',
+					'passages' => [
+						[
+							'id'      => 1,
+							'title'   => 'Views of the U.S.',
+							'content' => 'In Poland, 93% view the U.S. favorably, its highest rating.',
+						],
+					],
+					'bot'      => $bot,
+				]
+			);
+		};
+
+		$calls = [];
+		$spy   = function ( $temperature, $purpose, $models ) use ( &$calls ) {
+			$calls[] = [ $purpose, $models ];
+
+			return $temperature;
+		};
+		add_filter( 'ep_chat_model_temperature', $spy, 10, 3 );
+
+		$check();
+
+		$this->assertSame(
+			[
+				[ 'answer', [ [ 'fixture-ai', 'fixture-large' ] ] ],
+				[ 'verifier', [ [ 'fixture-ai', 'fixture-small' ] ] ],
+			],
+			$calls
+		);
+		$this->assertSame( [ null ], FixtureAiProvider::$temperatures['fixture-large'] );
+		$this->assertSame( [ null ], FixtureAiProvider::$temperatures['fixture-small'] );
+
+		// Opt in for the verifier only.
+		add_filter(
+			'ep_chat_model_temperature',
+			static function ( $temperature, $purpose ) {
+				return 'verifier' === $purpose ? 0.0 : $temperature;
+			},
+			20,
+			2
+		);
+
+		$check();
+
+		$this->assertSame( [ null, null ], FixtureAiProvider::$temperatures['fixture-large'] );
+		$this->assertSame( [ null, 0.0 ], FixtureAiProvider::$temperatures['fixture-small'] );
 	}
 
 	/**

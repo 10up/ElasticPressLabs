@@ -47,6 +47,13 @@ class FixtureAiProvider extends AbstractProvider {
 	public static $replies = [];
 
 	/**
+	 * Temperature each call sent, by model ID (null: none sent).
+	 *
+	 * @var array<string, array<int, float|null>>
+	 */
+	public static $temperatures = [];
+
+	/**
 	 * Register the provider once with the default registry.
 	 *
 	 * @return void

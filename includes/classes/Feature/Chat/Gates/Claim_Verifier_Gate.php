@@ -237,7 +237,7 @@ class Claim_Verifier_Gate extends Base_Gate {
 			[
 				'system'      => $messages['system'],
 				'models'      => $this->get_models( $context ),
-				'temperature' => 0.0,
+				'purpose'     => 'verifier',
 				'max_tokens'  => $this->get_max_tokens(),
 				'timeout'     => $this->get_timeout( $time_left ),
 				'json_schema' => [

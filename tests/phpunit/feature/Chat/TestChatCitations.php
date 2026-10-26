@@ -320,4 +320,23 @@ class TestChatCitations extends \WP_UnitTestCase {
 			$this->citations->attribute( '1. A median of 58% of adults view the United Nations favorably.', $passages )['content']
 		);
 	}
+
+	/**
+	 * A count that gets its own marker to a passage with a table is quoted from the table row
+	 * that has it (it has no year of its own to pick a row by).
+	 *
+	 * @group chat
+	 */
+	public function test_uncited_figure_in_a_table_is_quoted_from_its_row() {
+		$passages = [
+			$this->passage( 1, 'In most of the countries surveyed, a median of 58% of adults view the United Nations favorably.', 'Global attitudes' ),
+			$this->passage( 2, "Sample sizes\n| Survey | Countries |\n| --- | --- |\n| Spring survey | 24 |", 'Methodology' ),
+		];
+
+		$result = $this->citations->attribute( 'Across the 24 countries surveyed, a median of 58% of adults view the United Nations favorably.', $passages );
+
+		$this->assertSame( 'Across the 24[[1]] countries surveyed, a median of 58%[[2]] of adults view the United Nations favorably.', $result['content'] );
+		$this->assertSame( "| Survey | Countries |\n| Spring survey | 24 |", $result['provenance'][0]['quote'] );
+		$this->assertSame( [ '24' ], $this->marked( $result['provenance'][0] ) );
+	}
 }
