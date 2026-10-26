@@ -51,6 +51,8 @@ __Added:__
 
 * [AI Chat] New AI Chat feature: answers questions from the site's content with cited sources, answer checks, chat bots, and a conversation history. Requires WordPress 7.0 and ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia), [@tott](https://github.com/tott), and [@MomoFadaly](https://github.com/MomoFadaly).
 * [AI Chat] "AI-generated query" search method, where a model writes the search query, checked before it runs. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
+* [AI Chat] Setting to delete conversations after a number of days. Props [@felipeelia](https://github.com/felipeelia).
+* [AI Chat] Optional "Survey wave check" gate that asks which wave of a recurring report the reader means when a question names no year. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly).
 * [Vector Embeddings] [AI Search Summary] "Test connection" buttons. Requires ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Vector Embeddings] Reuse the vectors of unchanged chunks when a post is indexed again, and only embed new or changed chunks. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Vector Embeddings] Add the missing fields to existing indices when the feature is activated or updated, without a full sync. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
@@ -83,12 +85,14 @@ __Security:__
 __Developer:__
 
 * [AI Chat] New hooks, among them `ep_chat_register_gate`, `ep_chat_capabilities`, `ep_chat_sync_deadline`, `ep_chat_register_abilities`, and `ep_chat_pipeline_exception`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
+* [AI Chat] New `ep_chat_intent_keep_subject` filter to keep the earlier subject in the search query of a bare follow-up. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly).
 * [Vector Embeddings] New `ep_embeddings_tables_as_markdown`, `ep_embeddings_inline_tags`, `ep_embeddings_chunking_strategy`, `ep_embeddings_chunk_context`, `ep_embeddings_store_chunk_text`, and `ep_embeddings_reuse_group_size` filters, and a second argument for `ep_embeddings_chunk`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Semantic Search] New `ep_semantic_search_matched_chunks` and `ep_semantic_search_matched_chunk_types` filters. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Search Algorithm] Search algorithms with a public `$hidden` property set to `true` stay registered but are not offered on the Search Algorithm feature, and the new `ep_labs_search_algorithm_hidden` filter hides or shows one. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * New `ep_labs_connection_test_url_allowed` and `ep_labs_connection_test_interval` filters. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * The e2e setup builds ElasticPress with the Node version in its `.nvmrc`. Props [@felipeelia](https://github.com/felipeelia).
 * The e2e WP-CLI wrapper no longer loads the wp-env config, and calls api.wordpress.org, on every command. Props [@felipeelia](https://github.com/felipeelia).
+* Stop e2e jobs that run longer than 60 minutes. Props [@felipeelia](https://github.com/felipeelia).
 
 = 2.5.2 - 2026-10-14 =
 
