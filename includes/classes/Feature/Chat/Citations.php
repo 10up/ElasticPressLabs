@@ -293,8 +293,9 @@ class Citations {
 
 			$source = $this->choose_source( $sources, $words, $figure['figure'], array_merge( $figures, $others ) );
 
+			// No year picks its table row (build_provenance() reads `year` of every figure).
 			if ( null !== $source ) {
-				$groups[ $source ][] = $figure;
+				$groups[ $source ][] = $figure + [ 'year' => '' ];
 			}
 		}
 
