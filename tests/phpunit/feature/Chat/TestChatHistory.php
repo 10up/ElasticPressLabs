@@ -678,6 +678,35 @@ class TestChatHistory extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test conversations started in the same second are listed newest ID first,
+	 * on Ask's Previous questions and on History.
+	 *
+	 * @group chat
+	 */
+	public function test_same_second_conversations_are_ordered_by_id() {
+		$this->login_as( 'author' );
+
+		$ids = [];
+		foreach ( [ 'First?', 'Second?', 'Third?', 'Fourth?' ] as $question ) {
+			$ids[] = $this->storage->accept_question( $question )['ep_chat_id'];
+		}
+
+		foreach ( $ids as $id ) {
+			wp_update_post(
+				[
+					'ID'        => $id,
+					'post_date' => '2025-05-05 10:00:00',
+				]
+			);
+		}
+
+		$expected = array_reverse( $ids );
+
+		$this->assertSame( $expected, wp_list_pluck( ( new Admin() )->get_recent_conversations(), 'id' ) );
+		$this->assertSame( $expected, $this->listed() );
+	}
+
+	/**
 	 * Test History is a submenu of AI Chat, after Ask.
 	 *
 	 * @group chat

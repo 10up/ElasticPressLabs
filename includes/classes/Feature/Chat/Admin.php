@@ -327,8 +327,11 @@ class Admin {
 			'post_status'         => array_values( get_post_stati( [ 'show_in_admin_all_list' => true ] ) ),
 			'author'              => get_current_user_id(),
 			'posts_per_page'      => $count,
-			'orderby'             => 'date',
-			'order'               => 'DESC',
+			// The ID orders conversations started in the same second.
+			'orderby'             => [
+				'date' => 'DESC',
+				'ID'   => 'DESC',
+			],
 			'no_found_rows'       => true,
 			'ignore_sticky_posts' => true,
 		];

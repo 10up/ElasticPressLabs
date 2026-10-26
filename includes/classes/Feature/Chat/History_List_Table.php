@@ -147,8 +147,11 @@ class History_List_Table extends \WP_List_Table {
 			[
 				'post_type'           => Storage::POST_TYPE,
 				'post_status'         => 'trash' === ( $filters['view'] ?? '' ) ? 'trash' : array_values( get_post_stati( [ 'show_in_admin_all_list' => true ] ) ),
-				'orderby'             => 'date',
-				'order'               => 'DESC',
+				// The ID orders conversations started in the same second, so paging neither repeats nor skips one.
+				'orderby'             => [
+					'date' => 'DESC',
+					'ID'   => 'DESC',
+				],
 				'ignore_sticky_posts' => true,
 			],
 			$extra
