@@ -516,4 +516,108 @@ class TestChatIntent extends BaseTestCase {
 		$this->assertNotSame( '', $reasons[ Intent::REASON_OFF_TOPIC ]['message'] );
 		$this->assertSame( 'Understanding the question…', \ElasticPressLabs\Feature\Chat\Steps::label( Intent::STEP, 'running' ) );
 	}
+
+	/**
+	 * A bare follow-up that only names a report or a wave keeps the earlier question's subject in
+	 * the search query; a rewrite with words of its own, or a follow-up that asks on its own, is
+	 * left alone. The kind and on_topic verdicts are never touched.
+	 *
+	 * @group chat
+	 */
+	public function test_follow_up_keeps_the_earlier_subject() {
+		$priors = [ 'What share of online adults use LinkedIn?' ];
+
+		// A bare follow-up that names only a report: the search ran on the report title and lost the earlier subject.
+		$this->assertSame(
+			'What share of online adults use LinkedIn? Transit Survey Update 2016',
+			Intent::keep_subject( 'Transit Survey Update 2016', 'Transit Survey Update 2016, please.', $priors )
+		);
+		$this->assertSame(
+			'what share of us adults use youtube 2025 social media use survey',
+			Intent::keep_subject( '2025 social media use survey', 'the 2025 social media use survey', [ 'what share of us adults use youtube' ] )
+		);
+		$this->assertSame(
+			'how many teens are on snapchat 2025 teen survey',
+			Intent::keep_subject( '2025 teen survey', 'the 2025 teen survey', [ 'how many teens are on snapchat' ] )
+		);
+
+		// A long earlier question (over the 300-character query cap once joined) is not put in front:
+		// the follow-up's own words would be cut off the end, a worse search than today's.
+		$long = str_repeat( 'context about the gaming explainer we are rebuilding this quarter ', 7 );
+		$this->assertGreaterThan( Intent::MAX_QUERY_LENGTH, mb_strlen( $long ) );
+		$this->assertSame( 'the 2024 teens report', Intent::keep_subject( 'the 2024 teens report', 'the 2024 teens report', [ $long ] ) );
+		// Right at the cap it still fits.
+		$fits = str_repeat( 'x', Intent::MAX_QUERY_LENGTH - mb_strlen( ' the 2024 teens report' ) );
+		$this->assertSame( $fits . ' the 2024 teens report', Intent::keep_subject( 'the 2024 teens report', 'the 2024 teens report', [ $fits ] ) );
+
+		// The rewrite resolved the reference itself.
+		$this->assertSame( 'How do teens use AI chatbots?', Intent::keep_subject( 'How do teens use AI chatbots?', 'And teens?', [ 'How do adults use AI chatbots?' ] ) );
+		// The follow-up asks on its own.
+		$this->assertSame( 'what about abortion', Intent::keep_subject( 'what about abortion', 'and what about abortion?', [ 'Do Americans support stricter gun laws?' ] ) );
+		$this->assertSame( 'Has trust in government declined since 2000', Intent::keep_subject( 'Has trust in government declined since 2000', 'Has trust in government declined since 2000?', $priors ) );
+		$this->assertSame( 'Will most jobs change by 2030', Intent::keep_subject( 'Will most jobs change by 2030', 'Will most jobs change by 2030?', $priors ) );
+		// A month name is not a question word: the May wave is still a bare follow-up.
+		$this->assertSame( 'What share of online adults use LinkedIn? The May 2016 survey', Intent::keep_subject( 'The May 2016 survey', 'The May 2016 survey, please.', $priors ) );
+		// A first question: nothing earlier to keep.
+		$this->assertSame( 'Transit Survey Update 2016', Intent::keep_subject( 'Transit Survey Update 2016', 'Transit Survey Update 2016, please.', [] ) );
+		// A bare new topic with no year is left alone, not glued to the earlier question.
+		$this->assertSame( 'Trust in government', Intent::keep_subject( 'Trust in government', 'Trust in government.', $priors ) );
+		$this->assertSame( 'immigration attitudes in Europe', Intent::keep_subject( 'immigration attitudes in Europe', 'Tell me about immigration attitudes in Europe.', $priors ) );
+		$this->assertSame( 'Thanks', Intent::keep_subject( 'Thanks', 'Thanks!', $priors ) );
+		// The earlier question's year stays out, so it cannot become the search's only date limit.
+		$joined = Intent::keep_subject( 'Before 2020', 'Before 2020.', [ 'How many adults used TikTok in 2024?' ] );
+		$this->assertSame( 'How many adults used TikTok? Before 2020', $joined );
+		$this->assertNull( ( new \ElasticPressLabs\Feature\Chat\Date_Range() )->read( 'Before 2020.', $joined, [ 'How many adults used TikTok in 2024?' ] )['published_after'] );
+		// A year at a clause end goes too.
+		$this->assertSame( 'what share of adults used TikTok? The 2016 survey', Intent::keep_subject( 'The 2016 survey', 'The 2016 survey, please.', [ 'In 2024, what share of adults used TikTok?' ] ) );
+		// No "before" word of the earlier question is left in front of the follow-up's own year.
+		$this->assertSame( 'What did teens think of TikTok 2010 and 2016 figures', Intent::keep_subject( '2010 and 2016 figures', 'Pre-2010 and 2016 figures.', [ 'What did teens think of TikTok before' ] ) );
+		$joined = Intent::keep_subject( '2010 and 2016 figures', 'Pre-2010 and 2016 figures.', [ 'Teen TikTok use up to 2024' ] );
+		$this->assertSame( 'Teen TikTok use 2010 and 2016 figures', $joined );
+		$this->assertSame( '2010-01-01', ( new \ElasticPressLabs\Feature\Chat\Date_Range() )->read( 'Pre-2010 and 2016 figures.', '2010 and 2016 figures', [ 'Teen TikTok use up to 2024' ] )['published_after'] );
+		$this->assertSame( '2010-01-01', ( new \ElasticPressLabs\Feature\Chat\Date_Range() )->read( 'Pre-2010 and 2016 figures.', $joined, [ 'Teen TikTok use up to 2024' ] )['published_after'] );
+
+		$this->intent_reply = '{"kind":"question","on_topic":true,"query":"Transit Survey Update 2016"}';
+		$history            = [
+			[
+				'role'    => 'user',
+				'content' => 'What share of online adults use LinkedIn?',
+			],
+			[
+				'role'    => 'assistant',
+				'content' => 'About 25% of online adults use LinkedIn.',
+			],
+		];
+
+		// Off by default: the search gets the rewrite as today.
+		$this->ask( 'Transit Survey Update 2016, please.', $history, [ 'intent_enabled' => true ] );
+
+		$this->assertSame( 'Transit Survey Update 2016', $this->searches[0]['query'] );
+
+		// Through the pipeline, turned on by the bot-array key: the search gets the kept subject; the answer model still gets the follow-up.
+		$on = [
+			'intent_enabled'             => true,
+			Intent::KEEP_SUBJECT_SETTING => true,
+		];
+
+		$this->ask( 'Transit Survey Update 2016, please.', $history, $on );
+
+		$this->assertSame( 'What share of online adults use LinkedIn? Transit Survey Update 2016', $this->searches[1]['query'] );
+		$this->assertSame( 'Transit Survey Update 2016, please.', end( $this->answered ) );
+
+		// The filter turns it on too.
+		add_filter( 'ep_chat_intent_keep_subject', '__return_true' );
+		$this->ask( 'Transit Survey Update 2016, please.', $history, [ 'intent_enabled' => true ] );
+		remove_filter( 'ep_chat_intent_keep_subject', '__return_true' );
+
+		$this->assertSame( 'What share of online adults use LinkedIn? Transit Survey Update 2016', $this->searches[2]['query'] );
+
+		// An off-topic verdict on a follow-up is still declined: the guard never changes the kind.
+		$this->intent_reply = '{"kind":"offtopic","on_topic":false,"query":"The 2011 profile."}';
+		$result             = $this->ask( 'The 2011 profile.', $history, $on );
+
+		$this->assertSame( 'refused', $result['status'] );
+		$this->assertSame( Intent::REASON_OFF_TOPIC, $result['refusal_reason'] );
+		$this->assertCount( 3, $this->searches, 'Nothing more is searched.' );
+	}
 }

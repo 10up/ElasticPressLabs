@@ -89,6 +89,23 @@ class Intent {
 	public const MAX_QUERY_LENGTH = 300;
 
 	/**
+	 * Words that make a follow-up a question on its own ("and what about teens?"). English
+	 * only: a follow-up in another language never matches, and only the year check in
+	 * keep_subject() limits what it joins.
+	 *
+	 * @var string
+	 */
+	protected const ASKS = '/\b(?:what|which|who|whom|how|why|when|where|do|does|did|is|are|was|were|has|have|had|will|would|can|could|should|share|percent|percentage|many|much)\b/u';
+
+	/**
+	 * Bot-array key that turns on keeping the earlier question's subject (not a saved bot
+	 * setting; use the `ep_chat_intent_keep_subject` filter).
+	 *
+	 * @var string
+	 */
+	public const KEEP_SUBJECT_SETTING = 'intent_keep_subject';
+
+	/**
 	 * WordPress hooks.
 	 *
 	 * @return void
@@ -180,6 +197,10 @@ class Intent {
 				'model'    => is_wp_error( $reply ) ? '' : $reply['model'],
 				'fallback' => true,
 			];
+		}
+
+		if ( self::KIND_QUESTION === $verdict['kind'] && $verdict['on_topic'] && $this->is_keep_subject( $bot ) ) {
+			$verdict['query'] = self::keep_subject( $verdict['query'], $question, $this->get_prior_questions( $history ) );
 		}
 
 		return $verdict + [
@@ -393,6 +414,109 @@ class Intent {
 		$query = trim( $query, " \t\"'“”‘’" );
 
 		return mb_substr( $query, 0, self::MAX_QUERY_LENGTH );
+	}
+
+	/**
+	 * Whether a follow-up's query keeps the earlier question's subject (off by default).
+	 *
+	 * @param array $bot Selected chat bot.
+	 * @return bool
+	 */
+	protected function is_keep_subject( array $bot ): bool {
+		$enabled = ! empty( $bot[ self::KEEP_SUBJECT_SETTING ] );
+
+		/**
+		 * Filters whether a bare follow-up's search query keeps the earlier question's subject.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_intent_keep_subject
+		 * @param {bool}  $enabled Whether it is on (default: off; true only if the bot array carries the key).
+		 * @param {array} $bot     Selected chat bot.
+		 * @return {bool} Whether it is on.
+		 */
+		return (bool) apply_filters( 'ep_chat_intent_keep_subject', $enabled, $bot );
+	}
+
+	/**
+	 * Keep the earlier question's subject in a follow-up's search query.
+	 *
+	 * The rewrite rule asks for a query that stands alone, but on a bare follow-up that only
+	 * names a report or a wave ("The 2016 update, please.", "the 2025 survey") the model
+	 * sometimes returns the follow-up itself, trimmed, and the search loses the subject of the
+	 * question ("LinkedIn", "YouTube"). The latest earlier question, without its years, is put
+	 * in front of the rewrite only when the rewrite is an unbroken run of the follow-up's own
+	 * words, the follow-up names a year and asks nothing itself (ASKS, English words only), and
+	 * the joined string fits MAX_QUERY_LENGTH.
+	 *
+	 * This only changes the search string of a question that is searched anyway. It never
+	 * changes the kind or whether the question is on topic. A rewrite that adds words is kept
+	 * as it is; a bare new topic with no year is left alone, but a bare new topic with a year
+	 * ("Elections in 2024.") looks like a report name and is joined too.
+	 *
+	 * The earlier question's years are left out, so the follow-up alone sets the time frame:
+	 * Date_Range counts a query year the user wrote earlier, and a carried year could become the
+	 * only lower limit ("Before 2020." after a 2024 question). It takes the newest earlier
+	 * question, so after a chain of bare follow-ups or a refused turn it can pick one that is
+	 * itself a bare follow-up.
+	 *
+	 * @param string   $query   Rewritten query.
+	 * @param string   $message The user's message (the follow-up, as typed).
+	 * @param string[] $priors  The user's earlier questions, oldest first.
+	 * @return string
+	 */
+	public static function keep_subject( string $query, string $message, array $priors ): string {
+		$prior = (string) end( $priors );
+
+		if ( '' === trim( $prior ) ) {
+			return $query;
+		}
+
+		$normalize = static function ( string $text ): string {
+			return trim( (string) preg_replace( '/[^\p{L}\p{N}]+/u', ' ', mb_strtolower( $text, 'UTF-8' ) ) );
+		};
+
+		$short = $normalize( $query );
+		$whole = $normalize( $message );
+
+		// The rewrite has words of its own (it resolved a reference, or changed topic): trust it.
+		if ( '' === $short || false === strpos( ' ' . $whole . ' ', ' ' . $short . ' ' ) ) {
+			return $query;
+		}
+
+		// The follow-up asks something on its own: it stands alone already.
+		if ( preg_match( self::ASKS, $whole ) ) {
+			return $query;
+		}
+
+		// Only a follow-up that names a wave or a dated report (a year): a bare new topic
+		// returned as typed looks the same as a bare report name, so leave it alone.
+		if ( ! preg_match( '/(?<!\d)(?:19|20)\d{2}(?!\d)/', $whole ) ) {
+			return $query;
+		}
+
+		// The earlier question's subject without its time frame ("in 2024", "the 2010s").
+		// The words before a year include Date_Range's "before" words, so none is left hanging
+		// in front of the follow-up's own year ("up to" + "2016 figures").
+		// A year at a clause end ("In 2024, what ...") counts, as in Ambiguity_Gate::YEAR_PATTERN.
+		$subject = (string) preg_replace( '/(?:\b(?:in|since|from|during|for|of|by|before|after|until|till|through|thru|prior\s+to|up\s+to|pre)[\s-]+(?:the\s+)?(?:end\s+of\s+)?)?(?<![\d,.])(?:19|20)\d{2}s?(?!\d|,\d|\.\d)/iu', '', $prior );
+		$subject = (string) preg_replace( [ '/\s+([?.!,;:])/u', '/\s+/u' ], [ '$1', ' ' ], $subject );
+		// No word that reads as a time limit is left at the end, in front of the follow-up's year.
+		$subject = (string) preg_replace( '/(?:[\s,;:-]+\b(?:in|since|from|during|for|of|by|before|after|until|till|through|thru|prior\s+to|up\s+to|pre|between|and|to|the|end\s+of))+\s*([?.!]?)\s*$/iu', '$1', $subject );
+		$subject = trim( $subject, " \t,;:-" );
+
+		if ( '' === $subject || ! preg_match( '/\p{L}/u', $subject ) ) {
+			return $query;
+		}
+
+		$kept = $subject . ' ' . $query;
+
+		// A long earlier question would push the follow-up's own words past the query cap
+		// (clean_query() cuts at MAX_QUERY_LENGTH, so "2024 teens report" would be lost): keep today's query.
+		if ( mb_strlen( $kept ) > self::MAX_QUERY_LENGTH ) {
+			return $query;
+		}
+
+		return self::clean_query( $kept );
 	}
 
 	/**
