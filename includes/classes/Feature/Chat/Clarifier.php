@@ -452,12 +452,12 @@ class Clarifier {
 		return Models::generate(
 			$messages['user'],
 			[
-				'system'      => $messages['system'],
-				'models'      => [ Models::parse( (string) Settings::get( 'intent_model', $bot ) ) ],
-				'temperature' => 0.0,
-				'max_tokens'  => 300,
-				'timeout'     => 10,
-				'error_code'  => 'ep_chat_clarify_exception',
+				'system'     => $messages['system'],
+				'models'     => [ Models::parse( (string) Settings::get( 'intent_model', $bot ) ) ],
+				'purpose'    => 'clarifier',
+				'max_tokens' => 300,
+				'timeout'    => 10,
+				'error_code' => 'ep_chat_clarify_exception',
 			]
 		);
 	}

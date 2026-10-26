@@ -88,6 +88,7 @@ class Client {
 			'system'        => $instruction,
 			'history'       => $this->to_history_messages( $history ),
 			'models'        => [ Models::parse( (string) Settings::get( 'answer_model', $bot ) ) ],
+			'purpose'       => 'answer',
 			'error_code'    => 'ep_chat_ai_failed',
 			'error_message' => esc_html__( 'The assistant could not generate a reply.', 'elasticpress-labs' ),
 		];

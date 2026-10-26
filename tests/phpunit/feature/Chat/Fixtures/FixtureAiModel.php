@@ -104,6 +104,8 @@ class FixtureAiModel implements ModelInterface, TextGenerationModelInterface {
 		$id   = $this->model->getId();
 		$text = FixtureAiProvider::$replies[ $id ] ?? ( '' !== FixtureAiProvider::$reply ? FixtureAiProvider::$reply : 'Reply from ' . $id );
 
+		FixtureAiProvider::$temperatures[ $id ][] = $this->config->getTemperature();
+
 		return new GenerativeAiResult(
 			'fixture-result',
 			[ new Candidate( new ModelMessage( [ new MessagePart( $text ) ] ), FinishReasonEnum::stop() ) ],
