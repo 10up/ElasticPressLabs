@@ -34,8 +34,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  *    too: the earlier turns fixed the wave.
  * 2. Two or more passages share one report title once years are removed, and carry two or more
  *    distinct survey years (the year in the title, else the publication year). Generic page
- *    titles (Methodology, Appendix, Acknowledgments…) never form a wave family, and a year in a
- *    title that is later than the publication year is a projection, not a wave.
+ *    titles (Methodology, Appendix, Acknowledgments…) and numbered chapter titles ("Section 1:
+ *    Views of the mayor", "Chapter 2.", "3. …": chapters of different reports often share one)
+ *    never form a wave family, and a year in a title that is later than the publication year is
+ *    a projection, not a wave.
  *
  * Group ambiguity (parents or teens? adults or online adults?) is not read here: it cannot be
  * told from titles and dates without a model, so it is left to Population_Match_Gate. Known
@@ -101,6 +103,13 @@ class Ambiguity_Gate extends Base_Gate {
 	 * @var string
 	 */
 	protected const YEAR_PATTERN = '/(?<![\d,.])((?:19|20)\d{2})(?!\d|,\d|\.\d)/u';
+
+	/**
+	 * A numbered chapter title: "Section 1: …", "Chapter 2. …", "Part III: …", "3. …".
+	 *
+	 * @var string
+	 */
+	protected const CHAPTER_PATTERN = '/^\s*(?:(?:section|chapter|part)\s+(?:\d{1,2}|[ivx]{1,4})\b|\d{1,2}\s*[.:)]\s)/iu';
 
 	/**
 	 * Words that pick a wave without naming a year.
@@ -317,13 +326,17 @@ class Ambiguity_Gate extends Base_Gate {
 
 	/**
 	 * The report title without years, case or punctuation: passages with the same key are waves
-	 * of one report. Empty for a generic page title (Methodology, Appendix…) or a title of fewer
-	 * than two words.
+	 * of one report. Empty for a generic page title (Methodology, Appendix…), a numbered chapter
+	 * title (see CHAPTER_PATTERN), or a title of fewer than two words.
 	 *
 	 * @param string $title Passage title.
 	 * @return string
 	 */
 	public function get_family_key( string $title ): string {
+		if ( preg_match( self::CHAPTER_PATTERN, $title ) ) {
+			return '';
+		}
+
 		$key = mb_strtolower( $title );
 		$key = str_replace( '&', ' and ', $key );
 		$key = (string) preg_replace( self::YEAR_PATTERN, ' ', $key );
