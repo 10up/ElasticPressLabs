@@ -181,6 +181,13 @@ class Settings {
 			'min'     => 1,
 			'max'     => 300,
 		],
+		'retention_days'      => [
+			'type'    => 'int',
+			'shared'  => false,
+			'default' => 0,
+			'min'     => 0,
+			'max'     => 3650,
+		],
 	];
 
 	/**
@@ -497,6 +504,7 @@ class Settings {
 			'max_in_flight'       => __( 'Questions at once per person', 'elasticpress-labs' ),
 			'max_per_hour'        => __( 'Questions per hour per person', 'elasticpress-labs' ),
 			'retry_after'         => __( 'Wait before retrying (seconds)', 'elasticpress-labs' ),
+			'retention_days'      => __( 'Delete conversations after (days)', 'elasticpress-labs' ),
 		];
 
 		return $labels[ $key ] ?? $key;
@@ -668,6 +676,7 @@ class Settings {
 			'max_in_flight'       => __( 'Questions one person can have waiting for an answer (1 to 10).', 'elasticpress-labs' ),
 			'max_per_hour'        => __( 'Questions one person can ask in an hour, with any chat bot (0 for no limit).', 'elasticpress-labs' ),
 			'retry_after'         => __( 'How long a person over that limit waits before asking again (1 to 300).', 'elasticpress-labs' ),
+			'retention_days'      => __( 'Conversations with no new question for this long are deleted for good (0 keeps them).', 'elasticpress-labs' ),
 		];
 
 		return $help[ $key ] ?? '';
@@ -689,6 +698,7 @@ class Settings {
 			'history_messages'    => __( 'They help the model understand a follow-up question. 0 sends none.', 'elasticpress-labs' ),
 			'summary_enabled'     => __( 'After each answer, a model call updates the summary: the topics covered and search keywords, without figures. Each summary is an extra model call.', 'elasticpress-labs' ),
 			'summary_model'       => __( 'A small, fast model works well.', 'elasticpress-labs' ),
+			'retention_days'      => __( 'Deleting is permanent: the questions, answers, and sources of the conversation are removed, and the trash is skipped. Export the History first to keep a copy. Conversations with a question still running are kept. The check runs every five minutes, and a few conversations at a time. Up to 3,650.', 'elasticpress-labs' ),
 			'max_per_hour'        => __( 'Each question calls the AI provider several times, and the provider bills each call. Every question counts, whatever its answer. Up to 1,000.', 'elasticpress-labs' ),
 			'intent_enabled'      => __( 'A model call answers questions about the assistant itself with a fixed reply, declines questions that are unclear or outside what the site covers without searching, and rewrites follow-up questions into one standalone search. The answer model still reads the person’s own words. Each question is an extra model call.', 'elasticpress-labs' ),
 			'intent_model'        => __( 'Used by “Understand the question” and “Offer clarifying choices”. The reader waits for it, so a small, fast model works well.', 'elasticpress-labs' ),
