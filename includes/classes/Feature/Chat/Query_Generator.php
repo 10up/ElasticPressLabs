@@ -569,12 +569,12 @@ class Query_Generator {
 		return Models::generate(
 			$messages['user'],
 			[
-				'system'      => $messages['system'],
-				'models'      => [ Models::parse( (string) Settings::get( 'query_model', $bot ) ) ],
-				'temperature' => 0.0,
-				'max_tokens'  => 800,
-				'timeout'     => $this->get_timeout(),
-				'error_code'  => 'ep_chat_ai_query_exception',
+				'system'     => $messages['system'],
+				'models'     => [ Models::parse( (string) Settings::get( 'query_model', $bot ) ) ],
+				'purpose'    => 'query',
+				'max_tokens' => 800,
+				'timeout'    => $this->get_timeout(),
+				'error_code' => 'ep_chat_ai_query_exception',
 			]
 		);
 	}

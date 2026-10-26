@@ -278,7 +278,10 @@ class Models {
 	 *     @type array      $history       Prior messages (AI client Message objects).
 	 *     @type array      $models        Model preferences, most preferred first (see parse());
 	 *                                     empty uses the client's default model.
-	 *     @type float|null $temperature   Temperature.
+	 *     @type string     $purpose       What the call is for (answer, intent, query, clarifier,
+	 *                                     verifier, summary), passed to ep_chat_model_temperature.
+	 *     @type float|null $temperature   Temperature to send. Default: none, so the model uses its
+	 *                                     own (see ep_chat_model_temperature).
 	 *     @type int|null   $max_tokens    Most tokens the model may use.
 	 *     @type int|null   $timeout       Seconds the request can take.
 	 *     @type array|null $json_schema   JSON schema the reply must follow.
@@ -304,8 +307,26 @@ class Models {
 				$builder = $builder->with_history( ...array_values( $options['history'] ) );
 			}
 
-			if ( isset( $options['temperature'] ) ) {
-				$builder = $builder->using_temperature( (float) $options['temperature'] );
+			$models = array_values( array_filter( (array) ( $options['models'] ?? [] ) ) );
+
+			/**
+			 * Filters the temperature of a Chat model call. Null (the default) sends none, so the
+			 * model uses its own default: many recent models (Claude 5, OpenAI reasoning models)
+			 * reject any other value, and others (Gemini 3) are tuned for their default.
+			 *
+			 * @since 2.6.0
+			 * @hook ep_chat_model_temperature
+			 * @param {float|null} $temperature Temperature, or null to send none.
+			 * @param {string}     $purpose     What the call is for: answer, intent, query,
+			 *                                  clarifier, verifier, summary (empty when not given).
+			 * @param {array}      $models      Model preferences, most preferred first (see
+			 *                                  Models::parse()); empty for the client's default.
+			 * @return {float|null} Temperature, or null to send none.
+			 */
+			$temperature = apply_filters( 'ep_chat_model_temperature', $options['temperature'] ?? null, (string) ( $options['purpose'] ?? '' ), $models );
+
+			if ( is_numeric( $temperature ) ) {
+				$builder = $builder->using_temperature( (float) $temperature );
 			}
 
 			if ( isset( $options['max_tokens'] ) ) {
@@ -319,8 +340,6 @@ class Models {
 			if ( isset( $options['json_schema'] ) ) {
 				$builder = $builder->as_json_response( $options['json_schema'] );
 			}
-
-			$models = array_values( array_filter( (array) ( $options['models'] ?? [] ) ) );
 
 			// The client answers with its default model when no preferred one is offered.
 			if ( $models ) {

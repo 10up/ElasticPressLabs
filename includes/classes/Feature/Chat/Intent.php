@@ -586,12 +586,12 @@ class Intent {
 		return Models::generate(
 			$messages['user'],
 			[
-				'system'      => $messages['system'],
-				'models'      => [ Models::parse( (string) Settings::get( 'intent_model', $bot ) ) ],
-				'temperature' => 0.0,
-				'max_tokens'  => 200,
-				'timeout'     => $this->get_timeout(),
-				'error_code'  => 'ep_chat_intent_exception',
+				'system'     => $messages['system'],
+				'models'     => [ Models::parse( (string) Settings::get( 'intent_model', $bot ) ) ],
+				'purpose'    => 'intent',
+				'max_tokens' => 200,
+				'timeout'    => $this->get_timeout(),
+				'error_code' => 'ep_chat_intent_exception',
 			]
 		);
 	}
