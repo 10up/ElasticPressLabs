@@ -8,6 +8,7 @@
 
 namespace ElasticPressLabsTest;
 
+use ElasticPress\FeatureRequirementsStatus;
 use ElasticPress\Features;
 use ElasticPress\Utils;
 use ElasticPressLabs\Feature\Chat\Bots;
@@ -331,9 +332,7 @@ class TestChatSettings extends BaseTestCase {
 
 		$this->assertSame( 'Set up', $feature->get_field_group_map()['chat_rerank']['badge'] );
 
-		$expected = function_exists( '\ElasticPress\Utils\get_settings_field_types' ) && in_array( 'combobox', \ElasticPress\Utils\get_settings_field_types(), true ) ? 'combobox' : 'select';
-
-		$this->assertSame( $expected, $by_key['answer_model']['type'] );
+		$this->assertSame( 'combobox', $by_key['answer_model']['type'] );
 		$this->assertContains(
 			[
 				'value' => 'fixture-ai::fixture-large',
@@ -693,5 +692,39 @@ class TestChatSettings extends BaseTestCase {
 
 		wp_set_current_user( $this->ep_factory->user->create( [ 'role' => 'editor' ] ) );
 		$this->assertSame( 403, rest_do_request( new \WP_REST_Request( 'POST', '/elasticpress-labs/v1/chat-bots/' . $bot_id . '/duplicate' ) )->get_status() );
+	}
+
+	/**
+	 * Before ElasticPress 5.4.0, Chat is unavailable: it says so, comes back once ElasticPress is
+	 * updated, and has no settings fields the screen cannot render.
+	 *
+	 * @group chat
+	 */
+	public function test_chat_needs_elasticpress_5_4() {
+		add_filter( 'ep_chat_ai_available', '__return_true' );
+
+		$old = new class() extends \ElasticPressLabs\Feature\Chat\Chat {
+			/**
+			 * As ElasticPress before 5.4.0.
+			 *
+			 * @return bool
+			 */
+			public static function is_elasticpress_supported(): bool {
+				return false;
+			}
+		};
+
+		$status = $old->requirements_status();
+
+		// Not force disabled: ElasticPress would not turn Chat back on after an update.
+		$this->assertSame( FeatureRequirementsStatus::TEMPORARILY_DISABLED, $status->code );
+		$this->assertStringContainsString( 'ElasticPress 5.4.0', $status->message );
+		$this->assertSame( [ 'active' ], wp_list_pluck( $old->get_settings_schema(), 'key' ) );
+
+		$current = new \ElasticPressLabs\Feature\Chat\Chat();
+
+		$this->assertTrue( \ElasticPressLabs\Feature\Chat\Chat::is_elasticpress_supported() );
+		$this->assertStringNotContainsString( 'ElasticPress 5.4.0', (string) $current->requirements_status()->message );
+		$this->assertNotEmpty( $current->get_settings_schema() );
 	}
 }

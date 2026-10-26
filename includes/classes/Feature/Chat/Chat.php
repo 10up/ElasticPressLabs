@@ -85,7 +85,7 @@ class Chat extends Feature implements ConnectionTestable {
 		$this->summary = __( 'Answers questions in wp-admin from your published content. Needs Vector Embeddings and an AI provider.', 'elasticpress-labs' );
 
 		// Four boxes: the models (needed, so open), then the optional re-ranker, the chat bot
-		// defaults, and the advanced limits. Collapsible on ElasticPress 5.4+.
+		// defaults, and the advanced limits.
 		$this->field_group_map = [
 			'chat_models'   => [
 				'label'       => esc_html__( 'Models', 'elasticpress-labs' ),
@@ -138,12 +138,33 @@ class Chat extends Feature implements ConnectionTestable {
 	}
 
 	/**
+	 * Whether the installed ElasticPress is 5.4.0 or later, which the Chat settings screens need:
+	 * collapsible boxes, the combobox and custom field types, and conditions with a list of values.
+	 *
+	 * It looks for the function 5.4.0 added, not at EP_VERSION: builds of ElasticPress develop
+	 * have this code but still report 5.3.x.
+	 *
+	 * @return bool
+	 */
+	public static function is_elasticpress_supported(): bool {
+		return function_exists( '\ElasticPress\Utils\get_settings_field_types' );
+	}
+
+	/**
 	 * Tell user whether requirements for feature are met or not.
 	 *
 	 * @return FeatureRequirementsStatus Requirements object
 	 */
 	public function requirements_status() {
 		$status = new FeatureRequirementsStatus( FeatureRequirementsStatus::MANUALLY_ENABLED );
+
+		// Temporarily disabled, not force disabled: Chat comes back by itself once ElasticPress is updated.
+		if ( ! static::is_elasticpress_supported() ) {
+			$status->code    = FeatureRequirementsStatus::TEMPORARILY_DISABLED;
+			$status->message = esc_html__( 'Chat requires ElasticPress 5.4.0 or later.', 'elasticpress-labs' );
+
+			return $status;
+		}
 
 		$vector_embeddings = \ElasticPress\Features::factory()->get_registered_feature( 'vector_embeddings' );
 
@@ -293,6 +314,11 @@ class Chat extends Feature implements ConnectionTestable {
 	protected function set_settings_schema() {
 		$this->settings_schema = [];
 
+		// The screen only shows the requirements message, see requirements_status().
+		if ( ! static::is_elasticpress_supported() ) {
+			return;
+		}
+
 		if ( $this->is_active() ) {
 			$this->settings_schema[] = [
 				'key'   => 'manage_bots',
@@ -312,7 +338,6 @@ class Chat extends Feature implements ConnectionTestable {
 		];
 
 		$models      = Models::get_list();
-		$model_type  = $this->supports_field_type( 'combobox' ) ? 'combobox' : 'select';
 		$model_notes = '';
 
 		foreach ( $models['errors'] as $provider => $message ) {
@@ -320,12 +345,12 @@ class Chat extends Feature implements ConnectionTestable {
 			$model_notes .= ' ' . sprintf( __( 'The models of %1$s could not be loaded (%2$s); a saved model of that provider is kept.', 'elasticpress-labs' ), '<code>' . esc_html( $provider ) . '</code>', esc_html( $message ) );
 		}
 
-		$model_field = function ( string $key, string $empty_label ) use ( $model_type, $model_notes ): array {
+		$model_field = function ( string $key, string $empty_label ) use ( $model_notes ): array {
 			return [
 				'key'              => $key,
 				'label'            => Settings::get_label( $key ),
 				'help'             => $this->get_help_html( $key ) . $model_notes,
-				'type'             => $model_type,
+				'type'             => 'combobox',
 				'options'          => Models::get_options( $empty_label ),
 				'default'          => '',
 				'field_group_slug' => 'chat_models',
@@ -384,7 +409,7 @@ class Chat extends Feature implements ConnectionTestable {
 			'key'              => 'answer_instructions',
 			'label'            => Settings::get_label( 'answer_instructions' ),
 			'help'             => $this->get_help_html( 'answer_instructions' ),
-			'type'             => $this->supports_field_type( self::INSTRUCTIONS_FIELD_TYPE ) ? self::INSTRUCTIONS_FIELD_TYPE : 'textarea',
+			'type'             => self::INSTRUCTIONS_FIELD_TYPE,
 			'default'          => '',
 			'field_group_slug' => 'chat_defaults',
 		];
@@ -459,32 +484,16 @@ class Chat extends Feature implements ConnectionTestable {
 
 	/**
 	 * Show a field only while the search method is an AI search method (see
-	 * Settings::get_ai_search_methods()): no field at all when none is registered. Older
-	 * ElasticPress versions read a condition as one exact value, so there the field is always
-	 * shown.
+	 * Settings::get_ai_search_methods()): no field at all when none is registered.
 	 *
-	 * @return array `requires_fields` for the settings schema, or nothing.
+	 * @return array `requires_fields` for the settings schema.
 	 */
 	protected function get_ai_method_condition(): array {
-		if ( ! $this->supports_any_of_conditions() ) {
-			return [];
-		}
-
 		return [
 			'requires_fields' => [
 				'conditions' => [ 'search_algorithm' => Settings::get_ai_search_methods() ],
 			],
 		];
-	}
-
-	/**
-	 * Whether the settings screen reads a condition value that is a list as "any of these"
-	 * (ElasticPress 5.4.0 or later).
-	 *
-	 * @return bool
-	 */
-	protected function supports_any_of_conditions(): bool {
-		return defined( 'EP_VERSION' ) && version_compare( EP_VERSION, '5.4.0', '>=' );
 	}
 
 	/**
@@ -597,12 +606,12 @@ class Chat extends Feature implements ConnectionTestable {
 
 	/**
 	 * Hooks for the ElasticPress features screen, which renders the Chat settings whether or not
-	 * Chat is on. ElasticPress versions without custom field types get a plain text area.
+	 * Chat is on. Does nothing before ElasticPress 5.4.0, where Chat is unavailable.
 	 *
 	 * @return void
 	 */
 	public function setup_settings_screen() {
-		if ( ! function_exists( '\ElasticPress\Utils\get_settings_field_types' ) ) {
+		if ( ! static::is_elasticpress_supported() ) {
 			return;
 		}
 
@@ -699,16 +708,5 @@ class Chat extends Feature implements ConnectionTestable {
 		}
 
 		return $value;
-	}
-
-	/**
-	 * Whether the installed ElasticPress renders a settings field type.
-	 *
-	 * @param string $type Field type.
-	 * @return bool
-	 */
-	protected function supports_field_type( string $type ): bool {
-		return function_exists( '\ElasticPress\Utils\get_settings_field_types' )
-			&& in_array( $type, \ElasticPress\Utils\get_settings_field_types(), true );
 	}
 }

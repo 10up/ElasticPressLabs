@@ -299,12 +299,7 @@ class TestChatSearchSettings extends BaseTestCase {
 		$this->assertSame( 'radio', $by_key['search_algorithm']['type'] );
 		$this->assertSame( 'site', $by_key['search_algorithm']['default'] );
 		$this->assertContains( self::AI_METHOD, wp_list_pluck( $by_key['search_algorithm']['options'], 'value' ) );
-		// ElasticPress before 5.4.0 reads a condition as one exact value: the fields are always shown.
-		if ( version_compare( EP_VERSION, '5.4.0', '<' ) ) {
-			foreach ( [ 'search_algorithm', 'search_fallback', 'query_model' ] as $key ) {
-				$this->assertArrayNotHasKey( 'requires_fields', $by_key[ $key ], $key );
-			}
-		}
+		$this->assertArrayNotHasKey( 'requires_fields', $by_key['search_algorithm'] );
 
 		$this->assertStringContainsString( 'AI search methods', $by_key['query_model']['help'] );
 		$this->assertStringContainsString( 'ep-chat-choice-description', $by_key['search_fallback']['options'][1]['label'] );
@@ -367,26 +362,16 @@ class TestChatSearchSettings extends BaseTestCase {
 	}
 
 	/**
-	 * Where ElasticPress reads a list of values as "any of these" (5.4.0 or later), the fallback and
-	 * the query model show only for the AI search methods, and not at all when none is registered.
+	 * The fallback and the query model show only for the AI search methods, and not at all when
+	 * none is registered.
 	 *
 	 * @group chat
 	 * @group chat-ai-query
 	 */
 	public function test_fields_shown_only_for_ai_methods() {
 		$schema = static function () {
-			$feature = new class() extends \ElasticPressLabs\Feature\Chat\Chat {
-				/**
-				 * As ElasticPress 5.4.0.
-				 *
-				 * @return bool
-				 */
-				protected function supports_any_of_conditions(): bool {
-					return true;
-				}
-			};
-
-			$by_key = [];
+			$feature = new \ElasticPressLabs\Feature\Chat\Chat();
+			$by_key  = [];
 
 			foreach ( $feature->get_settings_schema() as $field ) {
 				$by_key[ $field['key'] ] = $field;
