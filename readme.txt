@@ -86,6 +86,7 @@ __Developer:__
 
 * [AI Chat] New hooks, among them `ep_chat_register_gate`, `ep_chat_capabilities`, `ep_chat_sync_deadline`, `ep_chat_register_abilities`, and `ep_chat_pipeline_exception`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [AI Chat] New `ep_chat_intent_keep_subject` filter to keep the earlier subject in the search query of a bare follow-up. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly).
+* [AI Chat] Model calls send no temperature unless a site sets one with the new `ep_chat_model_temperature` filter, so models that accept only their default temperature (such as Claude 5) work for every step. Props [@felipeelia](https://github.com/felipeelia).
 * [Vector Embeddings] New `ep_embeddings_tables_as_markdown`, `ep_embeddings_inline_tags`, `ep_embeddings_chunking_strategy`, `ep_embeddings_chunk_context`, `ep_embeddings_store_chunk_text`, and `ep_embeddings_reuse_group_size` filters, and a second argument for `ep_embeddings_chunk`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Semantic Search] New `ep_semantic_search_matched_chunks` and `ep_semantic_search_matched_chunk_types` filters. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
 * [Search Algorithm] Search algorithms with a public `$hidden` property set to `true` stay registered but are not offered on the Search Algorithm feature, and the new `ep_labs_search_algorithm_hidden` filter hides or shows one. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
@@ -93,6 +94,7 @@ __Developer:__
 * The e2e setup builds ElasticPress with the Node version in its `.nvmrc`. Props [@felipeelia](https://github.com/felipeelia).
 * The e2e WP-CLI wrapper no longer loads the wp-env config, and calls api.wordpress.org, on every command. Props [@felipeelia](https://github.com/felipeelia).
 * Stop e2e jobs that run longer than 60 minutes. Props [@felipeelia](https://github.com/felipeelia).
+* Time out the Playwright browser install of e2e jobs after 5 minutes. Props [@felipeelia](https://github.com/felipeelia).
 
 = 2.5.2 - 2026-10-14 =
 
