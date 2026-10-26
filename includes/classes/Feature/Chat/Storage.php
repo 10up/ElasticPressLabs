@@ -1175,7 +1175,31 @@ class Storage {
 			);
 		}
 
+		$this->touch_conversation( $conversation_id );
+
 		return (int) $comment_id;
+	}
+
+	/**
+	 * Record activity on a conversation: its modified date is the date of its newest turn,
+	 * which is what the retention sweep ages.
+	 *
+	 * @param int $conversation_id Conversation post ID.
+	 * @return void
+	 */
+	protected function touch_conversation( int $conversation_id ) {
+		global $wpdb;
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->posts,
+			[
+				'post_modified'     => current_time( 'mysql' ),
+				'post_modified_gmt' => current_time( 'mysql', true ),
+			],
+			[ 'ID' => $conversation_id ]
+		);
+
+		clean_post_cache( $conversation_id );
 	}
 
 	/**
