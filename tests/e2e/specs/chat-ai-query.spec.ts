@@ -72,10 +72,7 @@ test.describe('Chat AI-generated query', { tag: '@chat' }, () => {
 		await expect(siteAlgorithms.getByLabel(/AI-generated query/)).toHaveCount(0);
 
 		// Chat: offered as a search method. The fallback and the query model apply to the AI search
-		// methods: from ElasticPress 5.4.0 they show only for those; before, they are always there.
-		const epVersion = String(await wpCliEval('echo EP_VERSION;')).trim();
-		const showsOnlyForAi = epVersion.localeCompare('5.4.0', undefined, { numeric: true }) >= 0;
-
+		// methods, and show only for those.
 		await loggedInPage.getByRole('button', { name: 'AI', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Chat', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: /^Chat bot defaults/ }).click();
@@ -86,12 +83,8 @@ test.describe('Chat AI-generated query', { tag: '@chat' }, () => {
 		await expect(loggedInPage.getByRole('radio', { name: /AI-generated query/ })).toHaveCount(
 			1,
 		);
-		await expect(loggedInPage.getByText('Fallback search', { exact: true })).toHaveCount(
-			showsOnlyForAi ? 0 : 1,
-		);
-		await expect(loggedInPage.getByRole('combobox', { name: 'Query model' })).toHaveCount(
-			showsOnlyForAi ? 0 : 1,
-		);
+		await expect(loggedInPage.getByText('Fallback search', { exact: true })).toHaveCount(0);
+		await expect(loggedInPage.getByRole('combobox', { name: 'Query model' })).toHaveCount(0);
 
 		await loggedInPage.getByRole('radio', { name: /AI-generated query/ }).check();
 
