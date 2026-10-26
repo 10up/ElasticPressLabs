@@ -269,14 +269,8 @@ class TestChatAnswerInstructions extends BaseTestCase {
 		$this->assertSame( 'chat_defaults', $field['field_group_slug'] );
 		$this->assertNotEmpty( $field['help'] );
 
-		$supported = function_exists( '\ElasticPress\Utils\get_settings_field_types' )
-			&& in_array( Chat::INSTRUCTIONS_FIELD_TYPE, \ElasticPress\Utils\get_settings_field_types(), true );
-
-		$this->assertSame( $supported ? Chat::INSTRUCTIONS_FIELD_TYPE : 'textarea', $field['type'] );
-
-		if ( function_exists( '\ElasticPress\Utils\get_settings_field_types' ) ) {
-			$this->assertContains( Chat::INSTRUCTIONS_FIELD_TYPE, \ElasticPress\Utils\get_settings_field_types() );
-		}
+		$this->assertSame( Chat::INSTRUCTIONS_FIELD_TYPE, $field['type'] );
+		$this->assertContains( Chat::INSTRUCTIONS_FIELD_TYPE, \ElasticPress\Utils\get_settings_field_types() );
 	}
 
 	/**

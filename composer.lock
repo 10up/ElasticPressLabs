@@ -64,12 +64,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/10up/ElasticPress.git",
-                "reference": "10fe375bf443a0e8c668fa3e38447f913332496f"
+                "reference": "a1041b3f28a8de2f2256d75ddac85161708ed679"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/10fe375bf443a0e8c668fa3e38447f913332496f",
-                "reference": "10fe375bf443a0e8c668fa3e38447f913332496f",
+                "url": "https://api.github.com/repos/10up/ElasticPress/zipball/a1041b3f28a8de2f2256d75ddac85161708ed679",
+                "reference": "a1041b3f28a8de2f2256d75ddac85161708ed679",
                 "shasum": ""
             },
             "require": {
@@ -136,7 +136,7 @@
                 "issues": "https://github.com/10up/ElasticPress/issues",
                 "source": "https://github.com/10up/ElasticPress/tree/develop"
             },
-            "time": "2026-07-01T12:39:20+00:00"
+            "time": "2026-10-23T12:00:20+00:00"
         },
         {
             "name": "10up/phpcs-composer",
