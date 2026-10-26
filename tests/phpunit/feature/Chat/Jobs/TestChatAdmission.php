@@ -160,4 +160,83 @@ class TestChatAdmission extends \WP_UnitTestCase {
 
 		$this->assertTrue( $admission->check_cap( $user_id ), '0 means no limit.' );
 	}
+
+	/**
+	 * Ask a question that is queued or running.
+	 *
+	 * @param Storage $storage    Storage.
+	 * @param string  $text       Question text.
+	 * @param int     $ep_chat_id Conversation, or 0 for a new one.
+	 * @param int     $idle       Seconds since its last activity.
+	 * @return array Accepted question.
+	 */
+	protected function ask_active( Storage $storage, string $text, int $ep_chat_id = 0, int $idle = 0 ): array {
+		$accepted = $storage->accept_question( $text, $ep_chat_id );
+
+		$storage->claim_question( $accepted['question_id'] );
+		update_comment_meta( $accepted['question_id'], Storage::META_HEARTBEAT, time() - $idle );
+
+		return $accepted;
+	}
+
+	/**
+	 * Admission looks at running questions a page at a time: live ones still
+	 * decide the cap and the duplicate, and stale ones are timed out, even
+	 * when there are more of them than fit in one page.
+	 *
+	 * @group chat
+	 * @group chat-bounded-queries
+	 */
+	public function test_in_flight_is_paged() {
+		$storage = new Storage();
+		$storage->register_post_type();
+
+		$user_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		wp_set_current_user( $user_id );
+
+		// Only the in-flight cap is under test.
+		add_filter( 'ep_chat_max_questions_per_hour', '__return_zero' );
+
+		$stale = [];
+
+		foreach ( range( 1, 60 ) as $i ) {
+			$stale[] = $this->ask_active( $storage, "Stale question $i?", 0, DAY_IN_SECONDS )['question_id'];
+		}
+
+		$live = $this->ask_active( $storage, 'Live question?' );
+
+		$limits = [];
+
+		add_filter(
+			'comments_clauses',
+			static function ( $clauses, $query ) use ( &$limits ) {
+				// Counting questions in a conversation returns no rows.
+				if ( empty( $query->query_vars['count'] ) ) {
+					$limits[] = $clauses['limits'];
+				}
+
+				return $clauses;
+			},
+			10,
+			2
+		);
+
+		$admission = new Admission();
+
+		// One live question fills the default cap of 1.
+		$refused = $admission->check_cap( $user_id );
+
+		$this->assertWPError( $refused );
+		$this->assertSame( Admission::ERROR_RATE_LIMITED, $refused->get_error_code() );
+		$this->assertTrue( $admission->check_cap( $user_id, $live['ep_chat_id'] ), 'A follow-up joins its own conversation.' );
+		$this->assertSame( $live['question_id'], $admission->find_duplicate( $user_id, 0, 'live QUESTION?' ) );
+
+		// Every stale question was timed out, across pages.
+		foreach ( $stale as $question_id ) {
+			$this->assertSame( Storage::STATUS_ERROR, $storage->get_status( $question_id, true ) );
+		}
+
+		$this->assertNotEmpty( $limits );
+		$this->assertNotContains( '', $limits );
+	}
 }

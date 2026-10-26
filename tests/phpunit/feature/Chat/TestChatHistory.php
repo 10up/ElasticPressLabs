@@ -181,6 +181,97 @@ class TestChatHistory extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the history of a long conversation reads comments a page at a
+	 * time, and still finds finished exchanges behind many failed ones.
+	 *
+	 * @group chat
+	 * @group chat-bounded-queries
+	 */
+	public function test_history_of_long_conversation_is_paged() {
+		$this->login_as( 'editor' );
+
+		$first      = $this->storage->accept_question( 'Q1?' );
+		$ep_chat_id = $first['ep_chat_id'];
+		$this->storage->complete_question( $ep_chat_id, $first['question_id'], 'A1.' );
+
+		foreach ( range( 2, 48 ) as $i ) {
+			$this->exchange( $ep_chat_id, "Q$i?", "A$i." );
+		}
+
+		// More failed exchanges than fit in one page of comments.
+		foreach ( range( 49, 60 ) as $i ) {
+			$this->exchange( $ep_chat_id, "Q$i?", 'Provider failed.', Storage::STATUS_ERROR );
+		}
+
+		$current = $this->storage->accept_question( 'Q61?', $ep_chat_id );
+
+		$limits = [];
+
+		add_filter(
+			'comments_clauses',
+			static function ( $clauses ) use ( &$limits ) {
+				$limits[] = $clauses['limits'];
+				return $clauses;
+			}
+		);
+
+		$expected = static function ( array $numbers ): array {
+			$messages = [];
+
+			foreach ( $numbers as $i ) {
+				$messages[] = [
+					'role'    => 'user',
+					'content' => "Q$i?",
+				];
+				$messages[] = [
+					'role'    => 'assistant',
+					'content' => "A$i.",
+				];
+			}
+
+			return $messages;
+		};
+
+		$this->assertSame( $expected( [ 47, 48 ] ), $this->storage->get_history( $ep_chat_id, $current['question_id'] ) );
+
+		// Every query is bounded, and the second page was needed.
+		$this->assertGreaterThan( 1, count( $limits ) );
+		$this->assertNotContains( '', $limits );
+
+		// An odd limit drops the oldest answer.
+		add_filter(
+			'ep_chat_history_messages',
+			static function () {
+				return 3;
+			}
+		);
+
+		$this->assertSame( $expected( [ 48 ] ), $this->storage->get_history( $ep_chat_id, $current['question_id'] ) );
+
+		// A question in the middle only sees what came before it (limit 3 drops the answer of Q1).
+		$this->assertSame( [ 'Q2?', 'A2.' ], array_column( $this->storage->get_history( $ep_chat_id, $this->get_question_id( $ep_chat_id, 'Q3?' ) ), 'content' ) );
+	}
+
+	/**
+	 * Question comment ID by its text.
+	 *
+	 * @param int    $ep_chat_id Conversation post ID.
+	 * @param string $text       Question text.
+	 * @return int
+	 */
+	protected function get_question_id( int $ep_chat_id, string $text ): int {
+		$comments = get_comments(
+			[
+				'post_id' => $ep_chat_id,
+				'type'    => Storage::COMMENT_TYPE_QUESTION,
+				'search'  => $text,
+			]
+		);
+
+		return (int) $comments[0]->comment_ID;
+	}
+
+	/**
 	 * Test the history depth filter.
 	 *
 	 * @group chat
@@ -353,6 +444,77 @@ class TestChatHistory extends \WP_UnitTestCase {
 				]
 			)
 		);
+	}
+
+	/**
+	 * Test the History search is capped, newest conversations first, and
+	 * the cap is filterable.
+	 *
+	 * @group chat
+	 * @group chat-bounded-queries
+	 */
+	public function test_search_is_capped() {
+		$this->login_as( 'editor' );
+
+		$conversations = [];
+
+		foreach ( range( 1, 3 ) as $i ) {
+			$conversations[] = $this->storage->accept_question( "Tablets question $i?" )['ep_chat_id'];
+		}
+
+		// Conversations only matched through their summary.
+		$summarized = [];
+
+		foreach ( range( 1, 3 ) as $i ) {
+			$summarized[] = $this->factory()->post->create(
+				[
+					'post_type'    => Storage::POST_TYPE,
+					'post_content' => "Summary about tablets $i.",
+				]
+			);
+		}
+
+		$all = array_merge( $conversations, $summarized );
+
+		$this->assertEqualsCanonicalizing( $all, History_List_Table::search_conversation_ids( 'tablets', 0 ) );
+
+		$limits = [];
+		$sql    = [];
+
+		add_filter(
+			'ep_chat_history_search_limit',
+			static function () {
+				return 2;
+			}
+		);
+		add_filter(
+			'comments_clauses',
+			static function ( $clauses ) use ( &$limits ) {
+				$limits[] = $clauses['limits'];
+				return $clauses;
+			}
+		);
+		add_filter(
+			'query',
+			static function ( $query ) use ( &$sql ) {
+				if ( false !== strpos( $query, 'post_content LIKE' ) ) {
+					$sql[] = $query;
+				}
+				return $query;
+			}
+		);
+
+		$found = History_List_Table::search_conversation_ids( 'tablets', 0 );
+
+		// The two newest questions, and the two newest summaries.
+		$this->assertEqualsCanonicalizing(
+			array_merge( array_slice( $conversations, -2 ), array_slice( $summarized, -2 ) ),
+			$found
+		);
+		$this->assertNotEmpty( $limits );
+		$this->assertSame( 'LIMIT 0,2', $limits[0] );
+		$this->assertCount( 1, $sql );
+		$this->assertMatchesRegularExpression( '/LIMIT 2$/', trim( $sql[0] ) );
 	}
 
 	/**
