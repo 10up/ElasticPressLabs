@@ -799,7 +799,9 @@ class Storage {
 	 * Built from storage, not from the client. Only finished exchanges count:
 	 * a question whose answer is `done` or `refused`. Error, timeout, and
 	 * superseded answers, and their questions, are left out. Citation
-	 * markers such as `[[2]]` are stripped from answers.
+	 * markers such as `[[2]]` are stripped from answers. Comments are read
+	 * newest first, a page at a time, and reading stops once there are enough
+	 * exchanges.
 	 *
 	 * @param int   $ep_chat_id  Conversation post ID.
 	 * @param int   $question_id The question being asked. Only earlier turns are used.
@@ -827,59 +829,89 @@ class Storage {
 			return [];
 		}
 
-		$comments = get_comments(
-			[
-				'post_id'  => $ep_chat_id,
-				'type__in' => [ self::COMMENT_TYPE_QUESTION, self::COMMENT_TYPE_ANSWER ],
-				'status'   => 'approve',
-				'orderby'  => 'comment_ID',
-				'order'    => 'ASC',
-			]
-		);
+		// Newest first, a page at a time, until there are enough finished exchanges.
+		// Skipped exchanges (errors, timeouts) mean the last N comments are not the last N messages.
+		$page      = max( 20, 2 * $limit + 10 );
+		$offset    = 0;
+		$answers   = [];
+		$exchanges = [];
+		$fetched   = 0;
 
-		$answers = [];
+		do {
+			$comments = get_comments(
+				[
+					'post_id'       => $ep_chat_id,
+					'type__in'      => [ self::COMMENT_TYPE_QUESTION, self::COMMENT_TYPE_ANSWER ],
+					'status'        => 'approve',
+					'orderby'       => 'comment_ID',
+					'order'         => 'DESC',
+					'number'        => $page,
+					'offset'        => $offset,
+					'no_found_rows' => true,
+				]
+			);
 
-		foreach ( $comments as $comment ) {
-			if ( self::COMMENT_TYPE_ANSWER !== $comment->comment_type || ! $comment->comment_parent ) {
-				continue;
+			foreach ( $comments as $comment ) {
+				$id = (int) $comment->comment_ID;
+
+				if ( self::COMMENT_TYPE_ANSWER === $comment->comment_type ) {
+					$parent = (int) $comment->comment_parent;
+
+					// The newest valid answer of a question wins. An answer comes after its question, so it is seen first.
+					if ( ! $parent || isset( $answers[ $parent ] ) ) {
+						continue;
+					}
+
+					$payload = get_comment_meta( $id, self::META_PAYLOAD, true );
+
+					if ( ! empty( $payload['superseded'] ) || get_comment_meta( $id, self::META_ERROR_CODE, true ) ) {
+						continue;
+					}
+
+					$answers[ $parent ] = $comment;
+
+					continue;
+				}
+
+				if ( $question_id && $id >= $question_id ) {
+					continue;
+				}
+
+				if ( empty( $answers[ $id ] ) || ! in_array( $this->get_status( $id ), [ self::STATUS_DONE, self::STATUS_REFUSED, self::STATUS_CLARIFY ], true ) ) {
+					continue;
+				}
+
+				$answer = trim( Text::strip_markers( $answers[ $id ]->comment_content, true ) );
+
+				if ( '' === $answer ) {
+					continue;
+				}
+
+				$exchanges[] = [
+					[
+						'role'    => 'user',
+						'content' => (string) $comment->comment_content,
+					],
+					[
+						'role'    => 'assistant',
+						'content' => $answer,
+					],
+				];
+
+				// Two messages per exchange.
+				if ( 2 * count( $exchanges ) >= $limit ) {
+					break 2;
+				}
 			}
 
-			$payload = get_comment_meta( $comment->comment_ID, self::META_PAYLOAD, true );
-
-			if ( ! empty( $payload['superseded'] ) || get_comment_meta( $comment->comment_ID, self::META_ERROR_CODE, true ) ) {
-				continue;
-			}
-
-			$answers[ (int) $comment->comment_parent ] = $comment;
-		}
+			$fetched = count( $comments );
+			$offset += $page;
+		} while ( $fetched === $page );
 
 		$messages = [];
 
-		foreach ( $comments as $comment ) {
-			$id = (int) $comment->comment_ID;
-
-			if ( self::COMMENT_TYPE_QUESTION !== $comment->comment_type || ( $question_id && $id >= $question_id ) ) {
-				continue;
-			}
-
-			if ( empty( $answers[ $id ] ) || ! in_array( $this->get_status( $id ), [ self::STATUS_DONE, self::STATUS_REFUSED, self::STATUS_CLARIFY ], true ) ) {
-				continue;
-			}
-
-			$answer = trim( Text::strip_markers( $answers[ $id ]->comment_content, true ) );
-
-			if ( '' === $answer ) {
-				continue;
-			}
-
-			$messages[] = [
-				'role'    => 'user',
-				'content' => (string) $comment->comment_content,
-			];
-			$messages[] = [
-				'role'    => 'assistant',
-				'content' => $answer,
-			];
+		foreach ( array_reverse( $exchanges ) as $exchange ) {
+			$messages = array_merge( $messages, $exchange );
 		}
 
 		$messages = array_slice( $messages, -$limit );
@@ -1175,7 +1207,31 @@ class Storage {
 			);
 		}
 
+		$this->touch_conversation( $conversation_id );
+
 		return (int) $comment_id;
+	}
+
+	/**
+	 * Record activity on a conversation: its modified date is the date of its newest turn,
+	 * which is what the retention sweep ages.
+	 *
+	 * @param int $conversation_id Conversation post ID.
+	 * @return void
+	 */
+	protected function touch_conversation( int $conversation_id ) {
+		global $wpdb;
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->posts,
+			[
+				'post_modified'     => current_time( 'mysql' ),
+				'post_modified_gmt' => current_time( 'mysql', true ),
+			],
+			[ 'ID' => $conversation_id ]
+		);
+
+		clean_post_cache( $conversation_id );
 	}
 
 	/**

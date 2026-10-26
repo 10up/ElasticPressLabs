@@ -477,7 +477,14 @@ class Pipeline {
 	protected function refused( Gate_Result $result, array $bot, array $hits ): array {
 		$reasons = Gates::refusal_reasons();
 		$code    = $result->get_reason();
-		$clarify = ( new Clarifier() )->clarify( $this->question, $code, $this->retrieved, $bot );
+
+		// A gate that read the ambiguity itself (Ambiguity_Gate: several waves of one report) carries
+		// the offer in its result; no model call and no "Offer clarifying choices" setting needed.
+		$clarify = Clarifier::from_gate( $result->get_context() );
+
+		if ( null === $clarify ) {
+			$clarify = ( new Clarifier() )->clarify( $this->question, $code, $this->retrieved, $bot );
+		}
 
 		if ( null !== $clarify ) {
 			return $this->clarified( $clarify, $code, $bot );

@@ -200,16 +200,35 @@ class History_List_Table extends \WP_List_Table {
 	 * Conversations with a question (including follow-ups) or a summary that
 	 * matches the search.
 	 *
+	 * Each of the two lookups stops at `ep_chat_history_search_limit` rows,
+	 * newest first, so a broad search can't load every question. Older
+	 * matches beyond that are not listed.
+	 *
 	 * @param string $search    Search text.
 	 * @param int    $author_id Restrict to this author's conversations. 0 for any.
 	 * @return array Post IDs.
 	 */
 	public static function search_conversation_ids( string $search, int $author_id ): array {
+		/**
+		 * Filters the most rows the History search reads for each of its
+		 * lookups (question text and conversation summaries).
+		 *
+		 * @since 2.6.0
+		 * @hook ep_chat_history_search_limit
+		 * @param {int} $limit Maximum rows. Default 500.
+		 * @return {int} Filtered maximum rows.
+		 */
+		$limit = max( 1, (int) apply_filters( 'ep_chat_history_search_limit', 500 ) );
+
 		$args = [
-			'type'      => Storage::COMMENT_TYPE_QUESTION,
-			'post_type' => Storage::POST_TYPE,
-			'search'    => $search,
-			'status'    => 'any',
+			'type'          => Storage::COMMENT_TYPE_QUESTION,
+			'post_type'     => Storage::POST_TYPE,
+			'search'        => $search,
+			'status'        => 'any',
+			'orderby'       => 'comment_ID',
+			'order'         => 'DESC',
+			'number'        => $limit,
+			'no_found_rows' => true,
 		];
 
 		if ( $author_id ) {
@@ -237,6 +256,8 @@ class History_List_Table extends \WP_List_Table {
 		if ( $author_id ) {
 			$sql .= $wpdb->prepare( ' AND post_author = %d', $author_id );
 		}
+
+		$sql .= $wpdb->prepare( ' ORDER BY ID DESC LIMIT %d', $limit );
 
 		$ids = array_merge( $ids, array_map( 'intval', $wpdb->get_col( $sql ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 

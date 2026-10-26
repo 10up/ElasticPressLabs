@@ -8,6 +8,8 @@
 
 namespace ElasticPressLabs\Feature\Chat;
 
+use ElasticPressLabs\Feature\Chat\Gates\Ambiguity_Gate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -163,6 +165,46 @@ class Clarifier {
 		}
 
 		return $result + [ 'model' => $reply['model'] ];
+	}
+
+	/**
+	 * A clarifying offer a gate wrote itself, from the context its refusal carries, or null.
+	 *
+	 * Ambiguity_Gate reads several survey waves of one report from the passages and offers them,
+	 * so no model call is made and the bot's "Offer clarifying choices" setting does not apply:
+	 * that setting governs model-written offers for short queries only. The offer is checked the
+	 * way a model reply is: a prompt and at least two options, each one clean line.
+	 *
+	 * @param array $context Gate result context (`clarify` => `prompt`, `options`).
+	 * @return array{prompt: string, options: string[], model: string}|null
+	 */
+	public static function from_gate( array $context ): ?array {
+		$offer = is_array( $context['clarify'] ?? null ) ? $context['clarify'] : null;
+
+		if ( null === $offer ) {
+			return null;
+		}
+
+		$prompt  = self::clean( (string) ( is_string( $offer['prompt'] ?? null ) ? $offer['prompt'] : '' ), 600 );
+		$options = [];
+
+		foreach ( is_array( $offer['options'] ?? null ) ? $offer['options'] : [] as $option ) {
+			$option = is_string( $option ) ? self::clean( $option, Ambiguity_Gate::MAX_OPTION_LENGTH ) : '';
+
+			if ( '' !== $option && ! in_array( mb_strtolower( $option ), array_map( 'mb_strtolower', $options ), true ) ) {
+				$options[] = $option;
+			}
+		}
+
+		if ( '' === $prompt || count( $options ) < 2 ) {
+			return null;
+		}
+
+		return [
+			'prompt'  => $prompt,
+			'options' => array_slice( $options, 0, self::MAX_OPTIONS ),
+			'model'   => '',
+		];
 	}
 
 	/**

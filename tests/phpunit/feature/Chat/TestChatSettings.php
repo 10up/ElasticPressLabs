@@ -195,6 +195,7 @@ class TestChatSettings extends BaseTestCase {
 			'max_in_flight'       => [ 1, 10 ],
 			'max_per_hour'        => [ 0, 1000 ],
 			'retry_after'         => [ 1, 300 ],
+			'retention_days'      => [ 0, 3650 ],
 		];
 
 		foreach ( $ranges as $key => $range ) {
@@ -288,6 +289,7 @@ class TestChatSettings extends BaseTestCase {
 			'max_in_flight'       => 'chat_advanced',
 			'max_per_hour'        => 'chat_advanced',
 			'retry_after'         => 'chat_advanced',
+			'retention_days'      => 'chat_advanced',
 		];
 
 		foreach ( $expected_groups as $key => $group ) {

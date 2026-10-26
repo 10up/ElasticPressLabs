@@ -294,33 +294,53 @@ class Admission {
 	/**
 	 * The user's questions that are still queued or running, after stale ones are timed out.
 	 *
+	 * Read newest first, a page at a time. A page that has stale questions to
+	 * time out is followed by another one. A page of only live questions ends
+	 * the search: that many running questions is over any cap already.
+	 *
 	 * @param int $user_id User ID.
 	 * @return \WP_Comment[]
 	 */
 	protected function get_in_flight( int $user_id ): array {
-		$args = [
-			'user_id'       => $user_id,
-			'type'          => Storage::COMMENT_TYPE_QUESTION,
-			'status'        => 'approve',
-			'no_found_rows' => true,
-			'meta_query'    => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
-					'key'     => Storage::META_STATUS,
-					'value'   => $this->storage->get_active_statuses(),
-					'compare' => 'IN',
-				],
-			],
-		];
+		$reaper = new Reaper( $this->storage );
+		$active = $this->storage->get_active_statuses();
+		$page   = 25;
 
-		$reaper   = new Reaper( $this->storage );
 		$comments = [];
 
-		foreach ( get_comments( $args ) as $comment ) {
-			if ( ! $reaper->reap_question( (int) $comment->comment_ID )
-				&& in_array( $this->storage->get_status( (int) $comment->comment_ID, true ), $this->storage->get_active_statuses(), true ) ) {
-				$comments[] = $comment;
+		do {
+			$batch = get_comments(
+				[
+					'user_id'       => $user_id,
+					'type'          => Storage::COMMENT_TYPE_QUESTION,
+					'status'        => 'approve',
+					'orderby'       => 'comment_ID',
+					'order'         => 'DESC',
+					'number'        => $page,
+					// Timed out questions leave the result, live ones stay and are skipped.
+					'offset'        => count( $comments ),
+					'no_found_rows' => true,
+					'meta_query'    => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						[
+							'key'     => Storage::META_STATUS,
+							'value'   => $active,
+							'compare' => 'IN',
+						],
+					],
+				]
+			);
+
+			$fetched = count( $batch );
+			$kept    = 0;
+
+			foreach ( $batch as $comment ) {
+				if ( ! $reaper->reap_question( (int) $comment->comment_ID )
+					&& in_array( $this->storage->get_status( (int) $comment->comment_ID, true ), $active, true ) ) {
+					$comments[] = $comment;
+					++$kept;
+				}
 			}
-		}
+		} while ( $fetched === $page && $kept < $page );
 
 		return $comments;
 	}

@@ -15,6 +15,7 @@ use ElasticPressLabs\ConnectionTestable;
 use ElasticPressLabs\Feature\Chat\Gates\Gates;
 use ElasticPressLabs\Feature\Chat\Jobs\Dispatcher;
 use ElasticPressLabs\Feature\Chat\Jobs\Reaper;
+use ElasticPressLabs\Feature\Chat\Jobs\Retention;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -210,6 +211,9 @@ class Chat extends Feature implements ConnectionTestable {
 
 		$reaper = new Reaper();
 		$reaper->setup();
+
+		$retention = new Retention();
+		$retention->setup();
 
 		// Terms can change on any request, and the schema the query writer reads must follow.
 		$index_schema = new Index_Schema();
@@ -434,7 +438,7 @@ class Chat extends Feature implements ConnectionTestable {
 		// Advanced.
 		$this->settings_schema[] = $this->get_subheading( 'chat_advanced_intro', '', __( 'Most sites do not need to change these.', 'elasticpress-labs' ), 'chat_advanced' );
 
-		foreach ( [ 'passage_chunks', 'passage_word_budget', 'max_in_flight', 'max_per_hour', 'retry_after' ] as $key ) {
+		foreach ( [ 'passage_chunks', 'passage_word_budget', 'max_in_flight', 'max_per_hour', 'retry_after', 'retention_days' ] as $key ) {
 			$this->settings_schema[] = $this->get_number_field( $key, 'chat_advanced' );
 		}
 	}
