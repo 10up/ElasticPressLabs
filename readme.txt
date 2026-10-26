@@ -45,10 +45,7 @@ Please report security bugs found in the source code of the ElasticPress Labs pl
 
 = 2.6.0 - 2026-XX-XX =
 
-**Note that this release bumps the minimum required WordPress version to 6.2.** Some features need ElasticPress 5.4.0 or later:
-
-* AI Chat (it also needs WordPress 7.0) and the "Test connection" buttons. On older ElasticPress versions, their settings still save, but the buttons and the grouped fields of the settings screens do not show.
-* Vector Embeddings looks up the stored vectors of a whole batch of posts in one request. On older ElasticPress versions, it still reuses them, but with one request per post.
+**Note that this release bumps the minimum required WordPress version to 6.2.** AI Chat and the "Test connection" buttons need ElasticPress 5.4.0 or later (AI Chat also needs WordPress 7.0). On older ElasticPress versions, AI Chat reports that it needs 5.4.0 and stays off, and the "Test connection" buttons do not show. Vector Embeddings works on older versions too, but looks up the stored vectors of a batch with one request per post.
 
 __Added:__
 
