@@ -175,7 +175,6 @@ class Clarifier {
 	 * that setting governs model-written offers for short queries only. The offer is checked the
 	 * way a model reply is: a prompt and at least two options, each one clean line.
 	 *
-	 * @since 2.6.0
 	 * @param array $context Gate result context (`clarify` => `prompt`, `options`).
 	 * @return array{prompt: string, options: string[], model: string}|null
 	 */
