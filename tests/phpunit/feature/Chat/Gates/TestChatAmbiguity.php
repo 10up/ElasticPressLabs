@@ -281,6 +281,41 @@ class TestChatAmbiguity extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Numbered chapter titles of different reports ("Section 1: Views of the mayor" in a 2010
+	 * and a 2011 report) are not waves of one report; a report family next to them still is.
+	 *
+	 * @group chat
+	 */
+	public function test_numbered_chapter_titles_do_not_count() {
+		$chapters = [
+			[ 'Section 1: Views of the mayor', 'January 13, 2011' ],
+			[ 'Section 1: Views of the mayor', 'January 14, 2010' ],
+			[ '3. Views of the mayor', 'July 7, 2016' ],
+			[ '3. Views of the mayor', 'August 18, 2017' ],
+			[ 'Chapter 2. Views of the mayor', 'May 17, 2012' ],
+			[ 'Chapter 2. Views of the mayor', 'June 13, 2013' ],
+			[ 'Part IV: Views of the mayor', 'May 17, 2014' ],
+			[ 'Part IV: Views of the mayor', 'June 13, 2015' ],
+		];
+
+		$this->assertFalse( $this->run_gate( 'What do residents think of the mayor?', $chapters )->is_refuse() );
+
+		foreach ( [ 'Section 1: Views of the mayor', 'Section 12 Views', '3. Views of the mayor', '3) Views', 'Chapter 2. Views', 'Part IV: Views' ] as $title ) {
+			$this->assertSame( '', $this->gate->get_family_key( $title ), $title );
+		}
+
+		// Not chapters: a year, or words that only start like one.
+		$this->assertSame( 'the year in review', $this->gate->get_family_key( '2024: The year in review' ) );
+		$this->assertSame( 'part of the city', $this->gate->get_family_key( 'Part of the City 2024' ) );
+		$this->assertSame( 'sections of the city', $this->gate->get_family_key( 'Sections of the City 2024' ) );
+
+		$result = $this->run_gate( 'What share of commuters say they take the bus?', array_merge( $chapters, $this->commuter_waves() ) );
+
+		$this->assertTrue( $result->is_refuse() );
+		$this->assertSame( 'Commuters, Transit and Technology', $result->get_context()['ambiguity']['title'] );
+	}
+
+	/**
 	 * Publication years stand in for waves when the titles carry none.
 	 *
 	 * @group chat
