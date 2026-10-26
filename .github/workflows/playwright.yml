@@ -88,6 +88,7 @@ jobs:
       run: npm ci --include=dev
 
     - name: Install Playwright Browsers
+      timeout-minutes: 5
       run: npx playwright install --with-deps
 
     - name: Set up WP environment with Elasticsearch
