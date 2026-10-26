@@ -43,6 +43,7 @@ class Gates {
 		self::$registry = new Gate_Registry();
 		self::$registry->register( new Empty_Retrieve_Gate() );
 		self::$registry->register( new Injection_Defense_Gate() );
+		self::$registry->register( new Ambiguity_Gate() );
 		self::$registry->register( new Injection_Echo_Gate() );
 		self::$registry->register( new Figure_Match_Gate() );
 		self::$registry->register( new Scope_Gate() );
