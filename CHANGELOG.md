@@ -14,6 +14,54 @@ All notable changes to this project will be documented in this file, per [the Ke
 ### Developer
 -->
 
+## [2.6.0] - 2026-XX-XX
+
+**Note that this release bumps the minimum required WordPress version to 6.2.** AI Chat and the "Test connection" buttons need ElasticPress 5.4.0 or later (AI Chat also needs WordPress 7.0). On older ElasticPress versions, AI Chat reports that it needs 5.4.0 and stays off, and the "Test connection" buttons do not show. Vector Embeddings works on older versions too, but looks up the stored vectors of a batch with one request per post.
+
+### Added
+* [AI Chat] New AI Chat feature: answers questions from the site's content with cited sources, answer checks, chat bots, and a conversation history. Requires WordPress 7.0 and ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia), [@tott](https://github.com/tott), and [@MomoFadaly](https://github.com/MomoFadaly) via [#231](https://github.com/10up/ElasticPressLabs/pull/231), [#240](https://github.com/10up/ElasticPressLabs/pull/240), [#242](https://github.com/10up/ElasticPressLabs/pull/242), and [#245](https://github.com/10up/ElasticPressLabs/pull/245).
+* [AI Chat] "AI-generated query" search method, where a model writes the search query, checked before it runs. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#232](https://github.com/10up/ElasticPressLabs/pull/232).
+* [AI Chat] Setting to delete conversations after a number of days. Props [@felipeelia](https://github.com/felipeelia) via [#241](https://github.com/10up/ElasticPressLabs/pull/241).
+* [AI Chat] Optional "Survey wave check" gate that asks which wave of a recurring report the reader means when a question names no year. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly) via [#243](https://github.com/10up/ElasticPressLabs/pull/243) and [#244](https://github.com/10up/ElasticPressLabs/pull/244).
+* [Vector Embeddings] [AI Search Summary] "Test connection" buttons. Requires ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#229](https://github.com/10up/ElasticPressLabs/pull/229).
+* [Vector Embeddings] Reuse the vectors of unchanged chunks when a post is indexed again, and only embed new or changed chunks. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#226](https://github.com/10up/ElasticPressLabs/pull/226).
+* [Vector Embeddings] Add the missing fields to existing indices when the feature is activated or updated, without a full sync. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#223](https://github.com/10up/ElasticPressLabs/pull/223).
+* [Semantic Search] The best matching chunks of each post are returned as `$post->matched_chunks`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#227](https://github.com/10up/ElasticPressLabs/pull/227).
+* Upgrade routines that run once per new ElasticPress Labs version, and the `wp elasticpress-labs run-upgrades` WP-CLI command. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#223](https://github.com/10up/ElasticPressLabs/pull/223).
+
+### Changed
+* Bumped the minimum required WordPress version to 6.2, the same as ElasticPress. Props [@felipeelia](https://github.com/felipeelia) via [#235](https://github.com/10up/ElasticPressLabs/pull/235).
+* [Vector Embeddings] Content is split into chunks at paragraph and section boundaries, with a context line (post title and heading path) at the start of each chunk, and each chunk's text and type are stored. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#225](https://github.com/10up/ElasticPressLabs/pull/225).
+* [Vector Embeddings] The embedded text keeps tables (as Markdown), headings, and the separation between elements, decodes HTML entities instead of removing them, and leaves out scripts and styles. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#224](https://github.com/10up/ElasticPressLabs/pull/224).
+* [Vector Embeddings] The `ep_embeddings_is_embeddable` filter receives the computed value instead of `null`, and a callback that returns `null` now leaves the post out. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#221](https://github.com/10up/ElasticPressLabs/pull/221).
+* [Semantic Search] Post search results no longer include the Vector Embeddings chunks in `_source`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#227](https://github.com/10up/ElasticPressLabs/pull/227).
+
+### Fixed
+* [Vector Embeddings] Indexing Criteria (taxonomy and meta rules) were not applied in automatic mode. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#221](https://github.com/10up/ElasticPressLabs/pull/221).
+* [Vector Embeddings] Password-protected posts were embedded. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#221](https://github.com/10up/ElasticPressLabs/pull/221).
+* [Vector Embeddings] Posts indexed while the feature was temporarily disabled after repeated failures lost their stored vectors. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#228](https://github.com/10up/ElasticPressLabs/pull/228).
+* [Vector Embeddings] Memory use during a sync of posts with blocks that use the Interactivity API. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#225](https://github.com/10up/ElasticPressLabs/pull/225).
+* [Vector Embeddings] Array meta values were embedded as the word "Array". Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#225](https://github.com/10up/ElasticPressLabs/pull/225).
+* [Vector Embeddings] Shortcodes in meta values ran when a post was indexed. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#225](https://github.com/10up/ElasticPressLabs/pull/225).
+* Requests to AI services stayed in memory for the whole process, for the query log, even when query logging was off. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#220](https://github.com/10up/ElasticPressLabs/pull/220).
+
+### Security
+* The API key of AI requests is no longer shown in the query log or stored with failed queries. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#220](https://github.com/10up/ElasticPressLabs/pull/220).
+* Bumped `follow-redirects` from 1.16.0 to 1.16.1, `simple-git` from 3.33.0 to 4.0.2, and `@wordpress/env` from 11.17.0 to 12.0.0. Props [@dependabot](https://github.com/dependabot) via [#234](https://github.com/10up/ElasticPressLabs/pull/234).
+
+### Developer
+* [AI Chat] New hooks, among them `ep_chat_register_gate`, `ep_chat_capabilities`, `ep_chat_sync_deadline`, `ep_chat_register_abilities`, and `ep_chat_pipeline_exception`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#231](https://github.com/10up/ElasticPressLabs/pull/231).
+* [AI Chat] New `ep_chat_intent_keep_subject` filter to keep the earlier subject in the search query of a bare follow-up. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly) via [#243](https://github.com/10up/ElasticPressLabs/pull/243).
+* [AI Chat] Model calls send no temperature unless a site sets one with the new `ep_chat_model_temperature` filter, so models that accept only their default temperature (such as Claude 5) work for every step. Props [@felipeelia](https://github.com/felipeelia) via [#246](https://github.com/10up/ElasticPressLabs/pull/246).
+* [Vector Embeddings] New `ep_embeddings_tables_as_markdown`, `ep_embeddings_inline_tags`, `ep_embeddings_chunking_strategy`, `ep_embeddings_chunk_context`, `ep_embeddings_store_chunk_text`, and `ep_embeddings_reuse_group_size` filters, and a second argument for `ep_embeddings_chunk`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#224](https://github.com/10up/ElasticPressLabs/pull/224), [#225](https://github.com/10up/ElasticPressLabs/pull/225), and [#226](https://github.com/10up/ElasticPressLabs/pull/226).
+* [Semantic Search] New `ep_semantic_search_matched_chunks` and `ep_semantic_search_matched_chunk_types` filters. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#227](https://github.com/10up/ElasticPressLabs/pull/227).
+* [Search Algorithm] Search algorithms with a public `$hidden` property set to `true` stay registered but are not offered on the Search Algorithm feature, and the new `ep_labs_search_algorithm_hidden` filter hides or shows one. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#222](https://github.com/10up/ElasticPressLabs/pull/222).
+* New `ep_labs_connection_test_url_allowed` and `ep_labs_connection_test_interval` filters. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#229](https://github.com/10up/ElasticPressLabs/pull/229).
+* The e2e setup builds ElasticPress with the Node version in its `.nvmrc`. Props [@felipeelia](https://github.com/felipeelia) via [#233](https://github.com/10up/ElasticPressLabs/pull/233).
+* The e2e WP-CLI wrapper no longer loads the wp-env config, and calls api.wordpress.org, on every command. Props [@felipeelia](https://github.com/felipeelia) via [#236](https://github.com/10up/ElasticPressLabs/pull/236).
+* Stop e2e jobs that run longer than 60 minutes. Props [@felipeelia](https://github.com/felipeelia) via [#239](https://github.com/10up/ElasticPressLabs/pull/239).
+* Time out the Playwright browser install of e2e jobs after 5 minutes. Props [@felipeelia](https://github.com/felipeelia) via [#247](https://github.com/10up/ElasticPressLabs/pull/247).
+
 ## [2.5.2] - 2026-10-14
 
 ### Fixed
@@ -231,6 +279,7 @@ This version introduces the new *External Content* feature. Check [our blog post
 - Initial plugin release.
 
 [Unreleased]: https://github.com/10up/ElasticPressLabs/compare/trunk...develop
+[2.6.0]: https://github.com/10up/ElasticPressLabs/compare/2.5.2...2.6.0
 [2.5.2]: https://github.com/10up/ElasticPressLabs/compare/2.5.1...2.5.2
 [2.5.1]: https://github.com/10up/ElasticPressLabs/compare/2.5.0...2.5.1
 [2.5.0]: https://github.com/10up/ElasticPressLabs/compare/2.4.0...2.5.0
