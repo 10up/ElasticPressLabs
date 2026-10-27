@@ -234,8 +234,9 @@ class TestChatSources extends BaseTestCase {
 			}
 		) )->stream( [ 'view' => 'all' ], true, get_current_user_id() );
 
-		$data = json_decode( $json, true );
+		$data     = json_decode( $json, true );
+		$exported = array_column( $data['conversations'], null, 'id' )[ $accepted['ep_chat_id'] ];
 
-		$this->assertSame( $expected, $data['conversations'][0]['turns'][1]['citations'][0]['notes'] );
+		$this->assertSame( $expected, $exported['turns'][1]['citations'][0]['notes'] );
 	}
 }
