@@ -107,7 +107,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 
 				<div class="input-wrap">
 					<?php
-					$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
+					$search_algorithms = self::get_public_search_algorithms();
 					foreach ( $search_algorithms as $search_algorithm ) {
 						?>
 						<label>
@@ -144,7 +144,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @since 2.2.0
 	 */
 	public function set_settings_schema() {
-		$search_algorithms = \ElasticPress\SearchAlgorithms::factory()->get_all();
+		$search_algorithms = self::get_public_search_algorithms();
 		$options           = [];
 
 		foreach ( $search_algorithms as $search_algorithm ) {
@@ -190,7 +190,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 			return $settings;
 		}
 
-		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+		$available_search_algorithms = self::get_public_search_algorithm_slugs();
 		if ( ! in_array( $settings['search_algorithm']['search_algorithm_version'], $available_search_algorithms, true ) ) {
 			$settings['search_algorithm']['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
 		}
@@ -224,7 +224,7 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @return array The new settings
 	 */
 	public function fix_search_algorithm_version( $new_settings, $feature ) {
-		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+		$available_search_algorithms = self::get_public_search_algorithm_slugs();
 
 		if ( ! in_array( $new_settings['search_algorithm']['search_algorithm_version'], $available_search_algorithms, true ) ) {
 			$new_settings['search_algorithm']['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
@@ -241,12 +241,71 @@ class SearchAlgorithm extends \ElasticPress\Feature {
 	 * @return array The sanitized settings
 	 */
 	public function sanitize_settings_callback( $settings ) {
-		$available_search_algorithms = array_keys( \ElasticPress\SearchAlgorithms::factory()->get_all() );
+		$available_search_algorithms = self::get_public_search_algorithm_slugs();
 
 		if ( ! in_array( $settings['search_algorithm_version'], $available_search_algorithms, true ) ) {
 			$settings['search_algorithm_version'] = $this->default_settings['search_algorithm_version'];
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * The search algorithms this feature offers: every registered algorithm that is not hidden.
+	 *
+	 * A hidden algorithm stays registered, so code can still use it by slug (for example, through
+	 * `ep_post_search_algorithm` for one query), but it is not listed on this screen and cannot be
+	 * saved as the site's algorithm.
+	 *
+	 * @since 2.6.0
+	 * @return \ElasticPress\SearchAlgorithm[] Algorithms, keyed by slug.
+	 */
+	public static function get_public_search_algorithms(): array {
+		return array_filter(
+			\ElasticPress\SearchAlgorithms::factory()->get_all(),
+			static function ( $search_algorithm ) {
+				return ! self::is_hidden_search_algorithm( $search_algorithm );
+			}
+		);
+	}
+
+	/**
+	 * The slugs of the search algorithms this feature offers.
+	 *
+	 * @since 2.6.0
+	 * @return string[]
+	 */
+	public static function get_public_search_algorithm_slugs(): array {
+		return array_keys( self::get_public_search_algorithms() );
+	}
+
+	/**
+	 * Whether a search algorithm is hidden from this feature.
+	 *
+	 * An algorithm class hides itself with a public `$hidden` property set to true. An algorithm
+	 * without the property (as every ElasticPress algorithm) is public. Sites can change both with
+	 * the `ep_labs_search_algorithm_hidden` filter.
+	 *
+	 * @since 2.6.0
+	 * @param \ElasticPress\SearchAlgorithm $search_algorithm Search algorithm.
+	 * @return bool
+	 */
+	public static function is_hidden_search_algorithm( $search_algorithm ): bool {
+		$hidden = ! empty( $search_algorithm->hidden );
+
+		/**
+		 * Filters whether a search algorithm is hidden from the Search Algorithm feature.
+		 *
+		 * A hidden algorithm is not listed on the feature's screen and cannot be saved as the
+		 * site's algorithm. Showing an algorithm that hides itself lets it become the algorithm of
+		 * every search: for an algorithm that calls an AI model, that is one call per search.
+		 *
+		 * @since 2.6.0
+		 * @hook ep_labs_search_algorithm_hidden
+		 * @param {bool}                          $hidden           Whether the algorithm sets a public `$hidden` property to true.
+		 * @param {\ElasticPress\SearchAlgorithm} $search_algorithm Search algorithm.
+		 * @return {bool} New value.
+		 */
+		return (bool) apply_filters( 'ep_labs_search_algorithm_hidden', $hidden, $search_algorithm );
 	}
 }

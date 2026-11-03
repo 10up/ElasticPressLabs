@@ -84,15 +84,18 @@ class VectorEmbeddingsRequest {
 	/**
 	 * Add the headers.
 	 *
-	 * @param array $options The header options, passed by reference.
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$settings` parameter.
+	 * @param array $options  The header options, passed by reference.
+	 * @param array $settings Settings to use instead of the saved ones (see get_request()).
 	 */
-	public function add_headers( array &$options = [] ) {
+	public function add_headers( array &$options = [], array $settings = [] ) {
 		if ( empty( $options['headers'] ) ) {
 			$options['headers'] = [];
 		}
 
 		if ( ! isset( $options['headers']['Authorization'] ) ) {
-			$options['headers']['Authorization'] = $this->get_auth_header();
+			$options['headers']['Authorization'] = $this->get_auth_header( $settings );
 		}
 
 		if ( ! isset( $options['headers']['Content-Type'] ) ) {
@@ -103,10 +106,13 @@ class VectorEmbeddingsRequest {
 	/**
 	 * Get the auth header.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$settings` parameter.
+	 * @param array $settings Settings to use instead of the saved ones (see get_request()).
 	 * @return string
 	 */
-	public function get_auth_header() {
-		return 'Bearer ' . $this->vector_embeddings->get_setting( 'ep_embeddings_api_key' );
+	public function get_auth_header( array $settings = [] ) {
+		return 'Bearer ' . $this->get_setting( 'ep_embeddings_api_key', $settings );
 	}
 
 	/**
@@ -116,6 +122,23 @@ class VectorEmbeddingsRequest {
 	 * @return array|WP_Error
 	 */
 	public function send_request( $text ) {
+		[ $url, $options ] = $this->get_request( $text );
+
+		$response = $this->send_request_and_log( $url, $options, 'Vector Embeddings', 'vector_embeddings' );
+
+		return $this->get_result( $response );
+	}
+
+	/**
+	 * The URL and HTTP options of an embeddings request (the connection test sends the same).
+	 *
+	 * @since 2.6.0
+	 * @param string|array $text     The text to get embeddings for.
+	 * @param array        $settings Settings to use instead of the saved ones, such as the
+	 *                               unsaved values of a connection test.
+	 * @return array{0: string, 1: array} URL and wp_remote_post options.
+	 */
+	public function get_request( $text, array $settings = [] ): array {
 		/**
 		 * Filter the URL for the post request.
 		 *
@@ -126,7 +149,7 @@ class VectorEmbeddingsRequest {
 		 *
 		 * @return {string} The URL for the request.
 		 */
-		$url = apply_filters( 'ep_embeddings_api_url', $this->vector_embeddings->get_setting( 'ep_embeddings_api_url' ) );
+		$url = (string) apply_filters( 'ep_embeddings_api_url', $this->get_setting( 'ep_embeddings_api_url', $settings ) );
 
 		/**
 		 * Filter the request body before sending to OpenAI.
@@ -142,9 +165,9 @@ class VectorEmbeddingsRequest {
 		$body = apply_filters(
 			'ep_embeddings_request_body',
 			[
-				'model'      => $this->vector_embeddings->get_setting( 'ep_embeddings_embedding_model' ),
+				'model'      => $this->get_setting( 'ep_embeddings_embedding_model', $settings ),
 				'input'      => (array) $text,
-				'dimensions' => $this->vector_embeddings->get_dimensions(),
+				'dimensions' => $this->vector_embeddings->get_dimensions( $settings ),
 			],
 			$text
 		);
@@ -169,10 +192,20 @@ class VectorEmbeddingsRequest {
 			$url
 		);
 
-		$this->add_headers( $options );
+		$this->add_headers( $options, $settings );
 
-		$response = $this->send_request_and_log( $url, $options, 'Vector Embeddings', 'vector_embeddings' );
+		return [ $url, $options ];
+	}
 
-		return $this->get_result( $response );
+	/**
+	 * A setting, from `$settings` when it has it, else the saved one.
+	 *
+	 * @since 2.6.0
+	 * @param string $key      Setting key.
+	 * @param array  $settings Settings to use instead of the saved ones.
+	 * @return mixed
+	 */
+	protected function get_setting( string $key, array $settings ) {
+		return array_key_exists( $key, $settings ) ? $settings[ $key ] : $this->vector_embeddings->get_setting( $key );
 	}
 }

@@ -244,3 +244,56 @@ function get_asset_info( $slug, $attribute = null ) {
 
 	return $asset;
 }
+
+/**
+ * `preg_replace()` that returns the subject unchanged when the pattern fails, for example
+ * on the backtrack limit or on invalid UTF-8 with the `u` modifier, instead of `null`.
+ *
+ * @since 2.6.0
+ * @param string          $pattern     Pattern.
+ * @param string|string[] $replacement Replacement.
+ * @param string          $subject     Subject.
+ * @return string
+ */
+function preg_replace_safe( string $pattern, $replacement, string $subject ): string {
+	$result = preg_replace( $pattern, $replacement, $subject );
+
+	return null === $result ? $subject : $result;
+}
+
+/**
+ * `preg_replace_callback()` that returns the subject unchanged when the pattern fails,
+ * instead of `null`.
+ *
+ * @since 2.6.0
+ * @param string   $pattern  Pattern.
+ * @param callable $callback Callback.
+ * @param string   $subject  Subject.
+ * @return string
+ */
+function preg_replace_callback_safe( string $pattern, callable $callback, string $subject ): string {
+	$result = preg_replace_callback( $pattern, $callback, $subject );
+
+	return null === $result ? $subject : $result;
+}
+
+/**
+ * `preg_split()` that returns the whole subject as the only piece when the pattern fails,
+ * instead of `false`.
+ *
+ * @since 2.6.0
+ * @param string $pattern Pattern.
+ * @param string $subject Subject.
+ * @param int    $limit   Limit.
+ * @param int    $flags   Flags.
+ * @return string[]
+ */
+function preg_split_safe( string $pattern, string $subject, int $limit = -1, int $flags = 0 ): array {
+	$result = preg_split( $pattern, $subject, $limit, $flags );
+
+	if ( false !== $result ) {
+		return $result;
+	}
+
+	return ( $flags & PREG_SPLIT_NO_EMPTY ) && '' === $subject ? [] : [ $subject ];
+}

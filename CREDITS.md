@@ -28,6 +28,8 @@ Thank you to all the people who have already contributed to this repository via 
 [Peter Sorensen (@psorensen)](https://github.com/psorensen),
 [Zach (@ZacharyRener)](https://github.com/ZacharyRener),
 [Michael Phillips (@mphillips)](https://github.com/mphillips),
+[Ricky Lee Whittemore (@rickalee)](https://github.com/rickalee),
+[Harsh Gupta (@cazy8)](https://github.com/cazy8),
 and
 [Felipe Elia (@felipeelia)](https://github.com/felipeelia).
 

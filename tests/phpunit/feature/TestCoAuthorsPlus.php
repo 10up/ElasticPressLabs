@@ -74,6 +74,32 @@ class TestCoAuthorsPlus extends BaseTestCase {
 	}
 
 	/**
+	 * Test Protected Content status is checked during requirements validation.
+	 *
+	 * @since 2.5.2
+	 */
+	public function test_protected_content_status_is_checked_during_requirements_validation() {
+		ElasticPress\Features::factory()->activate_feature( 'protected_content' );
+
+		$instance = new class() extends ElasticPressLabs\Feature\CoAuthorsPlus {
+			/**
+			 * Return the protected content feature state.
+			 *
+			 * @return bool
+			 */
+			public function is_protected_content_feature_active() {
+				return $this->is_protected_content_feature_active;
+			}
+		};
+
+		$this->assertFalse( $instance->is_protected_content_feature_active() );
+
+		$instance->requirements_status();
+
+		$this->assertTrue( $instance->is_protected_content_feature_active() );
+	}
+
+	/**
 	 * Test box summary
 	 *
 	 * @since  1.1.0

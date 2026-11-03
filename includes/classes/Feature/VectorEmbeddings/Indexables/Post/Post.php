@@ -8,6 +8,7 @@
 
 namespace ElasticPressLabs\Feature\VectorEmbeddings\Indexables\Post;
 
+use ElasticPressLabs\Feature\VectorEmbeddings\Chunker;
 use ElasticPressLabs\Feature\VectorEmbeddings\Indexable;
 use ElasticPressLabs\Utils;
 use ElasticPressLabs\Feature\VectorEmbeddings\Settings;
@@ -24,6 +25,25 @@ class Post extends Indexable {
 	public $settings_page;
 
 	/**
+	 * Vectors already stored for posts being indexed: `[ post_id => [ hash => vector ] ]`.
+	 *
+	 * Holds one group of the batch at a time (see get_stored_vectors()), and is cleared
+	 * after the batch.
+	 *
+	 * @since 2.6.0
+	 * @var array
+	 */
+	protected $stored_vectors = [];
+
+	/**
+	 * The posts of the batch being indexed, in groups whose stored vectors are loaded together.
+	 *
+	 * @since 2.6.0
+	 * @var int[][]
+	 */
+	protected $batch_groups = [];
+
+	/**
 	 * Setup hooks
 	 */
 	public function setup() {
@@ -32,6 +52,13 @@ class Post extends Indexable {
 
 		// Alter post and term mapping to store our vector embeddings
 		add_filter( 'ep_post_mapping', [ $this, 'add_post_vector_field_mapping' ] );
+
+		// Search results do not carry every chunk; matching chunks come from `inner_hits`.
+		add_filter( 'ep_post_formatted_args', [ $this, 'exclude_chunks_from_source' ], 9999 );
+
+		// ElasticPress.io reports its processing here; other generators, posts indexed with
+		// the vectors of an earlier version (see keep_stored_chunks()).
+		add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
 
 		$generator = $this->feature->get_setting( 'ep_embeddings_generator' );
 		if ( 'external' === $generator ) {
@@ -50,10 +77,15 @@ class Post extends Indexable {
 		if ( 'epio' === $generator ) {
 			add_filter( 'ep_bulk_index_action_args', [ $this, 'maybe_add_chunks_to_bulk_index_action_args' ], 10, 2 );
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'maybe_add_chunks_to_text_chunks_fields' ], 10, 2 );
-			add_filter( 'ep_doc_status', [ $this, 'maybe_set_doc_status' ], 10, 3 );
 			add_filter( 'ep_embeddings_dimensions', [ $this, 'set_epio_dimensions' ] );
 		} else {
 			add_filter( 'ep_post_sync_args_post_prepare_meta', [ $this, 'add_vector_field_to_post_sync' ], 10, 2 );
+
+			// Reuse the vectors of unchanged chunks: load the stored ones once per batch.
+			add_action( 'ep_pre_prepare_documents', [ $this, 'prefetch_stored_vectors' ], 10, 2 );
+			add_action( 'ep_after_bulk_index', [ $this, 'clear_stored_vectors' ] );
+			add_action( 'ep_after_bulk_index_dynamically', [ $this, 'clear_stored_vectors' ] );
+			add_action( 'ep_after_index_post', [ $this, 'clear_stored_vectors' ] );
 		}
 	}
 
@@ -65,6 +97,37 @@ class Post extends Indexable {
 	 */
 	public function add_post_vector_field_mapping( array $mapping ): array {
 		return $this->add_vector_mapping_field( $mapping );
+	}
+
+	/**
+	 * Leave the chunks out of the `_source` of post search results.
+	 *
+	 * Every chunk's text (and, before Elasticsearch 9, its vector) would otherwise come
+	 * back with every hit. Queries that already choose their `_source` fields are left alone.
+	 *
+	 * @since 2.6.0
+	 * @param array $formatted_args Formatted Elasticsearch query.
+	 * @return array
+	 */
+	public function exclude_chunks_from_source( $formatted_args ) {
+		if ( ! is_array( $formatted_args ) ) {
+			return $formatted_args;
+		}
+
+		$source = $formatted_args['_source'] ?? null;
+
+		if ( null !== $source && ( ! is_array( $source ) || isset( $source['includes'] ) || isset( $source[0] ) ) ) {
+			return $formatted_args;
+		}
+
+		$excludes = array_merge( (array) ( $source['excludes'] ?? [] ), [ 'chunks', 'ep_embeddings_control' ] );
+
+		$formatted_args['_source'] = array_merge(
+			(array) $source,
+			[ 'excludes' => array_values( array_unique( $excludes ) ) ]
+		);
+
+		return $formatted_args;
 	}
 
 	/**
@@ -292,17 +355,305 @@ class Post extends Indexable {
 			return $args;
 		}
 
-		$post_chunks = $this->get_post_chunks( $post_id );
-		$embeddings  = $this->feature->get_embedding( $post_id, 'post', $post_chunks );
+		$chunk_items = $this->get_post_chunk_items( $post_id );
 
-		if ( ! is_array( $embeddings ) ) {
-			if ( is_wp_error( $embeddings ) ) {
-				throw new \Exception( wp_kses_post( $embeddings->get_error_message() ) );
-			}
+		if ( ! $chunk_items ) {
 			return $args;
 		}
 
-		return $this->add_chunks_field_value( $args, $embeddings );
+		// Chunks whose hash is already stored keep their vector; only the others are embedded.
+		$stored  = $this->get_stored_vectors( $post_id );
+		$missing = [];
+
+		foreach ( $chunk_items as $index => $item ) {
+			$hash = $this->feature->get_chunk_hash( $item['text'] );
+
+			$chunk_items[ $index ]['hash'] = $hash;
+
+			if ( ! isset( $stored[ $hash ] ) ) {
+				$missing[ $hash ] = $item['text'];
+			}
+		}
+
+		$new_vectors = [];
+
+		if ( $missing ) {
+			$embeddings = $this->feature->get_embedding( $post_id, 'post', array_values( $missing ) );
+
+			if ( ! is_array( $embeddings ) ) {
+				if ( is_wp_error( $embeddings ) ) {
+					throw new \Exception( wp_kses_post( $embeddings->get_error_message() ) );
+				}
+				return $args;
+			}
+
+			if ( count( $embeddings ) !== count( $missing ) ) {
+				throw new \Exception( esc_html__( 'The embedding service returned a different number of vectors than chunks sent.', 'elasticpress-labs' ) );
+			}
+
+			$new_vectors = array_combine( array_keys( $missing ), array_values( $embeddings ) );
+		}
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::debug(
+				sprintf(
+					/* translators: 1: post ID, 2: reused chunks, 3: total chunks */
+					__( 'Post %1$d: reused %2$d of %3$d chunk vectors.', 'elasticpress-labs' ),
+					$post_id,
+					count( $chunk_items ) - count( $missing ),
+					count( $chunk_items )
+				)
+			);
+		}
+
+		$vectors = [];
+
+		foreach ( $chunk_items as $item ) {
+			$vector = $stored[ $item['hash'] ] ?? $new_vectors[ $item['hash'] ] ?? null;
+
+			if ( ! is_array( $vector ) ) {
+				throw new \Exception( esc_html__( 'No vector was found or returned for one of the chunks.', 'elasticpress-labs' ) );
+			}
+
+			$vectors[] = $vector;
+		}
+
+		// The vectors match this version of the post: clear a message about older ones.
+		$args['ep_embeddings_control'] = [
+			'is_processing' => false,
+			'errors'        => [],
+		];
+
+		return $this->add_chunks_field_value( $args, $vectors, $chunk_items );
+	}
+
+	/**
+	 * Split the posts about to be indexed into groups, whose stored vectors are then loaded
+	 * one group at a time, with one request each (see get_stored_vectors()).
+	 *
+	 * Vectors are large (a post can have dozens of chunks of 1,536 floats), so a whole batch
+	 * is never loaded at once.
+	 *
+	 * Runs on the `ep_pre_prepare_documents` action (ElasticPress 5.4+). Without it, each
+	 * post is looked up when it is prepared.
+	 *
+	 * @since 2.6.0
+	 * @param array  $object_ids IDs of the objects about to be prepared.
+	 * @param string $slug       Indexable slug.
+	 */
+	public function prefetch_stored_vectors( $object_ids, $slug ) {
+		if ( 'post' !== $slug ) {
+			return;
+		}
+
+		$post_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $object_ids ) ) ) );
+
+		$this->stored_vectors = [];
+		$this->batch_groups   = $post_ids ? array_chunk( $post_ids, $this->get_group_size() ) : [];
+	}
+
+	/**
+	 * Forget the stored vectors after a batch.
+	 *
+	 * @since 2.6.0
+	 */
+	public function clear_stored_vectors() {
+		$this->stored_vectors = [];
+		$this->batch_groups   = [];
+	}
+
+	/**
+	 * Stored vectors of a post, keyed by chunk hash.
+	 *
+	 * A post of the current batch loads its whole group, and the previous group is let go.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id Post ID.
+	 * @return array
+	 */
+	protected function get_stored_vectors( int $post_id ): array {
+		if ( ! array_key_exists( $post_id, $this->stored_vectors ) ) {
+			$group = $this->get_batch_group( $post_id );
+
+			if ( $group ) {
+				$this->stored_vectors = [];
+				$this->load_stored_vectors( $group );
+			} else {
+				$this->load_stored_vectors( [ $post_id ] );
+			}
+		}
+
+		return $this->stored_vectors[ $post_id ] ?? [];
+	}
+
+	/**
+	 * The group of the current batch a post is in.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id Post ID.
+	 * @return int[] Empty when the post is not in the batch.
+	 */
+	protected function get_batch_group( int $post_id ): array {
+		foreach ( $this->batch_groups as $group ) {
+			if ( in_array( $post_id, $group, true ) ) {
+				return $group;
+			}
+		}
+
+		return [];
+	}
+
+	/**
+	 * How many posts' stored vectors are loaded with one request.
+	 *
+	 * @since 2.6.0
+	 * @return int
+	 */
+	protected function get_group_size(): int {
+		/**
+		 * Filters how many posts' stored vectors are loaded with one request while a batch is
+		 * indexed. Fewer use less memory; more send fewer requests.
+		 *
+		 * @hook ep_embeddings_reuse_group_size
+		 * @since 2.6.0
+		 * @param {int} $size Posts per request. Default 25.
+		 * @return {int} New size.
+		 */
+		return max( 1, (int) apply_filters( 'ep_embeddings_reuse_group_size', 25 ) );
+	}
+
+	/**
+	 * Load the chunk hashes and vectors stored for posts.
+	 *
+	 * Nothing is loaded during a full reindex (the index was just recreated). A failed
+	 * request loads nothing: every chunk is embedded again.
+	 *
+	 * @since 2.6.0
+	 * @param int[] $post_ids Post IDs.
+	 */
+	protected function load_stored_vectors( array $post_ids ) {
+		$post_ids = array_values( array_diff( array_filter( $post_ids ), array_keys( $this->stored_vectors ) ) );
+
+		if ( ! $post_ids ) {
+			return;
+		}
+
+		foreach ( $post_ids as $post_id ) {
+			$this->stored_vectors[ $post_id ] = [];
+		}
+
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+
+		if ( ! $indexable || $indexable->is_full_reindexing() ) {
+			return;
+		}
+
+		foreach ( (array) $this->fetch_stored_chunks( $indexable->get_index_name(), $post_ids ) as $post_id => $source ) {
+			foreach ( (array) ( $source['chunks'] ?? [] ) as $chunk ) {
+				if ( ! empty( $chunk['hash'] ) && ! empty( $chunk['vector'] ) && is_array( $chunk['vector'] ) ) {
+					$this->stored_vectors[ (int) $post_id ][ (string) $chunk['hash'] ] = $chunk['vector'];
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the stored chunk hashes and vectors of documents with one `_mget`.
+	 *
+	 * The fields are named in `_source_includes`: Elasticsearch 9 leaves dense vectors out of
+	 * `_source` unless a request names them.
+	 *
+	 * @since 2.6.0
+	 * @param string   $index    Index name.
+	 * @param int[]    $post_ids Post IDs.
+	 * @param string[] $fields   Optional. Chunk fields to get. Default the hash and the vector.
+	 * @return array|null `[ post_id => _source ]`, or null when the request failed.
+	 */
+	protected function fetch_stored_chunks( string $index, array $post_ids, array $fields = [ 'chunks.hash', 'chunks.vector' ] ): ?array {
+		$elasticsearch = \ElasticPress\Elasticsearch::factory();
+
+		try {
+			// ElasticPress 5.4+ can ask for source fields.
+			if ( defined( 'EP_VERSION' ) && version_compare( EP_VERSION, '5.4.0', '>=' ) ) {
+				$documents = $elasticsearch->get_documents( $index, 'post', $post_ids, $fields );
+
+				return is_array( $documents ) ? $documents : null;
+			}
+
+			$response = $elasticsearch->remote_request(
+				$index . '/_mget?_source_includes=' . implode( ',', $fields ),
+				[
+					'method' => 'POST',
+					'body'   => wp_json_encode( [ 'ids' => $post_ids ] ),
+				],
+				[],
+				'post'
+			);
+		} catch ( \Throwable $th ) {
+			return null;
+		}
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+
+		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
+		$documents = [];
+
+		foreach ( (array) ( $body['docs'] ?? [] ) as $doc ) {
+			if ( ! empty( $doc['found'] ) && isset( $doc['_id'], $doc['_source'] ) ) {
+				$documents[ (int) $doc['_id'] ] = $doc['_source'];
+			}
+		}
+
+		return $documents;
+	}
+
+	/**
+	 * While the feature is temporarily disabled after failures, index a post that should be
+	 * embedded with the chunks already stored for it, so it keeps its vectors.
+	 *
+	 * The rest of the document (title, content, terms, meta) is up to date; the vectors are
+	 * from an earlier version of the post, which its doc status says until its next sync. A
+	 * post with no stored chunks is indexed without them. When the stored chunks cannot be
+	 * read, the post is not indexed, so its stored document keeps them.
+	 *
+	 * @since 2.6.0
+	 * @param array $args    Current sync args.
+	 * @param int   $post_id Post ID being synced.
+	 * @return array
+	 * @throws \Exception If the stored chunks cannot be read.
+	 */
+	public function keep_stored_chunks( array $args, int $post_id ): array {
+		$indexable = \ElasticPress\Indexables::factory()->get( 'post' );
+
+		if ( ! $indexable || $indexable->is_full_reindexing() || ! $this->should_add_vector_field_to_post( $post_id ) ) {
+			return $args;
+		}
+
+		$documents = $this->fetch_stored_chunks( $indexable->get_index_name(), [ $post_id ], [ 'chunks.hash', 'chunks.vector', 'chunks.text', 'chunks.type' ] );
+
+		if ( null === $documents ) {
+			throw new \Exception(
+				esc_html__( 'Vector Embeddings is temporarily disabled after repeated embedding failures, and the stored vectors of this post could not be read. The post was not indexed, so it keeps them. Sync it again once the feature is re-enabled.', 'elasticpress-labs' )
+			);
+		}
+
+		$chunks = (array) ( $documents[ $post_id ]['chunks'] ?? [] );
+
+		if ( ! $chunks ) {
+			return $args;
+		}
+
+		$args['chunks']                = $chunks;
+		$args['ep_embeddings_control'] = [
+			'is_processing' => false,
+			'errors'        => [
+				esc_html__( 'The vectors are from before this change: Vector Embeddings was temporarily disabled. Sync the post again.', 'elasticpress-labs' ),
+			],
+		];
+
+		return $args;
 	}
 
 	/**
@@ -330,7 +681,7 @@ class Post extends Indexable {
 	}
 
 	/**
-	 * Return a representation of a post.
+	 * Return a representation of a post: the text of each chunk to embed.
 	 *
 	 * By default includes the title, the slug, and the post content, but could also add
 	 * meta fields and taxonomy terms, for example.
@@ -339,8 +690,213 @@ class Post extends Indexable {
 	 * @return array
 	 */
 	public function get_post_chunks( int $post_id ): array {
-		$fields = $this->settings_page->get_embedding_fields( $post_id );
-		$post   = get_post( $post_id );
+		return wp_list_pluck( $this->get_post_chunk_items( $post_id ), 'text' );
+	}
+
+	/**
+	 * The chunks of a post, with what each one comes from.
+	 *
+	 * With the `paragraphs` strategy, every chunk starts with a context line: the post
+	 * title and the heading path where the chunk starts ("Title › Methodology"), see the
+	 * `ep_embeddings_chunk_context` filter.
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id The Post ID
+	 * @return array[] `[ 'text' => string, 'type' => 'content'|'taxonomy'|'meta' ]` per chunk.
+	 */
+	public function get_post_chunk_items( int $post_id ): array {
+		/*
+		 * Rendering a post's blocks registers Interactivity API state (a chart block can
+		 * add its whole dataset). On a page that state is printed once; during a sync it
+		 * would pile up for every post until the process runs out of memory. Each post is
+		 * rendered with a fresh Interactivity API instance, and the page's one is restored.
+		 */
+		$has_interactivity = class_exists( '\WP_Interactivity_API' );
+
+		if ( $has_interactivity ) {
+			$interactivity               = $GLOBALS['wp_interactivity'] ?? null;
+			$GLOBALS['wp_interactivity'] = new \WP_Interactivity_API();
+		}
+
+		try {
+			return $this->build_post_chunk_items( $post_id );
+		} finally {
+			if ( $has_interactivity ) {
+				$GLOBALS['wp_interactivity'] = $interactivity;
+			}
+		}
+	}
+
+	/**
+	 * Build the chunks of a post. See get_post_chunk_items().
+	 *
+	 * @since 2.6.0
+	 * @param int $post_id The Post ID
+	 * @return array[]
+	 */
+	protected function build_post_chunk_items( int $post_id ): array {
+		$post = get_post( $post_id );
+
+		if ( ! $post ) {
+			return [];
+		}
+
+		$sources = [
+			'content' => $this->get_main_content( $post ),
+		];
+
+		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
+		if ( $taxonomies ) {
+			$sources['taxonomy'] = $this->get_post_terms( $post, $taxonomies );
+		}
+
+		$meta_fields = $this->get_embeddable_meta( $post_id, $post->post_type );
+		if ( $meta_fields ) {
+			$sources['meta'] = $this->get_post_meta( $post, $meta_fields );
+		}
+
+		$chunk_size   = $this->settings_page->get_chunk_size();
+		$overlap_size = $this->settings_page->get_chunk_overlap();
+		$items        = [];
+
+		if ( 'words' === $this->feature->get_chunking_strategy() ) {
+			foreach ( array_filter( $sources ) as $type => $text ) {
+				// Term names and meta values are not post content: their shortcodes must not run.
+				foreach ( $this->feature->chunk_content( $text, $chunk_size, $overlap_size, 'content' === $type ) as $chunk ) {
+					$items[] = [
+						'text' => $chunk,
+						'type' => $type,
+					];
+				}
+			}
+
+			return $items;
+		}
+
+		$chunker = new Chunker( $chunk_size, $overlap_size );
+
+		// The title is part of each chunk's context when it is one of the embedded fields.
+		$title = in_array( 'post_title', $this->settings_page->get_embedding_fields( $post_id ), true )
+			? html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' )
+			: '';
+
+		foreach ( array_filter( $sources ) as $type => $text ) {
+			// Term names and meta values are not post content: their shortcodes must not run.
+			$text = $this->feature->normalize_content( $text, 'content' === $type );
+
+			if ( 'content' === $type ) {
+				// The title is in every chunk's context line.
+				$text = $this->remove_title_section( $text );
+			}
+
+			$chunks = 'content' === $type ? $chunker->chunk_sections( $text ) : $chunker->chunk_labelled( $text );
+
+			foreach ( $chunks as $chunk ) {
+				$item = $this->prepare_chunk_item( $post, $chunk, $type, $title );
+
+				if ( '' !== trim( $item['text'] ) ) {
+					$items[] = $item;
+				}
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Add the context line to a chunk and run the chunk filter.
+	 *
+	 * @since 2.6.0
+	 * @param \WP_Post $post  Post.
+	 * @param array    $chunk Chunk from the Chunker: `text` and `headings`.
+	 * @param string   $type  Chunk type.
+	 * @param string   $title Post title for the context line, or empty when it is not embedded.
+	 * @return array `text` and `type`.
+	 */
+	protected function prepare_chunk_item( \WP_Post $post, array $chunk, string $type, string $title ): array {
+		$chunk_info = [
+			'type'     => $type,
+			'headings' => $chunk['headings'],
+		];
+
+		/**
+		 * Filter the context line parts of a chunk. They are joined with " › " and the
+		 * line is added before the chunk text.
+		 *
+		 * @hook ep_embeddings_chunk_context
+		 * @since 2.6.0
+		 * @param {array}    $parts      The post title (when it is an embedded field), then the heading path where the chunk starts.
+		 * @param {\WP_Post} $post       The post.
+		 * @param {array}    $chunk_info `type` (content, taxonomy, meta) and `headings`.
+		 * @return {array} New parts. Empty for no context line.
+		 */
+		$parts = (array) apply_filters( 'ep_embeddings_chunk_context', array_merge( [ $title ], $chunk['headings'] ), $post, $chunk_info );
+		$parts = array_filter( array_map( 'trim', array_map( 'strval', $parts ) ), 'strlen' );
+		$text  = $parts ? implode( ' › ', $parts ) . "\n" . $chunk['text'] : $chunk['text'];
+
+		/** This filter is documented in includes/classes/Feature/VectorEmbeddings/VectorEmbeddings.php */
+		$text = apply_filters( 'ep_embeddings_chunk', $text, $chunk_info );
+
+		return [
+			'text' => (string) $text,
+			'type' => $type,
+		];
+	}
+
+	/**
+	 * Remove the `# Title` section from normalized main content.
+	 *
+	 * With the `paragraphs` strategy the title is in every chunk's context line, so it is
+	 * not repeated in the text. A post with nothing but a title keeps it, so it still has
+	 * a chunk.
+	 *
+	 * Only the section get_main_content() writes is removed: `# Title` as the first line, up
+	 * to the next level 1 line (`# Summary` or `# Content`). Content headings are level 2 or
+	 * deeper, so a "# Title" line further down is content, and stays.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Normalized main content.
+	 * @return string
+	 */
+	protected function remove_title_section( string $text ): string {
+		$kept    = [];
+		$skip    = null;
+		$content = false;
+
+		foreach ( Utils\preg_split_safe( '/\R/u', $text ) as $line ) {
+			$trimmed = trim( $line );
+
+			if ( '' === $trimmed && null === $skip ) {
+				continue;
+			}
+
+			if ( null === $skip ) {
+				$skip = '# Title' === $trimmed;
+			} elseif ( $skip && preg_match( '/^#\s/u', $trimmed ) ) {
+				$skip = false;
+			}
+
+			if ( $skip ) {
+				continue;
+			}
+
+			$kept[]  = $line;
+			$content = $content || ( '' !== $trimmed && 0 !== strpos( $trimmed, '#' ) );
+		}
+
+		return $content ? implode( "\n", $kept ) : $text;
+	}
+
+	/**
+	 * The title, summary, and content Labs chunks for a post.
+	 *
+	 * @since 2.6.0
+	 * @param \WP_Post $post The post.
+	 * @return string
+	 */
+	protected function get_main_content( \WP_Post $post ): string {
+		$post_id = $post->ID;
+		$fields  = $this->settings_page->get_embedding_fields( $post_id );
 
 		$main_content = '';
 
@@ -369,29 +925,7 @@ class Post extends Indexable {
 		 * @param {\WP_Post} $post         The post being processed.
 		 * @return {string} The final main content representation.
 		 */
-		$main_content = apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
-
-		$chunk_size   = $this->settings_page->get_chunk_size();
-		$overlap_size = $this->settings_page->get_chunk_overlap();
-		$chunks       = $this->feature->chunk_content( $main_content, $chunk_size, $overlap_size );
-
-		$taxonomies = $this->get_embeddable_taxonomies( $post_id, $post->post_type );
-		if ( $taxonomies ) {
-			$post_terms_str = $this->get_post_terms( $post, $taxonomies );
-			if ( $post_terms_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_terms_str, $chunk_size, $overlap_size ) ];
-			}
-		}
-
-		$meta_fields = $this->get_embeddable_meta( $post_id, $post->post_type );
-		if ( $meta_fields ) {
-			$post_meta_str = $this->get_post_meta( $post, $meta_fields );
-			if ( $post_meta_str ) {
-				$chunks = [ ...$chunks, ...$this->feature->chunk_content( $post_meta_str, $chunk_size, $overlap_size ) ];
-			}
-		}
-
-		return $chunks;
+		return (string) apply_filters( 'ep_embeddings_post_main_content', $main_content, $post );
 	}
 
 	/**
@@ -512,6 +1046,41 @@ class Post extends Indexable {
 	}
 
 	/**
+	 * A meta value as text. Arrays and objects become a comma-separated list of their
+	 * scalar values (they used to become the word "Array").
+	 *
+	 * @since 2.6.0
+	 * @param mixed $value Meta value.
+	 * @param int   $depth Optional. Nesting level, so an object that references itself ends.
+	 * @return string
+	 */
+	protected function meta_value_to_text( $value, int $depth = 0 ): string {
+		if ( $depth > 10 ) {
+			return '';
+		}
+
+		if ( is_object( $value ) ) {
+			$value = get_object_vars( $value );
+		}
+
+		if ( is_array( $value ) ) {
+			$texts = [];
+
+			foreach ( $value as $item ) {
+				$texts[] = $this->meta_value_to_text( $item, $depth + 1 );
+			}
+
+			return implode( ', ', array_filter( $texts, 'strlen' ) );
+		}
+
+		if ( is_bool( $value ) || null === $value ) {
+			return '';
+		}
+
+		return is_scalar( $value ) ? trim( (string) $value ) : '';
+	}
+
+	/**
 	 * Get the representation of the post meta.
 	 *
 	 * @param \WP_Post $post        The post object
@@ -522,9 +1091,9 @@ class Post extends Indexable {
 		$meta_str = '';
 		$values   = [];
 		foreach ( $meta_fields as $meta_field ) {
-			$values[ $meta_field ] = get_post_meta( $post->ID, $meta_field, true );
+			$values[ $meta_field ] = $this->meta_value_to_text( get_post_meta( $post->ID, $meta_field, true ) );
 		}
-		$values = array_filter( $values );
+		$values = array_filter( $values, 'strlen' );
 
 		if ( ! empty( $values ) ) {
 			$meta_str .= "# Metadata\n";

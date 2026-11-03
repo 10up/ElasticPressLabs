@@ -54,10 +54,6 @@ class CoAuthorsPlus extends Feature {
 
 		$this->requires_install_reindex = true;
 
-		$protected_content_feature = Features::factory()->get_registered_feature( 'protected_content' );
-
-		$this->is_protected_content_feature_active = $protected_content_feature && $protected_content_feature->is_active();
-
 		$this->requires_feature = 'search';
 
 		parent::__construct();
@@ -272,6 +268,9 @@ class CoAuthorsPlus extends Feature {
 	public function requirements_status() {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		$status = new FeatureRequirementsStatus( 0 );
+
+		$protected_content_feature                 = Features::factory()->get_registered_feature( 'protected_content' );
+		$this->is_protected_content_feature_active = $protected_content_feature && $protected_content_feature->is_active();
 
 		if ( ! \is_plugin_active( 'co-authors-plus/co-authors-plus.php' ) || ! class_exists( '\CoAuthors_Plus' ) ) {
 			$status->code    = 2;
