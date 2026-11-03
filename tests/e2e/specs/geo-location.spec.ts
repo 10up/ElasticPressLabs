@@ -7,6 +7,7 @@ import {
 	activatePlugin,
 	deactivatePlugin,
 	getEditorFrame,
+	refreshIndex,
 	maybeDisableFeature,
 	maybeEnableFeature,
 } from 'elasticpress-playwright-utils';
@@ -46,7 +47,7 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 	});
 
 	test('Shows the address field when the Google Maps API exists', async ({ loggedInPage }) => {
-		test.fixme(true, 'Google Maps API is not available in all environments');
+		test.skip(!process.env.GOOGLE_MAPS_API_KEY, 'Google Maps API key is not available');
 
 		await maybeEnableFeature('geo_location');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
@@ -81,10 +82,17 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			await geoLocationButton.click();
 		}
 
-		// Select an address using the Places API (New) widget.
-		const addressInput = loggedInPage.locator('gmp-place-autocomplete input');
-		await addressInput.fill('california');
-		await loggedInPage.getByRole('option').first().waitFor();
+		// Use the widget's keyboard controls because its input is in a closed shadow root.
+		const addressInput = loggedInPage.locator('gmp-place-autocomplete');
+		await addressInput.click();
+		const predictionsPromise = loggedInPage.waitForResponse(
+			(response) =>
+				response.url().includes('/AutocompletePlaces') &&
+				response.request().postData()?.includes('"california"'),
+		);
+		await addressInput.pressSequentially('california');
+		const predictions = await predictionsPromise;
+		await predictions.finished();
 		await addressInput.press('ArrowDown');
 		await addressInput.press('Enter');
 
@@ -93,12 +101,14 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		const latitudeId = await latitudeLabel.getAttribute('for');
 		if (latitudeId) {
 			await expect(loggedInPage.locator(`#${latitudeId}`)).not.toHaveValue('');
+			await expect(loggedInPage.locator(`#${latitudeId}`)).not.toHaveValue('0');
 		}
 
 		const longitudeLabel = loggedInPage.locator('label:has-text("Longitude")');
 		const longitudeId = await longitudeLabel.getAttribute('for');
 		if (longitudeId) {
 			await expect(loggedInPage.locator(`#${longitudeId}`)).not.toHaveValue('');
+			await expect(loggedInPage.locator(`#${longitudeId}`)).not.toHaveValue('0');
 		}
 	});
 
@@ -140,6 +150,13 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		for await (const post of posts) {
 			// Create a post
 			await goToAdminPage(loggedInPage, 'post-new.php');
+			// The editor iframe may appear after the page has finished navigating.
+			await expect
+				.poll(async () => {
+					const frame = await getEditorFrame(loggedInPage);
+					return frame.locator('h1.editor-post-title__input, #post-title-0').isVisible();
+				})
+				.toBe(true);
 			const editorFrame = await getEditorFrame(loggedInPage);
 			await editorFrame
 				.locator('h1.editor-post-title__input, #post-title-0')
@@ -201,6 +218,7 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		}
 
 		// Search ordering by distance
+		await refreshIndex('post');
 		await loggedInPage.goto('/?s=Test+Geo+Location+Post&orderby=geo_distance');
 
 		// Check if only 3 posts are displayed
