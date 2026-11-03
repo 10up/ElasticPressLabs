@@ -65,16 +65,16 @@ export default () => {
 			<Panel>
 				<PanelBody>
 					{embeddingsFiltered && (
-						<Notice status="warning" isDismissible={false}>
+						<Notice status="info" isDismissible={false}>
 							{__(
-								'This configuration is currently filtered via the `ep_embeddings_is_embeddable` filter. Changes made here will not be applied.',
+								'A plugin adjusts this configuration with the `ep_embeddings_is_embeddable` filter, so some posts may be embedded differently than set here.',
 								'elasticpress-labs',
 							)}
 						</Notice>
 					)}
 					<TabPanel
 						className="ep-vector-embedding-settings__tabs"
-						activeClass="ep-vector-embedding-settings__tabs__tab--active"
+						activeClass="ep-vector-embedding-settings__tab--active"
 						onSelect={(val) => setCurrentTab(val)}
 						initialTabName={postTypes[0].key}
 						orientation={is2columns ? 'vertical' : 'horizontal'}

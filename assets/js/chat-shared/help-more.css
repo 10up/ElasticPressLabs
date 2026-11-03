@@ -1,0 +1,32 @@
+/*
+ * Longer help behind "More": the Chat settings and the bots screen
+ * (see Settings::to_help_html()).
+ */
+.ep-chat-help-more {
+	display: inline;
+
+	& summary {
+		color: var(--wp-admin-theme-color, #3858e9);
+		cursor: pointer;
+		display: inline;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		&::after {
+			content: " ▾";
+		}
+	}
+
+	&[open] {
+		display: block;
+		margin-top: 4px;
+	}
+
+	/* Same specificity as the closed arrow above; it wins by order. */
+	&:where([open]) summary::after {
+		content: " ▴";
+	}
+}

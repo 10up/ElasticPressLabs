@@ -16,8 +16,14 @@ namespace ElasticPressLabs\Feature\VectorEmbeddings;
 use ElasticPress\Feature;
 use ElasticPress\Elasticsearch;
 use ElasticPress\Utils;
+use ElasticPressLabs\ConnectionTest;
+use ElasticPressLabs\ConnectionTestable;
 use ElasticPressLabs\Traits\DisableAfterFailures;
+use ElasticPressLabs\Upgrades;
 use WP_Error;
+
+use function ElasticPressLabs\Utils\preg_replace_callback_safe;
+use function ElasticPressLabs\Utils\preg_replace_safe;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -26,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vector Embeddings feature
  */
-class VectorEmbeddings extends Feature {
+class VectorEmbeddings extends Feature implements ConnectionTestable {
 	use DisableAfterFailures;
 
 	/**
@@ -118,8 +124,11 @@ class VectorEmbeddings extends Feature {
 	 * @return void
 	 */
 	public function setup() {
-		$this->indexables['post'] = new Indexables\Post\Post( $this );
-		$this->indexables['post']->setup();
+		$this->indexables = $this->create_indexables();
+
+		foreach ( $this->indexables as $indexable ) {
+			$indexable->setup();
+		}
 
 		add_filter( 'ep_query_logger_allowed_log_types', [ $this, 'add_vector_embeddings_to_allowed_log_types' ] );
 
@@ -136,6 +145,271 @@ class VectorEmbeddings extends Feature {
 	 */
 	public function pre_handle_feature_activation() {
 		$this->setup_failures_count();
+	}
+
+	/**
+	 * While the feature is on but temporarily disabled after failures, keep documents from
+	 * losing their vectors.
+	 *
+	 * The feature is not set up then, so without this a sync or a post save that starts in
+	 * that window would rewrite every document without its chunks, silently. Instead, posts
+	 * that should be embedded are indexed with the chunks already stored for them (see
+	 * Post::keep_stored_chunks()), and a new index still gets the `chunks` mapping.
+	 *
+	 * Hooked on `init` right after ElasticPress sets up the active features.
+	 *
+	 * @since 2.6.0
+	 */
+	public function maybe_add_breaker_guard() {
+		if ( ! $this->is_temporarily_disabled_after_failures() || 'external' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return;
+		}
+
+		$indexable                = $this->create_indexables()['post'];
+		$indexable->settings_page = new Settings();
+
+		add_filter( 'ep_post_mapping', [ $indexable, 'add_post_vector_field_mapping' ] );
+		add_filter( 'ep_post_sync_args_post_prepare_meta', [ $indexable, 'keep_stored_chunks' ], 10, 2 );
+		add_filter( 'ep_doc_status', [ $indexable, 'maybe_set_doc_status' ], 10, 3 );
+	}
+
+	/**
+	 * Whether the feature is turned on in the settings but disabled for now after too many
+	 * embedding failures, and for nothing else (like an Elasticsearch version that is too old).
+	 *
+	 * @since 2.6.0
+	 * @return bool
+	 */
+	public function is_temporarily_disabled_after_failures(): bool {
+		$settings = Utils\get_option( 'ep_feature_settings', [] );
+
+		if ( empty( $settings[ $this->slug ]['active'] ) || ! $this->should_disable_after_failures() ) {
+			return false;
+		}
+
+		return \ElasticPress\FeatureRequirementsStatus::FORCE_DISABLED !== (int) $this->requirements_status()->code;
+	}
+
+	/**
+	 * Add the feature's fields to existing indices when the feature is activated.
+	 *
+	 * An index created before the feature was active has none of them.
+	 *
+	 * @since 2.6.0
+	 */
+	public function post_activation() {
+		parent::post_activation();
+
+		$this->ensure_mapping();
+	}
+
+	/**
+	 * Add the fields this feature needs to the existing indices, without recreating them.
+	 *
+	 * Only while the feature is active: an index can stay without the fields until the
+	 * feature is activated (`post_activation()` calls this again then).
+	 *
+	 * Missing fields (all of them, if the index was created while the feature was off) are
+	 * added with `PUT _mapping`. Fields whose definition differs, like the vector dimensions,
+	 * cannot be changed in place: those indices need a sync with `--setup`.
+	 *
+	 * @since 2.6.0
+	 * @param bool $dry_run Report what would change, without changing anything.
+	 * @return array `[ 'status' => 'applied'|'pending'|'skipped'|'failed', 'message' => string ]`
+	 */
+	public function ensure_mapping( bool $dry_run = false ): array {
+		if ( ! $this->is_active() ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				'message' => __( 'Vector Embeddings is not active. Its fields are added when it is activated.', 'elasticpress-labs' ),
+			];
+		}
+
+		if ( ! Elasticsearch::factory()->get_elasticsearch_version( true ) ) {
+			return [
+				'status'  => Upgrades::FAILED,
+				'message' => __( 'Could not connect to Elasticsearch.', 'elasticpress-labs' ),
+			];
+		}
+
+		$results = [];
+
+		foreach ( $this->get_mapping_indexables() as $slug => $indexable ) {
+			$ep_indexable = \ElasticPress\Indexables::factory()->get( $slug );
+
+			if ( $ep_indexable ) {
+				$results[] = $this->ensure_index_mapping( $ep_indexable, $indexable, $dry_run );
+			}
+		}
+
+		if ( ! $results ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				'message' => __( 'No index to update.', 'elasticpress-labs' ),
+			];
+		}
+
+		// The most important status wins.
+		$statuses = wp_list_pluck( $results, 'status' );
+		$status   = Upgrades::SKIPPED;
+
+		foreach ( [ Upgrades::FAILED, Upgrades::NEEDS_ACTION, Upgrades::APPLIED, Upgrades::PENDING ] as $candidate ) {
+			if ( in_array( $candidate, $statuses, true ) ) {
+				$status = $candidate;
+				break;
+			}
+		}
+
+		return [
+			'status'  => $status,
+			'message' => implode( ' ', wp_list_pluck( $results, 'message' ) ),
+		];
+	}
+
+	/**
+	 * The indexables whose mapping this feature changes, keyed by ElasticPress indexable slug.
+	 *
+	 * Built on demand when the feature has not been set up (it is being activated).
+	 *
+	 * @since 2.6.0
+	 * @return Indexable[]
+	 */
+	protected function get_mapping_indexables(): array {
+		if ( ! empty( $this->indexables ) ) {
+			return $this->indexables;
+		}
+
+		return $this->create_indexables();
+	}
+
+	/**
+	 * Create the Vector Embeddings indexables, keyed by ElasticPress indexable slug.
+	 *
+	 * @since 2.6.0
+	 * @return Indexable[]
+	 */
+	protected function create_indexables(): array {
+		return [
+			'post' => new Indexables\Post\Post( $this ),
+		];
+	}
+
+	/**
+	 * The fields this feature adds, as a new index would get them: from the ElasticPress
+	 * mapping, after the `ep_config_mapping` filter.
+	 *
+	 * @since 2.6.0
+	 * @param \ElasticPress\Indexable $ep_indexable ElasticPress indexable.
+	 * @param Indexable               $indexable    Vector Embeddings indexable.
+	 * @return array Mapping properties.
+	 */
+	protected function get_target_mapping_properties( \ElasticPress\Indexable $ep_indexable, Indexable $indexable ): array {
+		// The fields are added here too, for when the feature is being activated and not hooked yet.
+		$mapping = $indexable->add_vector_mapping_field( $ep_indexable->generate_mapping() );
+
+		/** This filter is documented in elasticpress/includes/classes/Elasticsearch.php */
+		$mapping = apply_filters( 'ep_config_mapping', $mapping, $ep_indexable->get_index_name() );
+
+		return (array) ( $mapping['mappings']['properties'] ?? [] );
+	}
+
+	/**
+	 * Add the missing fields to one index.
+	 *
+	 * @since 2.6.0
+	 * @param \ElasticPress\Indexable $ep_indexable ElasticPress indexable.
+	 * @param Indexable               $indexable    Vector Embeddings indexable.
+	 * @param bool                    $dry_run      Report only.
+	 * @return array `status` and `message`.
+	 */
+	protected function ensure_index_mapping( \ElasticPress\Indexable $ep_indexable, Indexable $indexable, bool $dry_run ): array {
+		$elasticsearch = Elasticsearch::factory();
+		$index         = $ep_indexable->get_index_name();
+
+		if ( ! $elasticsearch->index_exists( $index ) ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Index %s does not exist yet. It gets the fields when it is created.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$mapping = $elasticsearch->get_mapping( $index );
+
+		if ( ! isset( $mapping[ $index ]['mappings'] ) ) {
+			return [
+				'status'  => Upgrades::FAILED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Could not read the mapping of index %s.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$changes = $indexable->get_mapping_changes(
+			(array) ( $mapping[ $index ]['mappings']['properties'] ?? [] ),
+			$this->get_target_mapping_properties( $ep_indexable, $indexable )
+		);
+
+		// Nothing to retry: the index stays like this until it is recreated.
+		if ( $changes['conflicts'] ) {
+			return [
+				'status'  => Upgrades::NEEDS_ACTION,
+				'message' => sprintf(
+					/* translators: 1: index name, 2: list of mapping settings */
+					__( 'Index %1$s: %2$s differ from what Vector Embeddings needs and cannot be changed in place. Run a full sync with --setup to recreate the index.', 'elasticpress-labs' ),
+					$index,
+					implode( ', ', $changes['conflicts'] )
+				),
+			];
+		}
+
+		if ( ! $changes['add'] ) {
+			return [
+				'status'  => Upgrades::SKIPPED,
+				/* translators: %s: index name */
+				'message' => sprintf( __( 'Index %s is up to date.', 'elasticpress-labs' ), $index ),
+			];
+		}
+
+		$added = implode( ', ', $changes['added'] );
+
+		if ( $dry_run ) {
+			return [
+				'status'  => Upgrades::PENDING,
+				/* translators: 1: index name, 2: list of fields */
+				'message' => sprintf( __( 'Index %1$s: would add %2$s.', 'elasticpress-labs' ), $index, $added ),
+			];
+		}
+
+		$response = $elasticsearch->remote_request(
+			$index . '/_mapping',
+			[
+				'method'  => 'PUT',
+				'body'    => wp_json_encode( [ 'properties' => $changes['add'] ] ),
+				'timeout' => 30,
+			],
+			[],
+			'put_mapping'
+		);
+
+		/** This action is documented in elasticpress/includes/classes/Elasticsearch.php */
+		do_action( 'ep_after_put_mapping', $index, $response );
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$body   = is_wp_error( $response ) ? [] : json_decode( wp_remote_retrieve_body( $response ), true );
+			$reason = is_wp_error( $response ) ? $response->get_error_message() : ( $body['error']['reason'] ?? wp_remote_retrieve_response_message( $response ) );
+
+			return [
+				'status'  => Upgrades::FAILED,
+				/* translators: 1: index name, 2: error message */
+				'message' => sprintf( __( 'Index %1$s: could not update the mapping: %2$s', 'elasticpress-labs' ), $index, $reason ),
+			];
+		}
+
+		return [
+			'status'  => Upgrades::APPLIED,
+			/* translators: 1: index name, 2: list of fields */
+			'message' => sprintf( __( 'Index %1$s: added %2$s.', 'elasticpress-labs' ), $index, $added ),
+		];
 	}
 
 	/**
@@ -296,6 +570,71 @@ class VectorEmbeddings extends Feature {
 				'field_group_slug' => 'ep_embeddings_openai',
 			],
 		];
+
+		$test = ConnectionTest::get_field( $this, 'ep_embeddings_openai' );
+
+		if ( $test ) {
+			$this->settings_schema[] = $test;
+		}
+	}
+
+	/**
+	 * The OpenAI connection settings the connection test reads.
+	 *
+	 * @since 2.6.0
+	 * @return string[]
+	 */
+	public function get_connection_fields(): array {
+		return [ 'ep_embeddings_api_key', 'ep_embeddings_api_url', 'ep_embeddings_embedding_model', 'ep_embeddings_dimensions' ];
+	}
+
+	/**
+	 * Embed a short text with these settings, and check the vector has the dimensions set. A
+	 * failed test is not counted as an embedding failure.
+	 *
+	 * @since 2.6.0
+	 * @param array $settings Feature settings, with the unsaved connection fields.
+	 * @return string|\WP_Error
+	 */
+	public function test_connection( array $settings ) {
+		$model = trim( (string) ( $settings['ep_embeddings_embedding_model'] ?? '' ) );
+
+		if ( '' === $model ) {
+			return new \WP_Error( 'ep_embeddings_test_no_model', __( 'Fill in the embedding model first.', 'elasticpress-labs' ) );
+		}
+
+		$dimensions        = $this->get_dimensions( $settings );
+		[ $url, $options ] = ( new VectorEmbeddingsRequest( $this ) )->get_request( 'Connection test', $settings );
+
+		$data = ConnectionTest::send( $url, $options );
+
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
+		$vector = $data['data'][0]['embedding'] ?? null;
+
+		if ( ! is_array( $vector ) || ! $vector ) {
+			return new \WP_Error( 'ep_embeddings_test_no_vector', __( 'The service answered, but without an embedding. Check the API URL and the model.', 'elasticpress-labs' ) );
+		}
+
+		if ( count( $vector ) !== $dimensions ) {
+			return new \WP_Error(
+				'ep_embeddings_test_dimensions',
+				sprintf(
+					/* translators: 1: dimensions returned, 2: dimensions set */
+					__( 'The model returned %1$d dimensions, but %2$d are set. Change the dimensions to match the model.', 'elasticpress-labs' ),
+					count( $vector ),
+					$dimensions
+				)
+			);
+		}
+
+		return sprintf(
+			/* translators: %d: number of dimensions */
+			__( 'Connected. The model returned %d dimensions, as set.', 'elasticpress-labs' ),
+			$dimensions
+		);
 	}
 
 	/**
@@ -421,61 +760,374 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Normalizes content into plain text.
 	 *
-	 * @param string $content Content to normalize.
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$apply_the_content` parameter.
+	 * @param string $content           Content to normalize.
+	 * @param bool   $apply_the_content Optional. Whether to run the `the_content` filters (blocks,
+	 *                                  shortcodes, embeds). Default true. Without them, shortcodes
+	 *                                  are removed without running.
 	 * @return string
 	 */
-	public function normalize_content( string $content = '' ): string {
-		$content = apply_filters( 'the_content', $content );
+	public function normalize_content( string $content = '', bool $apply_the_content = true ): string {
+		$content = $apply_the_content ? (string) apply_filters( 'the_content', $content ) : strip_shortcodes( $content );
 
-		// Strip shortcodes but keep internal caption text.
-		// Revert it if shortcodes are not balanced and preg_replace errors out.
-		$pre_content = $content;
-		$content     = preg_replace( '#\[.+\](.+)\[/.+\]#', '$1', $content );
-		if ( null === $content ) {
-			$content = $pre_content;
+		// Replace bytes that are not valid UTF-8, so the patterns below (with the `u` modifier) work.
+		if ( function_exists( 'mb_scrub' ) ) {
+			$content = mb_scrub( $content, 'UTF-8' );
 		}
 
-		// Strip HTML entities.
-		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
+		// Remove code and markup that is never read as text (scripts, structured data, styles),
+		// with its contents: the later steps replace tags with separators, after which
+		// wp_strip_all_tags() could no longer find these elements and would keep their contents.
+		// Every step keeps the text as it was when its pattern fails (backtrack limit, invalid
+		// UTF-8), so a post is never embedded empty.
+		$content = preg_replace_safe( '#<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>#is', '', $content );
+
+		// Strip shortcodes but keep internal caption text.
+		$content = preg_replace_safe( '#\[.+\](.+)\[/.+\]#', '$1', $content );
 
 		// Replace HTML linebreaks with newlines.
-		$content = preg_replace( '#<br\s?/?>#', "\n\n", $content );
+		$content = preg_replace_safe( '#<br\s?/?>#i', "\n\n", $content );
+
+		$separator = $this->get_separator_pattern();
+
+		// Tables become Markdown, so each figure keeps its row and column labels.
+		$content = $this->tables_to_markdown( $content );
+
+		// Headings become Markdown heading lines, so chunks can follow the sections.
+		$content = $this->headings_to_markdown( $content, $separator );
+
+		// Keep text from separate elements apart, so table cells, list items, and chart
+		// labels do not run together ("2026" + "12" + "46" must not become "20261246").
+		$content = $this->separate_elements( $content, $separator );
 
 		// Strip all HTML tags.
 		$content = wp_strip_all_tags( $content );
+
+		// Decode entities after the tags are gone, so "&amp;" reads "&" instead of vanishing.
+		$content = html_entity_decode( $content, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		// Non-breaking and other Unicode spaces become plain spaces.
+		$content = preg_replace_safe( '/[\x{00A0}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]/u', ' ', $content );
 
 		return $content;
 	}
 
 	/**
+	 * Replace every HTML table with a Markdown table.
+	 *
+	 * The innermost tables are converted first, so a nested table ends up on one
+	 * line inside its outer table's cell.
+	 *
+	 * @since 2.6.0
+	 * @param string $content HTML.
+	 * @return string
+	 */
+	protected function tables_to_markdown( string $content ): string {
+		/**
+		 * Filters whether tables are turned into Markdown tables before embedding.
+		 *
+		 * @hook ep_embeddings_tables_as_markdown
+		 * @since 2.6.0
+		 * @param {bool} $enabled Whether to convert tables. Default true.
+		 * @return {bool} Whether to convert tables.
+		 */
+		if ( ! class_exists( '\DOMDocument' ) || ! apply_filters( 'ep_embeddings_tables_as_markdown', true ) || false === stripos( $content, '<table' ) ) {
+			return $content;
+		}
+
+		// Innermost table: no other "<table" between its start and its end.
+		$pattern = '#<table\b[^>]*>(?:(?!<table\b).)*?</table>#is';
+		$guard   = 0;
+
+		while ( $guard++ < 50 && preg_match( $pattern, $content ) ) {
+			$converted = preg_replace_callback_safe(
+				$pattern,
+				function ( $found ) {
+					return "\n\n" . $this->table_to_markdown( $found[0] ) . "\n\n";
+				},
+				$content
+			);
+
+			if ( $converted === $content ) {
+				break;
+			}
+
+			$content = $converted;
+		}
+
+		return $content;
+	}
+
+	/**
+	 * Convert one HTML table (without nested tables) to a Markdown table.
+	 *
+	 * The header is the `<thead>` row, or the first row when every cell is a `<th>`,
+	 * or else the first row. Cell text is escaped again as HTML, so the later steps
+	 * (stripping tags, decoding entities) turn it back into the same text.
+	 *
+	 * @since 2.6.0
+	 * @param string $html Table HTML.
+	 * @return string Markdown, or the plain text of the table if it has no rows.
+	 */
+	protected function table_to_markdown( string $html ): string {
+		$document = new \DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$loaded   = $document->loadHTML( '<?xml encoding="utf-8"?><html><body>' . $html . '</body></html>', LIBXML_NONET );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+
+		if ( ! $loaded ) {
+			return $html;
+		}
+
+		// DOM properties (parentNode, childNodes, nodeName, textContent) are camelCase.
+		// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+		$rows       = [];
+		$header_row = null;
+
+		foreach ( $document->getElementsByTagName( 'tr' ) as $tr ) {
+			$cells   = [];
+			$all_th  = true;
+			$in_head = $tr->parentNode && 'thead' === strtolower( $tr->parentNode->nodeName );
+
+			foreach ( $tr->childNodes as $cell ) {
+				$name = strtolower( $cell->nodeName );
+
+				if ( 'td' !== $name && 'th' !== $name ) {
+					continue;
+				}
+
+				$all_th  = $all_th && 'th' === $name;
+				$cells[] = $this->markdown_cell( $cell->textContent );
+			}
+
+			if ( ! $cells ) {
+				continue;
+			}
+
+			if ( null === $header_row && ( $in_head || $all_th ) ) {
+				$header_row = count( $rows );
+			}
+
+			$rows[] = $cells;
+		}
+
+		if ( ! $rows ) {
+			return $html;
+		}
+
+		$header = $rows[ $header_row ?? 0 ];
+		unset( $rows[ $header_row ?? 0 ] );
+
+		$columns = max( array_map( 'count', array_merge( [ $header ], $rows ) ) );
+		$line    = static function ( array $cells ) use ( $columns ) {
+			return '| ' . implode( ' | ', array_pad( $cells, $columns, '' ) ) . ' |';
+		};
+
+		$lines = [];
+		$title = $document->getElementsByTagName( 'caption' )->item( 0 );
+
+		if ( $title && '' !== $this->markdown_cell( $title->textContent ) ) {
+			$lines[] = $this->markdown_cell( $title->textContent );
+		}
+		// phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+
+		$lines[] = $line( $header );
+		$lines[] = $line( array_fill( 0, $columns, '---' ) );
+
+		foreach ( $rows as $cells ) {
+			$lines[] = $line( $cells );
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Cell text for a Markdown table: one line, pipes escaped, HTML-escaped.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Cell text (decoded).
+	 * @return string
+	 */
+	protected function markdown_cell( string $text ): string {
+		$text = trim( preg_replace_safe( '/\s+/u', ' ', $text ) );
+		$text = str_replace( '|', '\\|', $text );
+
+		return htmlspecialchars( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Replace every HTML heading with a Markdown heading line (`## Methodology`).
+	 *
+	 * Content headings are level 2 or deeper, whatever their tag: level 1 is kept for the
+	 * sections Labs writes around the content (`# Title`, `# Summary`, `# Content`).
+	 *
+	 * @since 2.6.0
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
+	 * @return string
+	 */
+	protected function headings_to_markdown( string $content, string $separator = '' ): string {
+		$separator = '' !== $separator ? $separator : $this->get_separator_pattern();
+
+		return preg_replace_callback_safe(
+			'#<h([1-6])\b[^>]*>(.*?)</h\1\s*>#is',
+			function ( $found ) use ( $separator ) {
+				$text = trim( preg_replace_safe( '/\s+/u', ' ', wp_strip_all_tags( $this->separate_elements( $found[2], $separator ) ) ) );
+
+				if ( '' === $text ) {
+					return "\n";
+				}
+
+				return "\n\n" . str_repeat( '#', max( 2, (int) $found[1] ) ) . ' ' . $text . "\n\n";
+			},
+			$content
+		);
+	}
+
+	/**
+	 * Put a separator at element boundaries before tags are stripped.
+	 *
+	 * Block-level elements get a new line; every other element gets a space, except the
+	 * inline formatting tags listed here, which sit inside words and sentences.
+	 *
+	 * @since 2.6.0
+	 * @param string $content   HTML.
+	 * @param string $separator Optional. Pattern from get_separator_pattern().
+	 * @return string
+	 */
+	protected function separate_elements( string $content, string $separator = '' ): string {
+		$block = 'address|article|aside|blockquote|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hgroup|hr|li|main|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul';
+
+		$content = preg_replace_safe( '#</?(?:' . $block . ')\b[^>]*>#i', "\n", $content );
+
+		return preg_replace_safe( '' !== $separator ? $separator : $this->get_separator_pattern(), ' ', $content );
+	}
+
+	/**
+	 * Pattern of the tags that get a space in separate_elements(): every tag but the
+	 * inline formatting ones.
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	protected function get_separator_pattern(): string {
+		/**
+		 * Filters the inline tags that join text without a separator when content is
+		 * prepared for embeddings. Every other tag gets a space.
+		 *
+		 * @hook ep_embeddings_inline_tags
+		 * @since 2.6.0
+		 * @param {array} $tags Tag names.
+		 * @return {array} Tag names.
+		 */
+		$inline = (array) apply_filters(
+			'ep_embeddings_inline_tags',
+			[ 'a', 'abbr', 'b', 'bdi', 'bdo', 'cite', 'code', 'del', 'dfn', 'em', 'i', 'ins', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'strong', 'time', 'u', 'var', 'wbr' ]
+		);
+		$inline = implode( '|', array_map( 'preg_quote', array_filter( array_map( 'strval', $inline ) ) ) );
+
+		return '' !== $inline
+			? '#<(?!/?(?:' . $inline . ')\b)/?[a-z][a-z0-9-]*\b[^>]*>#i'
+			: '#</?[a-z][a-z0-9-]*\b[^>]*>#i';
+	}
+
+	/**
+	 * Hash that identifies the embedding of a chunk text.
+	 *
+	 * It covers the text and everything that changes its vector (generator, API URL,
+	 * model, dimensions), so a stored vector with the same hash can be reused as is.
+	 * Services behind other URLs can answer to the same model name with vectors that
+	 * cannot be compared.
+	 *
+	 * @since 2.6.0
+	 * @param string $text Chunk text, exactly as sent to the model.
+	 * @return string
+	 */
+	public function get_chunk_hash( string $text ): string {
+		return sha1(
+			implode(
+				"\n",
+				[
+					(string) $this->get_setting( 'ep_embeddings_generator' ),
+					/** This filter is documented in includes/classes/Feature/VectorEmbeddings/VectorEmbeddingsRequest.php */
+					(string) apply_filters( 'ep_embeddings_api_url', $this->get_setting( 'ep_embeddings_api_url' ) ),
+					(string) $this->get_setting( 'ep_embeddings_embedding_model' ),
+					(string) $this->get_dimensions(),
+					$text,
+				]
+			)
+		);
+	}
+
+	/**
+	 * How content is split into chunks.
+	 *
+	 * - `paragraphs` (default): at paragraph and section boundaries, see Chunker.
+	 * - `words`: fixed windows of words with an overlap (chunk_content()), as before 2.6.0.
+	 *
+	 * ElasticPress.io chunks content on its side, so it always gets the `words` path
+	 * (which sends the whole content).
+	 *
+	 * @since 2.6.0
+	 * @return string
+	 */
+	public function get_chunking_strategy(): string {
+		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
+			return 'words';
+		}
+
+		/**
+		 * Filter how content is split into chunks.
+		 *
+		 * @hook ep_embeddings_chunking_strategy
+		 * @since 2.6.0
+		 * @param {string}           $strategy `paragraphs` (default) or `words`.
+		 * @param {VectorEmbeddings} $feature  Feature instance.
+		 * @return {string} New strategy.
+		 */
+		$strategy = apply_filters( 'ep_embeddings_chunking_strategy', 'paragraphs', $this );
+
+		return 'words' === $strategy ? 'words' : 'paragraphs';
+	}
+
+	/**
 	 * Chunk content into smaller pieces with an overlap.
 	 *
-	 * @param string $content      Content to chunk.
-	 * @param int    $chunk_size   Size of each chunk, in words.
-	 * @param int    $overlap_size Overlap size for each chunk, in words.
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$apply_the_content` parameter.
+	 * @param string $content           Content to chunk.
+	 * @param int    $chunk_size        Size of each chunk, in words.
+	 * @param int    $overlap_size      Overlap size for each chunk, in words.
+	 * @param bool   $apply_the_content Optional. Whether to run the `the_content` filters. Default true.
 	 * @return array
 	 */
-	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25 ): array {
+	public function chunk_content( string $content = '', int $chunk_size = 150, $overlap_size = 25, bool $apply_the_content = true ): array {
 		// Normalize our content.
-		$content = $this->normalize_content( $content );
+		$content = $this->normalize_content( $content, $apply_the_content );
 		if ( ! $content ) {
 			return [];
 		}
 
 		// Remove multiple whitespaces.
-		$content = preg_replace( '/[ \t\r\f]+/', ' ', $content );
+		$content = preg_replace_safe( '/[ \t\r\f]+/', ' ', $content );
 
 		// Remove multiple new lines.
-		$content = preg_replace( '/[\n\v]{2,}/', "\n\n", $content );
+		$content = preg_replace_safe( '/[\n\v]{2,}/', "\n\n", $content );
 
 		// For ElasticPress.io, we chunk the content on the service side.
 		if ( 'epio' === $this->get_setting( 'ep_embeddings_generator' ) ) {
 			/**
 			 * Filter a chunk of text.
 			 *
+			 * With the `paragraphs` chunking strategy, the chunk already starts with its
+			 * context line, and a second argument describes it.
+			 *
 			 * @hook ep_embeddings_chunk
-			 * @since 2.4.0
-			 * @param {string} $chunk The chunk being processed.
+			 * @since 2.4.0, 2.6.0 added $chunk_info (`paragraphs` strategy only)
+			 * @param {string} $chunk      The chunk being processed.
+			 * @param {array}  $chunk_info `type` (content, taxonomy, meta) and `headings` (heading path).
 			 * @return {string} The modified chunk.
 			 */
 			return (array) apply_filters( 'ep_embeddings_chunk', $content );
@@ -512,10 +1164,15 @@ class VectorEmbeddings extends Feature {
 	/**
 	 * Get the number of dimensions for the embeddings.
 	 *
+	 * @since 2.5.0
+	 * @since 2.6.0 Added the `$settings` parameter.
+	 * @param array $settings Settings to use instead of the saved ones, such as the unsaved values
+	 *                        of a connection test.
 	 * @return int
 	 */
-	public function get_dimensions(): int {
-		$calc_dimensions = max( 1, min( 4096, $this->get_setting( 'ep_embeddings_dimensions' ) ) );
+	public function get_dimensions( array $settings = [] ): int {
+		$dimensions      = $settings['ep_embeddings_dimensions'] ?? $this->get_setting( 'ep_embeddings_dimensions' );
+		$calc_dimensions = max( 1, min( 4096, (int) $dimensions ) );
 
 		/**
 		 * Filter the dimensions we want for each embedding.

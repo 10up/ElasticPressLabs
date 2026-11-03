@@ -1,0 +1,21 @@
+.ep-labs-connection-test__row {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.ep-labs-connection-test__result {
+
+	&.is-success {
+		color: var(--wp-components-color-success, #007017);
+	}
+
+	&.is-error {
+		color: var(--wp-components-color-error, #cc1818);
+	}
+
+	&.is-success::before {
+		content: "✓ ";
+	}
+}
