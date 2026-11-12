@@ -80,7 +80,7 @@ __Fixed:__
 __Security:__
 
 * The API key of AI requests is no longer shown in the query log or stored with failed queries. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
-* Bumped `follow-redirects` from 1.16.0 to 1.16.1, `simple-git` from 3.33.0 to 4.0.2, and `@wordpress/env` from 11.17.0 to 12.0.0. Props [@dependabot](https://github.com/dependabot).
+* Bumped `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot).
 
 __Developer:__
 
@@ -95,6 +95,7 @@ __Developer:__
 * The e2e WP-CLI wrapper no longer loads the wp-env config, and calls api.wordpress.org, on every command. Props [@felipeelia](https://github.com/felipeelia).
 * Stop e2e jobs that run longer than 60 minutes. Props [@felipeelia](https://github.com/felipeelia).
 * Time out the Playwright browser install of e2e jobs after 5 minutes. Props [@felipeelia](https://github.com/felipeelia).
+* Faster and more reliable e2e tests on CI, and updated GitHub Actions. Props [@felipeelia](https://github.com/felipeelia).
 
 = 2.5.2 - 2026-10-14 =
 

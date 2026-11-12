@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 **Note that this release bumps the minimum required WordPress version to 6.2.** AI Chat and the "Test connection" buttons need ElasticPress 5.4.0 or later (AI Chat also needs WordPress 7.0). On older ElasticPress versions, AI Chat reports that it needs 5.4.0 and stays off, and the "Test connection" buttons do not show. Vector Embeddings works on older versions too, but looks up the stored vectors of a batch with one request per post.
 
 ### Added
-* [AI Chat] New AI Chat feature: answers questions from the site's content with cited sources, answer checks, chat bots, and a conversation history. Requires WordPress 7.0 and ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia), [@tott](https://github.com/tott), and [@MomoFadaly](https://github.com/MomoFadaly) via [#231](https://github.com/10up/ElasticPressLabs/pull/231), [#240](https://github.com/10up/ElasticPressLabs/pull/240), [#242](https://github.com/10up/ElasticPressLabs/pull/242), and [#245](https://github.com/10up/ElasticPressLabs/pull/245).
+* [AI Chat] New AI Chat feature: answers questions from the site's content with cited sources, answer checks, chat bots, and a conversation history. Requires WordPress 7.0 and ElasticPress 5.4. Props [@felipeelia](https://github.com/felipeelia), [@tott](https://github.com/tott), and [@MomoFadaly](https://github.com/MomoFadaly) via [#231](https://github.com/10up/ElasticPressLabs/pull/231), [#240](https://github.com/10up/ElasticPressLabs/pull/240), [#242](https://github.com/10up/ElasticPressLabs/pull/242), [#245](https://github.com/10up/ElasticPressLabs/pull/245), and [#249](https://github.com/10up/ElasticPressLabs/pull/249).
 * [AI Chat] "AI-generated query" search method, where a model writes the search query, checked before it runs. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#232](https://github.com/10up/ElasticPressLabs/pull/232).
 * [AI Chat] Setting to delete conversations after a number of days. Props [@felipeelia](https://github.com/felipeelia) via [#241](https://github.com/10up/ElasticPressLabs/pull/241).
 * [AI Chat] Optional "Survey wave check" gate that asks which wave of a recurring report the reader means when a question names no year. Props [@felipeelia](https://github.com/felipeelia) and [@MomoFadaly](https://github.com/MomoFadaly) via [#243](https://github.com/10up/ElasticPressLabs/pull/243) and [#244](https://github.com/10up/ElasticPressLabs/pull/244).
@@ -47,7 +47,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Security
 * The API key of AI requests is no longer shown in the query log or stored with failed queries. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#220](https://github.com/10up/ElasticPressLabs/pull/220).
-* Bumped `follow-redirects` from 1.16.0 to 1.16.1, `simple-git` from 3.33.0 to 4.0.2, and `@wordpress/env` from 11.17.0 to 12.0.0. Props [@dependabot](https://github.com/dependabot) via [#234](https://github.com/10up/ElasticPressLabs/pull/234).
+* Bumped `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot) via [#234](https://github.com/10up/ElasticPressLabs/pull/234), [#248](https://github.com/10up/ElasticPressLabs/pull/248), and [#251](https://github.com/10up/ElasticPressLabs/pull/251).
 
 ### Developer
 * [AI Chat] New hooks, among them `ep_chat_register_gate`, `ep_chat_capabilities`, `ep_chat_sync_deadline`, `ep_chat_register_abilities`, and `ep_chat_pipeline_exception`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#231](https://github.com/10up/ElasticPressLabs/pull/231).
@@ -61,6 +61,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 * The e2e WP-CLI wrapper no longer loads the wp-env config, and calls api.wordpress.org, on every command. Props [@felipeelia](https://github.com/felipeelia) via [#236](https://github.com/10up/ElasticPressLabs/pull/236).
 * Stop e2e jobs that run longer than 60 minutes. Props [@felipeelia](https://github.com/felipeelia) via [#239](https://github.com/10up/ElasticPressLabs/pull/239).
 * Time out the Playwright browser install of e2e jobs after 5 minutes. Props [@felipeelia](https://github.com/felipeelia) via [#247](https://github.com/10up/ElasticPressLabs/pull/247).
+* Faster and more reliable e2e tests on CI, and updated GitHub Actions. Props [@felipeelia](https://github.com/felipeelia) via [#252](https://github.com/10up/ElasticPressLabs/pull/252).
 
 ## [2.5.2] - 2026-10-14
 
