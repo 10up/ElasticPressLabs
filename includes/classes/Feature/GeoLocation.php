@@ -34,6 +34,8 @@ class GeoLocation extends Feature {
 	public function __construct() {
 		$this->slug = 'geo_location';
 
+		$this->default_settings = [ 'use_legacy_google_maps' => '0' ];
+
 		$this->requires_install_reindex = true;
 
 		$this->docs_url = 'https://www.elasticpress.io/documentation/article/geo-location-sorting-and-filtering-content-based-on-coordinates/';
@@ -43,6 +45,8 @@ class GeoLocation extends Feature {
 		}
 
 		parent::__construct();
+
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_settings_script' ], 9 );
 	}
 
 	/**
@@ -69,13 +73,54 @@ class GeoLocation extends Feature {
 	public function set_settings_schema(): void {
 		$this->settings_schema = [
 			[
-				'default' => '',
-				'help'    => __( 'Providing a Google Maps API key with Places API (New) enabled adds an autocomplete address field that automatically fetches the latitude and longitude.', 'elasticpress-labs' ),
-				'key'     => 'google_maps_api_key',
-				'label'   => __( 'Google Maps API Key', 'elasticpress-labs' ),
-				'type'    => 'text',
+				'default'         => '',
+				'help'            => '<span class="ep-geo-key-help">' . __( 'Providing a Google Maps API key with Places API (New) enabled adds an autocomplete address field that automatically fetches the latitude and longitude.', 'elasticpress-labs' ) . '</span>',
+				'key'             => 'google_maps_api_key',
+				'label'           => __( 'Google Places API Key', 'elasticpress-labs' ),
+				'type'            => 'text',
+				'requires_fields' => [
+					'conditions' => [ 'use_legacy_google_maps' => '0' ],
+				],
+			],
+			[
+				'default'         => '',
+				'help'            => '<span class="ep-geo-key-help">' . __( 'Providing a Google Maps API key enables an autocomplete address field that automatically fetches the latitude and longitude.', 'elasticpress-labs' ) . '</span>',
+				'key'             => 'google_maps_api_key',
+				'label'           => __( 'Google Maps API Key', 'elasticpress-labs' ),
+				'type'            => 'text',
+				'requires_fields' => [
+					'conditions' => [ 'use_legacy_google_maps' => '1' ],
+				],
+			],
+			[
+				'default' => '0',
+				'help'    => '<span class="ep-geo-legacy-help">' . __( 'Enable this to continue using your existing Google API setup instead of Places API (New).', 'elasticpress-labs' ) . '</span>',
+				'key'     => 'use_legacy_google_maps',
+				'label'   => __( 'Use the legacy Google Maps integration', 'elasticpress-labs' ),
+				'type'    => 'checkbox',
 			],
 		];
+	}
+
+	/**
+	 * Enqueue temporary API key handling on the feature settings screen.
+	 *
+	 * @return void
+	 */
+	public function enqueue_settings_script(): void {
+		if ( 'dashboard' !== \ElasticPress\Screen::factory()->get_current_screen() ) {
+			return;
+		}
+
+		$asset = Utils\get_asset_info( 'geo-location-settings-script' );
+
+		wp_enqueue_script(
+			'ep_geo_location_settings',
+			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-settings-script.js',
+			$asset['dependencies'],
+			$asset['version'],
+			true
+		);
 	}
 
 	/**
@@ -235,6 +280,7 @@ class GeoLocation extends Feature {
 	public function admin_scripts(): void {
 		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
 		$dependencies        = (array) Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' );
+
 		if ( ! empty( $google_maps_api_key ) ) {
 			$dependencies[] = 'google-places-api';
 		}
@@ -253,8 +299,9 @@ class GeoLocation extends Feature {
 			'ep_geo_location_editor_script',
 			'epGeoLocation',
 			[
-				'hasMapKey'      => ! empty( $google_maps_api_key ),
-				'isExternalMeta' => has_filter( 'ep_geo_location_pre_geo_points' ),
+				'hasMapKey'       => ! empty( $google_maps_api_key ),
+				'isExternalMeta'  => has_filter( 'ep_geo_location_pre_geo_points' ),
+				'autocompleteApi' => '1' === $this->get_setting( 'use_legacy_google_maps' ) ? 'legacy' : 'places',
 			]
 		);
 

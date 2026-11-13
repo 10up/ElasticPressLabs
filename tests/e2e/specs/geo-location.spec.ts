@@ -46,6 +46,59 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		expect(result.toString()).toContain('geo_location');
 	});
 
+	test('Temporarily restores the Places key until settings are saved', async ({
+		loggedInPage,
+	}) => {
+		await maybeEnableFeature('geo_location');
+		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+
+		const legacy = loggedInPage.getByLabel('Use the legacy Google Maps integration', {
+			exact: true,
+		});
+		const placesKey = loggedInPage.getByLabel('Google Places API Key', { exact: true });
+		const mapsKey = loggedInPage.getByLabel('Google Maps API Key', { exact: true });
+
+		await legacy.uncheck();
+		await placesKey.fill('temporary-places-key');
+		await legacy.check();
+		await expect(mapsKey).toHaveValue('');
+		await legacy.uncheck();
+		await expect(placesKey).toHaveValue('temporary-places-key');
+		await legacy.check();
+		await expect(mapsKey).toHaveValue('');
+		await mapsKey.fill('replacement-maps-key');
+
+		const saved = loggedInPage.waitForResponse(
+			(response) =>
+				response.url().includes('/elasticpress/v1/features') &&
+				response.request().method() === 'POST',
+		);
+
+		await loggedInPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+		await saved;
+		await expect(
+			loggedInPage.getByRole('button', { name: 'Save changes', exact: true }),
+		).toBeDisabled();
+		await legacy.uncheck();
+		await expect(placesKey).toHaveValue('');
+
+		const savedPlaces = loggedInPage.waitForResponse(
+			(response) =>
+				response.url().includes('/elasticpress/v1/features') &&
+				response.request().method() === 'POST',
+		);
+
+		await loggedInPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+		await savedPlaces;
+		await loggedInPage.reload();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+		await expect(legacy).not.toBeChecked();
+		await expect(placesKey).toHaveValue('');
+	});
+
 	test('Shows the address field when the Google Maps API exists', async ({ loggedInPage }) => {
 		test.skip(!process.env.GOOGLE_MAPS_API_KEY, 'Google Maps API key is not available');
 
@@ -61,7 +114,7 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
 
 		// Add Google Maps API Key
-		const apiKeyLabel = loggedInPage.locator('label:has-text("Google Maps API Key")');
+		const apiKeyLabel = loggedInPage.locator('label:has-text("Google Places API Key")');
 		const apiKeyId = await apiKeyLabel.getAttribute('for');
 		if (apiKeyId) {
 			await loggedInPage.locator(`#${apiKeyId}`).clear();

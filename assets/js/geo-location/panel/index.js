@@ -15,6 +15,7 @@ import { ifCondition } from '@wordpress/compose';
  * Internal dependencies
  */
 import AutoCompleteField from './AutoCompleteField';
+import LegacyAutoCompleteField from './LegacyAutoCompleteField';
 
 /**
  * ElasticPress Geo Location Panel
@@ -65,6 +66,26 @@ const GeoLocationPanel = () => {
 		});
 	};
 
+	/**
+	 * Handle the original Google Places Autocomplete response.
+	 *
+	 * @param {object} place Legacy Google Place.
+	 */
+	const onLegacyPlaceSelected = (place) => {
+		editPost({ meta: { ...meta, ep_address: place.formatted_address } });
+
+		if (place.geometry && place.geometry.location) {
+			const latitude = place.geometry.location.lat();
+			const longitude = place.geometry.location.lng();
+
+			onUpdateLatitude(latitude);
+			onUpdateLongitude(longitude);
+		}
+	};
+
+	const useLegacyAutocomplete = epGeoLocation.autocompleteApi === 'legacy';
+	const AddressField = useLegacyAutocomplete ? LegacyAutoCompleteField : AutoCompleteField;
+
 	const WrapperElement =
 		typeof PluginDocumentSettingPanel !== 'undefined'
 			? PluginDocumentSettingPanel
@@ -77,7 +98,12 @@ const GeoLocationPanel = () => {
 			className="ep-lat-long-panel"
 		>
 			{epGeoLocation.hasMapKey && (
-				<AutoCompleteField value={ep_address} onPlaceSelected={onPlaceSelected} />
+				<AddressField
+					value={ep_address}
+					onPlaceSelected={
+						useLegacyAutocomplete ? onLegacyPlaceSelected : onPlaceSelected
+					}
+				/>
 			)}
 
 			<TextControl
