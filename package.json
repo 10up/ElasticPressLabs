@@ -58,7 +58,6 @@
       "ai-search-summary-block-frontend-script": "./assets/js/blocks/ai-search-summary/frontend.js",
       "embeddings-editor-script": "./assets/js/embeddings-editor/index.js",
       "embeddings-script": "./assets/js/embeddings/index.js",
-      "geo-location-settings-script": "./assets/js/geo-location/settings.js",
       "geo-location-editor-script": "./assets/js/geo-location/editor.js",
       "geo-location-script": "./assets/js/geo-location/index.js",
       "search-templates-script": "./assets/js/search-templates/index.js",
