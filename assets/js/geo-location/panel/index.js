@@ -15,6 +15,7 @@ import { ifCondition } from '@wordpress/compose';
  * Internal dependencies
  */
 import AutoCompleteField from './AutoCompleteField';
+import LegacyAutoCompleteField from './LegacyAutoCompleteField';
 
 /**
  * ElasticPress Geo Location Panel
@@ -31,15 +32,46 @@ const GeoLocationPanel = () => {
 		...meta
 	} = useSelect((select) => select('core/editor').getEditedPostAttribute('meta') || {});
 
+	/**
+	 * Update the latitude entered manually.
+	 *
+	 * @param {string} latitude Latitude input value.
+	 */
 	const onUpdateLatitude = (latitude) => {
 		editPost({ meta: { ...meta, ep_latitude: latitude } });
 	};
 
+	/**
+	 * Update the longitude entered manually.
+	 *
+	 * @param {string} longitude Longitude input value.
+	 */
 	const onUpdateLongitude = (longitude) => {
 		editPost({ meta: { ...meta, ep_longitude: longitude } });
 	};
 
+	/**
+	 * Save the selected address and coordinates in one editor update.
+	 *
+	 * @param {object} place Google Place with fetched address and location.
+	 */
 	const onPlaceSelected = (place) => {
+		editPost({
+			meta: {
+				...meta,
+				ep_address: place.formattedAddress,
+				ep_latitude: place.location.lat(),
+				ep_longitude: place.location.lng(),
+			},
+		});
+	};
+
+	/**
+	 * Handle the original Google Places Autocomplete response.
+	 *
+	 * @param {object} place Legacy Google Place.
+	 */
+	const onLegacyPlaceSelected = (place) => {
 		editPost({ meta: { ...meta, ep_address: place.formatted_address } });
 
 		if (place.geometry && place.geometry.location) {
@@ -50,6 +82,9 @@ const GeoLocationPanel = () => {
 			onUpdateLongitude(longitude);
 		}
 	};
+
+	const useLegacyAutocomplete = epGeoLocation.autocompleteApi === 'legacy';
+	const AddressField = useLegacyAutocomplete ? LegacyAutoCompleteField : AutoCompleteField;
 
 	const WrapperElement =
 		typeof PluginDocumentSettingPanel !== 'undefined'
@@ -63,7 +98,12 @@ const GeoLocationPanel = () => {
 			className="ep-lat-long-panel"
 		>
 			{epGeoLocation.hasMapKey && (
-				<AutoCompleteField value={ep_address} onPlaceSelected={onPlaceSelected} />
+				<AddressField
+					value={ep_address}
+					onPlaceSelected={
+						useLegacyAutocomplete ? onLegacyPlaceSelected : onPlaceSelected
+					}
+				/>
 			)}
 
 			<TextControl

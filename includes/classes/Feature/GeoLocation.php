@@ -34,6 +34,8 @@ class GeoLocation extends Feature {
 	public function __construct() {
 		$this->slug = 'geo_location';
 
+		$this->default_settings = [ 'use_legacy_google_maps' => '0' ];
+
 		$this->requires_install_reindex = true;
 
 		$this->docs_url = 'https://www.elasticpress.io/documentation/article/geo-location-sorting-and-filtering-content-based-on-coordinates/';
@@ -74,6 +76,13 @@ class GeoLocation extends Feature {
 				'key'     => 'google_maps_api_key',
 				'label'   => __( 'Google Maps API Key', 'elasticpress-labs' ),
 				'type'    => 'text',
+			],
+			[
+				'default' => '0',
+				'help'    => __( 'Use the previous address search instead of Places API (New). Requires Places API (Legacy) enabled for your project and allowed by your key.', 'elasticpress-labs' ),
+				'key'     => 'use_legacy_google_maps',
+				'label'   => __( 'Use the legacy Google Maps integration', 'elasticpress-labs' ),
+				'type'    => 'checkbox',
 			],
 		];
 	}
@@ -233,24 +242,30 @@ class GeoLocation extends Feature {
 	 * @return void
 	 */
 	public function admin_scripts(): void {
+		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
+		$dependencies        = (array) Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' );
+
+		if ( ! empty( $google_maps_api_key ) ) {
+			$dependencies[] = 'google-places-api';
+		}
+
 		wp_enqueue_script(
 			'ep_geo_location_editor_script',
 			ELASTICPRESS_LABS_URL . 'dist/js/geo-location-editor-script.js',
-			Utils\get_asset_info( 'geo-location-editor-script', 'dependencies' ),
+			$dependencies,
 			Utils\get_asset_info( 'geo-location-editor-script', 'version' ),
 			true
 		);
 
 		wp_set_script_translations( 'ep_geo_location_script', 'elasticpress-labs' );
 
-		$google_maps_api_key = $this->get_setting( 'google_maps_api_key' );
-
 		wp_localize_script(
 			'ep_geo_location_editor_script',
 			'epGeoLocation',
 			[
-				'hasMapKey'      => ! empty( $google_maps_api_key ),
-				'isExternalMeta' => has_filter( 'ep_geo_location_pre_geo_points' ),
+				'hasMapKey'       => ! empty( $google_maps_api_key ),
+				'isExternalMeta'  => has_filter( 'ep_geo_location_pre_geo_points' ),
+				'autocompleteApi' => '1' === $this->get_setting( 'use_legacy_google_maps' ) ? 'legacy' : 'places',
 			]
 		);
 

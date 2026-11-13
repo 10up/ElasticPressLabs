@@ -7,6 +7,7 @@ import {
 	activatePlugin,
 	deactivatePlugin,
 	getEditorFrame,
+	refreshIndex,
 	maybeDisableFeature,
 	maybeEnableFeature,
 } from 'elasticpress-playwright-utils';
@@ -45,71 +46,105 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		expect(result.toString()).toContain('geo_location');
 	});
 
-	test('Shows the address field when the Google Maps API exists', async ({ loggedInPage }) => {
-		test.fixme(true, 'Google Maps API is not available in all environments');
-
+	test('Preserves the API key when switching integrations and saving', async ({
+		loggedInPage,
+	}) => {
 		await maybeEnableFeature('geo_location');
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
-
-		// Wait for API request
-		const apiRequestPromise = loggedInPage.waitForResponse(
-			'/wp-json/elasticpress/v1/features*',
-		);
-
 		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
-		await loggedInPage.getByRole('button', { name: 'Geo Location' }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
 
-		// Add Google Maps API Key
-		const apiKeyLabel = loggedInPage.locator('label:has-text("Google Maps API Key")');
-		const apiKeyId = await apiKeyLabel.getAttribute('for');
-		if (apiKeyId) {
-			await loggedInPage.locator(`#${apiKeyId}`).clear();
-			await loggedInPage.locator(`#${apiKeyId}`).fill(process.env.GOOGLE_MAPS_API_KEY || '');
-		}
-
-		await loggedInPage.getByRole('button', { name: 'Save changes' }).click();
-		await apiRequestPromise;
-
-		await goToAdminPage(loggedInPage, 'post-new.php');
-
-		// Wait for Google Maps API request
-		const mapApiRequestPromise = loggedInPage.waitForResponse(
-			'https://maps.googleapis.com/maps/api/place/js/AutocompletionService*',
-		);
-
-		const geoLocationButton = loggedInPage.getByRole('button', {
-			name: 'ElasticPress Geo Location',
+		const key = loggedInPage.getByLabel('Google Maps API Key', { exact: true });
+		const legacy = loggedInPage.getByLabel('Use the legacy Google Maps integration', {
+			exact: true,
 		});
-		const isExpanded = await geoLocationButton.getAttribute('aria-expanded');
 
-		if (isExpanded === 'false') {
-			await geoLocationButton.click();
-		}
+		await key.fill('shared-test-key');
 
-		// Add address
-		const addressLabel = loggedInPage.locator('label:has-text("Address")');
-		const addressId = await addressLabel.getAttribute('for');
-		if (addressId) {
-			await loggedInPage.locator(`#${addressId}`).fill('california');
+		for await (const checked of [true, false]) {
+			await legacy.setChecked(checked);
+			await expect(key).toHaveValue('shared-test-key');
 
-			await mapApiRequestPromise;
-			await loggedInPage.locator(`#${addressId}`).press('ArrowDown');
-			await loggedInPage.locator(`#${addressId}`).press('Enter');
-		}
+			const saved = loggedInPage.waitForResponse(
+				(response) =>
+					response.url().includes('/elasticpress/v1/features') &&
+					response.request().method() === 'POST',
+			);
 
-		// Check if fields are not empty
-		const latitudeLabel = loggedInPage.locator('label:has-text("Latitude")');
-		const latitudeId = await latitudeLabel.getAttribute('for');
-		if (latitudeId) {
-			await expect(loggedInPage.locator(`#${latitudeId}`)).not.toHaveValue('');
-		}
-
-		const longitudeLabel = loggedInPage.locator('label:has-text("Longitude")');
-		const longitudeId = await longitudeLabel.getAttribute('for');
-		if (longitudeId) {
-			await expect(loggedInPage.locator(`#${longitudeId}`)).not.toHaveValue('');
+			await loggedInPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+			await saved;
+			await loggedInPage.reload();
+			await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+			await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+			await expect(legacy).toBeChecked({ checked });
+			await expect(key).toHaveValue('shared-test-key');
 		}
 	});
+
+	for (const integration of ['Legacy', 'New']) {
+		test(`Selects an address using Places API (${integration})`, async ({ loggedInPage }) => {
+			test.skip(!process.env.GOOGLE_MAPS_API_KEY, 'Google Maps API key is not available');
+
+			await maybeEnableFeature('geo_location');
+			await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+			await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+			await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+			await loggedInPage
+				.getByLabel('Google Maps API Key', { exact: true })
+				.fill(process.env.GOOGLE_MAPS_API_KEY || '');
+			await loggedInPage
+				.getByLabel('Use the legacy Google Maps integration', { exact: true })
+				.setChecked(integration === 'Legacy');
+
+			const saved = loggedInPage.waitForResponse(
+				(response) =>
+					response.url().includes('/elasticpress/v1/features') &&
+					response.request().method() === 'POST',
+			);
+
+			await loggedInPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+			await saved;
+			await goToAdminPage(loggedInPage, 'post-new.php');
+
+			const panel = loggedInPage.getByRole('button', {
+				name: 'ElasticPress Geo Location',
+				exact: true,
+			});
+
+			if ((await panel.getAttribute('aria-expanded')) === 'false') {
+				await panel.click();
+			}
+
+			if (integration === 'Legacy') {
+				const address = loggedInPage.getByRole('textbox', { name: 'Address', exact: true });
+				await address.fill('california');
+				await loggedInPage.locator('.pac-item').first().click();
+			} else {
+				// The new widget's input is in a closed shadow root.
+				const address = loggedInPage.locator('gmp-place-autocomplete');
+				await address.click();
+
+				const predictionsPromise = loggedInPage.waitForResponse(
+					(response) =>
+						response.url().includes('/AutocompletePlaces') &&
+						response.request().postData()?.includes('"california"'),
+				);
+
+				await address.pressSequentially('california');
+				const predictions = await predictionsPromise;
+				await predictions.finished();
+				await address.press('ArrowDown');
+				await address.press('Enter');
+			}
+
+			await expect(loggedInPage.getByLabel('Latitude', { exact: true })).not.toHaveValue('');
+			await expect(loggedInPage.getByLabel('Latitude', { exact: true })).not.toHaveValue('0');
+			await expect(loggedInPage.getByLabel('Longitude', { exact: true })).not.toHaveValue('');
+			await expect(loggedInPage.getByLabel('Longitude', { exact: true })).not.toHaveValue(
+				'0',
+			);
+		});
+	}
 
 	test("Can show posts that are near the user's location", async ({ context, loggedInPage }) => {
 		await setEpLabsDefaultFeatures();
@@ -149,6 +184,13 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		for await (const post of posts) {
 			// Create a post
 			await goToAdminPage(loggedInPage, 'post-new.php');
+			// The editor iframe may appear after the page has finished navigating.
+			await expect
+				.poll(async () => {
+					const frame = await getEditorFrame(loggedInPage);
+					return frame.locator('h1.editor-post-title__input, #post-title-0').isVisible();
+				})
+				.toBe(true);
 			const editorFrame = await getEditorFrame(loggedInPage);
 			await editorFrame
 				.locator('h1.editor-post-title__input, #post-title-0')
@@ -210,6 +252,7 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		}
 
 		// Search ordering by distance
+		await refreshIndex('post');
 		await loggedInPage.goto('/?s=Test+Geo+Location+Post&orderby=geo_distance');
 
 		// Check if only 3 posts are displayed
