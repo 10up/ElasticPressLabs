@@ -47,7 +47,7 @@ All notable changes to this project will be documented in this file, per [the Ke
 
 ### Security
 * The API key of AI requests is no longer shown in the query log or stored with failed queries. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#220](https://github.com/10up/ElasticPressLabs/pull/220).
-* Bumped `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot) via [#234](https://github.com/10up/ElasticPressLabs/pull/234), [#248](https://github.com/10up/ElasticPressLabs/pull/248), and [#251](https://github.com/10up/ElasticPressLabs/pull/251).
+* Bumped `fast-xml-parser` from 5.11.2 to 5.12.1, `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot) via [#234](https://github.com/10up/ElasticPressLabs/pull/234), [#248](https://github.com/10up/ElasticPressLabs/pull/248), [#251](https://github.com/10up/ElasticPressLabs/pull/251), and [#253](https://github.com/10up/ElasticPressLabs/pull/253).
 
 ### Developer
 * [AI Chat] New hooks, among them `ep_chat_register_gate`, `ep_chat_capabilities`, `ep_chat_sync_deadline`, `ep_chat_register_abilities`, and `ep_chat_pipeline_exception`. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott) via [#231](https://github.com/10up/ElasticPressLabs/pull/231).

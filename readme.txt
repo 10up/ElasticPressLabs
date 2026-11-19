@@ -80,7 +80,7 @@ __Fixed:__
 __Security:__
 
 * The API key of AI requests is no longer shown in the query log or stored with failed queries. Props [@felipeelia](https://github.com/felipeelia) and [@tott](https://github.com/tott).
-* Bumped `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot).
+* Bumped `fast-xml-parser` from 5.11.2 to 5.12.1, `follow-redirects` from 1.16.0 to 1.16.2, `simple-git` from 3.33.0 to 4.0.2, `@wordpress/env` from 11.17.0 to 12.0.0, `postcss-selector-parser` from 6.1.2 to 6.1.5, and `serialize-javascript` from 7.1.2 to 7.1.4. Props [@dependabot](https://github.com/dependabot).
 
 __Developer:__
 
