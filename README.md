@@ -23,7 +23,13 @@ This plugin provides a simple interface to enable and disable features.
 * [WordPress](http://wordpress.org) 6.2+
 * [ElasticPress plugin](https://github.com/10up/ElasticPress/) 5.0.0+
 
+AI Chat needs WordPress 7.0+ and ElasticPress 5.4.0+.
+
 ## Features
+
+### AI Chat
+
+Answer questions in wp-admin from your published content, with the sources of each answer cited. Answers are checked before they are shown, chat bots let you set up different instructions and models for different uses, and past conversations are listed in a History screen. Requires the Vector Embeddings feature, an AI provider, WordPress 7.0+, and ElasticPress 5.4.0+.
 
 ### AI Search Summary
 
@@ -110,6 +116,8 @@ Grouped as in the ElasticPress Features screen.
 ![AI Search Summary: show an AI-generated summary of the search results.](.wordpress-org/screenshot-4.png)
 
 </details>
+
+<!-- TODO (2.6.0): AI Chat screenshots, once the feature is final. -->
 
 ### Other
 
