@@ -39,6 +39,11 @@ class Upgrades {
 	const VERSION_OPTION = 'ep_labs_version';
 
 	/**
+	 * Whether a Maps key existed when the Places integration was introduced.
+	 */
+	const GEO_LOCATION_LEGACY_OPTION = 'ep_labs_geo_location_legacy_available';
+
+	/**
 	 * Option that stores the failures of the last run, for the admin notice.
 	 */
 	const FAILURES_OPTION = 'ep_labs_upgrade_failures';
@@ -90,6 +95,10 @@ class Upgrades {
 	public function get_routines(): array {
 		$routines = [
 			'2.6.0' => [
+				'geo_location_integration'  => [
+					'label'    => __( 'Preserve the legacy Geo Location integration for existing keys', 'elasticpress-labs' ),
+					'callback' => [ $this, 'upgrade_geo_location_integration' ],
+				],
 				'vector_embeddings_mapping' => [
 					'label'    => __( 'Add missing Vector Embeddings fields to the post index mapping', 'elasticpress-labs' ),
 					'callback' => [ $this, 'upgrade_vector_embeddings_mapping' ],
@@ -444,6 +453,52 @@ class Upgrades {
 		];
 
 		return $notices;
+	}
+
+	/**
+	 * Preserve the legacy integration for sites with an existing Maps key.
+	 *
+	 * @param bool $dry_run Whether this is a dry run.
+	 * @return array
+	 */
+	public function upgrade_geo_location_integration( bool $dry_run ): array {
+		$already_migrated = null !== Utils\get_option( self::GEO_LOCATION_LEGACY_OPTION, null );
+
+		if ( $already_migrated ) {
+			return [
+				'status'  => self::SKIPPED,
+				'message' => __( 'Geo Location integration has already been selected.', 'elasticpress-labs' ),
+			];
+		}
+
+		$settings = Utils\get_option( 'ep_feature_settings', [] );
+		$has_key  = ! empty( $settings['geo_location']['google_maps_api_key'] );
+
+		if ( $dry_run ) {
+			return [
+				'status'  => self::PENDING,
+				'message' => __( 'Record whether Geo Location can use the legacy integration.', 'elasticpress-labs' ),
+			];
+		}
+
+		if ( $has_key ) {
+			$settings['geo_location']['use_legacy_google_maps'] = '1';
+			Utils\update_option( 'ep_feature_settings', $settings );
+
+			$draft = Utils\get_option( 'ep_feature_settings_draft', [] );
+
+			if ( isset( $draft['geo_location'] ) ) {
+				$draft['geo_location']['use_legacy_google_maps'] = '1';
+				Utils\update_option( 'ep_feature_settings_draft', $draft );
+			}
+		}
+
+		Utils\update_option( self::GEO_LOCATION_LEGACY_OPTION, $has_key );
+
+		return [
+			'status'  => self::APPLIED,
+			'message' => __( 'Geo Location integration selected.', 'elasticpress-labs' ),
+		];
 	}
 
 	/**
