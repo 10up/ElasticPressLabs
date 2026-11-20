@@ -12,6 +12,7 @@ use ElasticPress\Feature;
 use ElasticPress\FeatureRequirementsStatus;
 use ElasticPress\Features;
 use ElasticPressLabs\Utils;
+use ElasticPressLabs\Upgrades;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -77,14 +78,20 @@ class GeoLocation extends Feature {
 				'label'   => __( 'Google Maps API Key', 'elasticpress-labs' ),
 				'type'    => 'text',
 			],
-			[
+		];
+
+		$legacy_available = \ElasticPress\Utils\get_option( Upgrades::GEO_LOCATION_LEGACY_OPTION, false );
+		$has_key          = ! empty( $this->get_setting( 'google_maps_api_key' ) );
+
+		if ( $legacy_available && $has_key ) {
+			$this->settings_schema[] = [
 				'default' => '0',
 				'help'    => __( 'Use the previous address search instead of Places API (New). Requires Places API (Legacy) enabled for your project and allowed by your key.', 'elasticpress-labs' ),
 				'key'     => 'use_legacy_google_maps',
 				'label'   => __( 'Use the legacy Google Maps integration', 'elasticpress-labs' ),
 				'type'    => 'checkbox',
-			],
-		];
+			];
+		}
 	}
 
 	/**

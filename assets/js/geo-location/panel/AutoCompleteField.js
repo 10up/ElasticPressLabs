@@ -29,6 +29,7 @@ const AutoCompleteField = ({ onPlaceSelected, value }) => {
 
 	useEffect(() => {
 		valueRef.current = value;
+
 		if (autocompleteRef.current) {
 			autocompleteRef.current.value = value || '';
 		}
@@ -74,6 +75,7 @@ const AutoCompleteField = ({ onPlaceSelected, value }) => {
 				) {
 					return;
 				}
+
 				if (!place.formattedAddress || !place.location) {
 					showError();
 					return;
@@ -96,6 +98,7 @@ const AutoCompleteField = ({ onPlaceSelected, value }) => {
 			try {
 				const { PlaceAutocompleteElement } =
 					await window.google.maps.importLibrary('places');
+
 				if (disposed) {
 					return;
 				}
@@ -122,11 +125,13 @@ const AutoCompleteField = ({ onPlaceSelected, value }) => {
 		// Ignore pending requests and detach the widget on unmount.
 		return () => {
 			disposed = true;
+
 			if (autocomplete) {
 				autocomplete.removeEventListener('gmp-select', selectPlace);
 				autocomplete.removeEventListener('gmp-error', showError);
 				autocomplete.remove();
 			}
+
 			autocompleteRef.current = null;
 		};
 	}, [id]);

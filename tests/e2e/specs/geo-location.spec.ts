@@ -46,10 +46,50 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 		expect(result.toString()).toContain('geo_location');
 	});
 
+	for (const installation of ['new', 'existing without a key']) {
+		test(`Hides the legacy integration (${installation} installation)`, async ({
+			loggedInPage,
+		}) => {
+			await maybeEnableFeature('geo_location');
+			await wpCliEval(`
+				$settings = \\ElasticPress\\Utils\\get_option( 'ep_feature_settings', [] );
+				$settings['geo_location']['google_maps_api_key'] = '';
+				unset( $settings['geo_location']['use_legacy_google_maps'] );
+				\\ElasticPress\\Utils\\update_option( 'ep_feature_settings', $settings );
+				\\ElasticPress\\Utils\\delete_option( \\ElasticPressLabs\\Upgrades::GEO_LOCATION_LEGACY_OPTION );
+				call_user_func( ( new \\ElasticPressLabs\\Upgrades() )->get_routines()['2.6.0']['geo_location_integration']['callback'], false );
+			`);
+
+			// A key added after installation must not make the legacy option available.
+			if (installation === 'new') {
+				await wpCliEval(`
+					\\ElasticPress\\Features::factory()->update_feature(
+						'geo_location', [ 'google_maps_api_key' => 'new-test-key' ]
+					);
+					call_user_func( ( new \\ElasticPressLabs\\Upgrades() )->get_routines()['2.6.0']['geo_location_integration']['callback'], false );
+				`);
+			}
+
+			await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
+			await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+			await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+			await expect(
+				loggedInPage.getByLabel('Use the legacy Google Maps integration', { exact: true }),
+			).toHaveCount(0);
+		});
+	}
+
 	test('Preserves the API key when switching integrations and saving', async ({
 		loggedInPage,
 	}) => {
 		await maybeEnableFeature('geo_location');
+		await wpCliEval(`
+			\\ElasticPress\\Features::factory()->update_feature(
+				'geo_location', [ 'google_maps_api_key' => 'shared-test-key' ]
+			);
+			\\ElasticPress\\Utils\\delete_option( \\ElasticPressLabs\\Upgrades::GEO_LOCATION_LEGACY_OPTION );
+			call_user_func( ( new \\ElasticPressLabs\\Upgrades() )->get_routines()['2.6.0']['geo_location_integration']['callback'], false );
+		`);
 		await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
 		await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
@@ -59,7 +99,8 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			exact: true,
 		});
 
-		await key.fill('shared-test-key');
+		await expect(legacy).toBeChecked();
+		await expect(key).toHaveValue('shared-test-key');
 
 		for await (const checked of [true, false]) {
 			await legacy.setChecked(checked);
@@ -73,12 +114,25 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 
 			await loggedInPage.getByRole('button', { name: 'Save changes', exact: true }).click();
 			await saved;
+			await wpCliEval(`
+				call_user_func( ( new \\ElasticPressLabs\\Upgrades() )->get_routines()['2.6.0']['geo_location_integration']['callback'], false );
+			`);
 			await loggedInPage.reload();
 			await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
 			await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
 			await expect(legacy).toBeChecked({ checked });
 			await expect(key).toHaveValue('shared-test-key');
 		}
+
+		await wpCliEval(`
+			\\ElasticPress\\Features::factory()->update_feature(
+				'geo_location', [ 'google_maps_api_key' => '' ]
+			);
+		`);
+		await loggedInPage.reload();
+		await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
+		await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
+		await expect(legacy).toHaveCount(0);
 	});
 
 	for (const integration of ['Legacy', 'New']) {
@@ -86,6 +140,13 @@ test.describe('Geo Location Feature', { tag: '@geo-location' }, () => {
 			test.skip(!process.env.GOOGLE_MAPS_API_KEY, 'Google Maps API key is not available');
 
 			await maybeEnableFeature('geo_location');
+			await wpCliEval(`
+				\\ElasticPress\\Features::factory()->update_feature(
+					'geo_location', [ 'google_maps_api_key' => 'shared-test-key' ]
+				);
+				\\ElasticPress\\Utils\\delete_option( \\ElasticPressLabs\\Upgrades::GEO_LOCATION_LEGACY_OPTION );
+				call_user_func( ( new \\ElasticPressLabs\\Upgrades() )->get_routines()['2.6.0']['geo_location_integration']['callback'], false );
+			`);
 			await goToAdminPage(loggedInPage, 'admin.php?page=elasticpress');
 			await loggedInPage.getByRole('button', { name: 'Other', exact: true }).click();
 			await loggedInPage.getByRole('button', { name: 'Geo Location', exact: true }).click();
