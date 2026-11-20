@@ -32,6 +32,15 @@ jobs:
     name: ES ${{ matrix.esVersion }} - ${{ matrix.core.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # A new push to a pull request cancels the cells still running for the
+    # previous push. EP.io cells are the exception: they create indices and
+    # search templates on the shared EP.io host, and only the end of the job
+    # deletes them, so a newer EP.io cell waits for the older one to finish
+    # instead. Pushes to develop/trunk get a group per run, so nothing is
+    # cancelled or queued there.
+    concurrency:
+      group: e2e-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}-${{ matrix.esVersion }}-${{ matrix.core.name }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' && matrix.esVersion != 'EP.io' }}
     defaults:
       run:
         working-directory: ./elasticpress-labs
@@ -45,7 +54,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         path: elasticpress-labs
 
@@ -54,14 +63,14 @@ jobs:
         echo "WORKING_DIR=$(pwd)" >> $GITHUB_ENV
 
     - name: Prepare npm cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ env.NODE_CACHE }}
         key: npm-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           npm-${{ env.NODE_VERSION }}-
     - name: Prepare composer cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ env.COMPOSER_CACHE }}
         key: composer-${{ env.COMPOSER_VERSION }}-${{ hashFiles('**/composer.lock') }}
@@ -80,22 +89,44 @@ jobs:
       run: composer install
 
     - name: "Install node v${{ env.NODE_VERSION }}"
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ env.NODE_VERSION }}
 
     - name: Install dependencies
       run: npm ci --include=dev
 
-    - name: Install Playwright Browsers
+    - name: Get Playwright version
+      id: playwright-version
+      run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+    # Browser binaries are tied to the Playwright version, so key on it.
+    - name: Prepare Playwright browser cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+    # Only Chromium: it is the only project in playwright.config.ts, and it is
+    # Playwright's own Chromium, not the runner's Google Chrome. ffmpeg is for
+    # video. Downloads come from Playwright's CDN and are a no-op when the
+    # cache above was restored.
+    #
+    # No --with-deps / install-deps: ubuntu-latest already has every library
+    # Chromium needs (it ships Google Chrome), so apt would only add fonts the
+    # tests don't use, and an apt mirror outage would fail every job. If a
+    # future image drops a library, Chromium fails to launch with "Host system
+    # is missing dependencies", listing what to install.
+    - name: Install Playwright browser
       timeout-minutes: 5
-      run: npx playwright install --with-deps
+      run: npx playwright install chromium ffmpeg
 
     - name: Set up WP environment with Elasticsearch
       run: ES_VERSION=${{ matrix.esVersion }} npm run env:start
       if: matrix.esVersion != 'EP.io'
 
     - name: Set up WP environment with Elasticsearch (EP.io)
+      id: env-epio
       run: |
         npm run env start
         npm run env:install-tests-cli
@@ -123,21 +154,25 @@ jobs:
       run: npm run playwright:test
 
     - name: Make artifacts available
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure()
       with:
         name: playwright-report-${{ matrix.esVersion }}-${{ matrix.core.name }}
         retention-days: 2
         path: ${{ env.WORKING_DIR }}/tests/e2e/playwright-report/
 
+    # always(), not !cancelled(): search templates and indices on the shared
+    # EP.io host must be deleted even when the job is cancelled. They need
+    # WordPress, though, so they are skipped when the environment never started
+    # (nothing was created).
     - name: Delete Elasticsearch search templates
-      if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
+      if: ${{ always() && steps.env-epio.outcome == 'success' }}
       run: |
         ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress elasticpress-labs"
         ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress-tests delete-all-search-templates"
 
     - name: Delete Elasticsearch indices
-      if: ${{ !cancelled() && matrix.esVersion == 'EP.io' }}
+      if: ${{ always() && steps.env-epio.outcome == 'success' }}
       run: |
         ./bin/wp-env-cli tests-wordpress "wp --allow-root plugin activate elasticpress elasticpress-labs"
         ./bin/wp-env-cli tests-wordpress "wp --allow-root elasticpress-tests delete-all-indices"

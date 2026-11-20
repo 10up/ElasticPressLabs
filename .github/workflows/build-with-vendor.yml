@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set PHP version
       uses: shivammathur/setup-php@v2
@@ -24,7 +24,7 @@ jobs:
         coverage: none
 
     - name: install node v20
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: 24.21.0
 
@@ -40,7 +40,7 @@ jobs:
       run: npm run build:zip
 
     - name: Make artifacts available
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: elasticpress-labs
         retention-days: 2
