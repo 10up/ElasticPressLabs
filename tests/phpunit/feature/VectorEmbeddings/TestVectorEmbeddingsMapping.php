@@ -284,6 +284,7 @@ class TestVectorEmbeddingsMapping extends \WP_UnitTestCase {
 		);
 
 		$results = ( new Upgrades() )->run( [ 'routine' => '2.6.0' ] );
+		$results = array_values( wp_list_filter( $results, [ 'routine' => 'vector_embeddings_mapping' ] ) );
 
 		$this->assertSame( [ Upgrades::APPLIED ], array_column( $results, 'status' ), implode( ' ', array_column( $results, 'message' ) ) );
 		$this->assertStringContainsString( 'added chunks.text, chunks.hash, chunks.type.', $results[0]['message'] );
